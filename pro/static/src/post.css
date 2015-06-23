@@ -71,8 +71,6 @@
         h6 { font-size: 1em; font-weight: bold; }
         img { display: block; max-width: 100%; height: auto;}
         p           { margin: 0 0 1.5em;  line-height: 1.5}
-        p img.left  { float: left; margin: 1.5em 1.5em 1.5em 0; padding: 0; }
-        p img.right { float: right; margin: 1.5em 0 1.5em 1.5em; }
 
         a:focus, 
         a:hover     { color: #000; text-decoration: none}
@@ -113,7 +111,6 @@
         th          { font-weight: bold; }
         thead th        { background: #c3d9ff; }
         th,td,caption { padding: 4px 10px 4px 5px; }
-        tr.even td  { background: #e5ecf9; }
         tfoot       { font-style: italic; }
         caption     { background: #eee; }
 
@@ -154,11 +151,11 @@
             border: 0;
         }
 
-        .embed-responsive.embed-responsive-16by9 {
+        .embed-responsive-16by9 {
             padding-bottom: 56.25%;
         }
 
-        .embed-responsive.embed-responsive-4by3 {
+        .embed-responsive-4by3 {
             padding-bottom: 75%;
         }
 

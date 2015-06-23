@@ -8,6 +8,7 @@ var gulp = require('gulp');
 var postcss = require('gulp-postcss');
 var autoprefixer = require('autoprefixer-core');
 var nano = require('gulp-cssnano');
+var csslint = require('gulp-csslint');
 var vhash = require('gulp-vhash');
 
 processors = [
@@ -20,7 +21,7 @@ processors = [
 gulp.task('sass', function () {
     return gulp.src(input)
         .pipe(postcss(processors))
-        .pipe(nano())
+        //.pipe(nano())
         .pipe(gulp.dest(output));
 });
 
@@ -31,4 +32,19 @@ gulp.task('hash', function () {
     .pipe(vhash('pro/templates/**/*.html'));
 });
 
-gulp.task('default', ['sass', 'hash']);
+
+
+gulp.task('csstest', function () {
+    gulp.src('pro/static/css/style.css')
+    .pipe(csslint({
+        'compatible-vendor-prefixes':false,
+        'box-sizing':false,
+        'star-property-hack':false,
+        'unique-headings':false,
+        'qualified-headings':false
+
+    }))
+    .pipe(csslint.reporter());
+});
+
+gulp.task('default', ['sass', 'csstest', 'hash']);

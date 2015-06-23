@@ -13,6 +13,7 @@
     "autoprefixer-core": "^5.2.0",
     "cssnano": "^1.4.2",
     "gulp": "^3.9.0",
+    "gulp-csslint": "^0.1.5",
     "gulp-cssnano": "^1.0.0",
     "gulp-postcss": "^5.1.8",
     "gulp-sass": "^2.0.1",
