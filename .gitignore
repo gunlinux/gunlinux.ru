@@ -1,5 +1,6 @@
 *.py[co]
 pro/static/upload/*
+vhash.json
 tmp
 config.sh
 venv
