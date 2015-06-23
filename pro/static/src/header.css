@@ -1,7 +1,10 @@
 .header {
     text-align: center;
-    padding: 3em 1em;
+    padding: 3em 0em;
     font-size: 1rem;
+    @media (max-width:767px) {
+        padding: 3em 1em;
+    }
     &__logo {
         font-weight: bold;
         text-decoration: none;
