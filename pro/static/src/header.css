@@ -1,6 +1,6 @@
 .header {
     text-align: center;
-    padding: 3em 0;
+    padding: 3em 1em;
     font-size: 1rem;
     &__logo {
         font-weight: bold;

@@ -1,5 +1,5 @@
 *.py[co]
-por/static/upload/*
+pro/static/upload/*
 tmp
 config.sh
 venv
