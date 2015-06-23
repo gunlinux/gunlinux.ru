@@ -25,7 +25,7 @@ gulp.task('sass', function () {
         .pipe(gulp.dest(output));
 });
 
-gulp.task('hash', function () {
+gulp.task('hash', ['sass'], function () {
     return gulp.src(
         'pro/static/{css,js}/*.{css,js}'
     )
@@ -34,7 +34,7 @@ gulp.task('hash', function () {
 
 
 
-gulp.task('csstest', function () {
+gulp.task('csstest', ['sass'], function () {
     gulp.src('pro/static/css/style.css')
     .pipe(csslint({
         'compatible-vendor-prefixes':false,
