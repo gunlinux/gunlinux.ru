@@ -1,0 +1,39 @@
+.header {
+    text-align: center;
+    padding: 3em 0;
+    font-size: 1rem;
+    &__logo {
+        font-weight: bold;
+        text-decoration: none;
+        font-size: 1.17em;
+        color: #333;
+        float: left;
+        &:hover {
+            color: 000;
+        }
+    }
+    &__nav {
+        float: right;
+    }
+    &__divider {
+        width: 20%;
+        padding-top: 50px;
+        margin: 0 auto;;
+        display: block;
+        clear: both;
+        border-bottom: 1px solid #ccc;
+    }
+}
+.nav {
+    &__link {
+        color: #444;
+        transition: all .2s ease-in-out;
+        text-decoration: none;
+        margin-left: 1rem;
+        &:hover {
+            color: #000;
+            text-decoration: none; 
+        }
+    }
+            
+}

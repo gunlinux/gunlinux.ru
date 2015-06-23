@@ -1,0 +1,14 @@
+{% extends 'admin/model/edit.html' %}
+{% block head_css %}
+    {{super()}}
+	<link rel="stylesheet" href="/static/css/admin.css">
+	<link rel="stylesheet" href="/static/css/bootstrap-markdown.min.css">
+{% endblock %}
+
+{% block tail %}
+    {{ super() }}
+    <script src="/static/js/bootstrap-markdown.js"></script>
+	<script>
+		$("#content").markdown({autofocus:false,savable:false})
+	</script>
+{% endblock %}

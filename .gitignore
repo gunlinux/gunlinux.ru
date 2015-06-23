@@ -1,0 +1,54 @@
+*.py[co]
+por/static/upload/*
+tmp
+config.sh
+venv
+current.todo
+pro/templates/_fingerprint.html
+pro/static/css/style.css
+pro/static/js/svg.js
+server.log
+pro/base.db
+pro/static/css/app*.css
+pro/static/js/app*.js
+pro/static/css/admin.min.css
+pro/static/js/admin.js
+pro/static/js/admin.min.js
+secret.json
+node_modules
+base.db
+pro/static/css/style.min.css
+pro/config.cfg
+*.DS_Store
+nohup.out
+local
+old
+env
+local
+# Packages
+*.egg
+.*.swp
+*.swp
+*.egg-info
+dist
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+.coverage
+.tox
+
+#Translations
+*.mo
+
+#Mr Developer
+.mr.developer.cfg

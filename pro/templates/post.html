@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+{% block styles %}
+  <link rel="stylesheet" href="/static/css/highlight.css">
+{% endblock %}
+{% block content %}
+  <article class="post typesettings">
+    <h1 class="post__title">{{post.pagetitle}}</h1>
+    
+    <div class="post__date">
+      {% if post.status==1 %}
+        {{post.publishedon.strftime("%B %d, %Y")}}
+      {% endif %}
+      {% if post.status==2 %}
+        Архив
+      {% endif %}
+    </div>
+
+    <div class="post__body">
+      {% markdown %}
+        {{post.content|safe}}
+      {% endmarkdown %}
+    </div>
+  </article>
+{% endblock %}
+{% block scripts %}
+  <script src="/static/js/highlight.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+{% endblock %}

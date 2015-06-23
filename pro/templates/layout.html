@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8">
+  <title>{% if post %}{{post.pagetitle}}{% else %}  Неразумный перфекционизм{% endif %}</title>
+  <meta name="description" content="{% if post %}{{post.pagetitle}}{% endif %}">
+  <link href="/static/img/favicon.ico" rel="shortcut icon" />
+  <base href="{{config['BASE']}}">
+  <link href='http://fonts.googleapis.com/css?family=PT+Serif:400,700&subset=latin,cyrillic' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" href="/static/css/style.css">
+  {% block styles %}
+  {% endblock %}
+</head>
+<body class="page">
+    <div class="header">
+      <a href="/" class="header__logo" title="На главную">@gunlinux</a>
+      <div class="header__nav">
+        <nav class="nav">
+          {% for page in pages %}
+            <a href="{{url_for('postb.view',alias=page.alias)}}" class="nav__link">{{page.pagetitle}}</a>
+          {% endfor %}
+        </nav>
+      </div> 
+      <div class="header__divider"></div>
+    </div>
+    {% block content %}
+    {% endblock %}
+
+  </div>
+  {% block scripts %}
+  {% endblock %}
+</body>
+</html>

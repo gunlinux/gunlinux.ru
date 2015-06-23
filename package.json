@@ -1,0 +1,22 @@
+{
+  "name": "gunlinuxblog",
+  "version": "0.1.1",
+  "description": "",
+  "main": "gulpfile.js",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:gunlinux/gunlinuxblog.git"
+  },
+  "author": "gunlinux",
+  "license": "MIT",
+  "devDependencies": {
+    "autoprefixer-core": "^5.2.0",
+    "cssnano": "^1.4.2",
+    "gulp": "^3.9.0",
+    "gulp-cssnano": "^1.0.0",
+    "gulp-postcss": "^5.1.8",
+    "gulp-sass": "^2.0.1",
+    "postcss-import": "^6.0.0",
+    "postcss-nested": "^0.3.2"
+  }
+}
