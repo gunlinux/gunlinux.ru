@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 {% block styles %}
-  <link rel="stylesheet" href="/static/css/highlight.css?v=41eb1f617edacbff67834f5bacb7cd76">
+  <link rel="stylesheet" href="/static/components/highlight/src/styles/zenburn.css">
 {% endblock %}
 {% block content %}
   <article class="post typesettings">
@@ -23,6 +23,6 @@
   </article>
 {% endblock %}
 {% block scripts %}
-  <script src="/static/js/highlight.js?v=801cbf64c97da9049bf2ae4c1d18a066"></script>
+  <script src="/static/components/highlight/build/highlight.pack.js"></script>
   <script>hljs.initHighlightingOnLoad();</script>
 {% endblock %}

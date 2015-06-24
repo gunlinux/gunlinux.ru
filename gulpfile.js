@@ -29,7 +29,7 @@ gulp.task('hash', ['sass'], function () {
     return gulp.src(
         'pro/static/{css,js}/*.{css,js}'
     )
-    .pipe(vhash('pro/templates/**/*.html'));
+    .pipe(vhash('pro/templates/*/*.html'));
 });
 
 
