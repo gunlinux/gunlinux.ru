@@ -28,5 +28,10 @@ def list_routes():
         print(rule)
 
 
+@manager.command
+def dbinit():
+    db.create_all()
+
+
 if __name__ == '__main__':
     manager.run()

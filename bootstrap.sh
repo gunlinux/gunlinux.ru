@@ -13,3 +13,4 @@ gulp
 bower install
 python pro/static/components/highlight/tools/build.py
 
+./manage.py dbinit
