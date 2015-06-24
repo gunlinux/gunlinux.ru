@@ -1,6 +1,7 @@
 *.py[co]
 pro/static/components/*
 pro/static/upload/*
+gunicorn.conf
 vhash.json
 tmp
 config.sh

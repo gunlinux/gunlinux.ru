@@ -1,32 +1,29 @@
 #Install
 
-`$ virtualenv env`
 
-`$ source env/bin/activate`
-
-`$ pip install -r requirements.txt `
-
-`$ cp pro/config.cfg.sample pro/config.cfg `
-
-`$ npm install gulp -g`
-
-`$ npm install`
-
-`$ gulp`
-
+`$ ./bootstrap.sh`
 
 #Configs
 
-* pro/config.cfg
+* config.sh
 
-* gulpfile.js
+* gunicorn.conf
 
 #Debug
 
 `$ source env/bin/activate`
 
-`$ python debug.py`
+`$ source config.sh`
 
+`$ ./manage runserver -p PORT`
+
+#Deploy
+
+`$ source env/bin/activate`
+
+`$ source config.sh`
+
+`$ gunicorn -c gunicorn.conf manage:app `
 
 #Contribution
 
