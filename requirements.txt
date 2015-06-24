@@ -6,3 +6,4 @@ flask-markdown2
 Flask-Script
 bumpversion
 Flask-Debugtoolbar
+gunicorn
