@@ -2,13 +2,13 @@
 {% block head_css %}
     {{super()}}
 	<link rel="stylesheet" href="/static/css/admin.css?v=bad00c159a8471ae2b789d75ed81e2da">
-	<link rel="stylesheet" href="/static/css/bootstrap-markdown.min.css?v=e69a404efc728f57393273c0d6203ee5">
+	<link rel="stylesheet" href="/static/components/bootstrap-markdown/css/bootstrap-markdown.min.css">
 {% endblock %}
 
 {% block tail %}
     {{ super() }}
-	<script src="/static/js/bootstrap-markdown.js?v=b3c1a2b8590bc5b7db3c1a766695594e"></script>
+    <script src="/static/components/bootstrap-markdown/js/bootstrap-markdown.js"></script>
 	<script>
-		$("#content").markdown({autofocus:false,savable:false})
+		$('#content').markdown({autofocus:false, savable:false});
 	</script>
 {% endblock %}
