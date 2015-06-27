@@ -1,22 +1,27 @@
 {% extends "layout.html" %}
+
 {% block content %}
-<div class="content">
-  {% for group in posts|groupby('publishedon.year')|sort(reverse=True)  %}
-    <div class="post-group">
-      <h3 class="post-group__title">{{group.grouper}}</h3>
-      <div class="post-group_content">
-        {% for post in group.list %}
-          <div class="minipost">
-            <a class="minipost__title" href="{{url_for('postb.view',alias=post.alias)}}">
-              {{post.pagetitle}}
-            </a>
-            <span class="minipost__date">
-              {% if post.status==2 %}архив{% else %} {{post.publishedon.strftime("%B %d, %Y")}} {% endif %}
-            </span>
-          </div>
-        {% endfor %}
-      </div>
+    <div class="content">
+    {% for group in posts|groupby('publishedon.year')|sort(reverse=True)  %}
+        <div class="post-group">
+            <h3 class="post-group__title">{{group.grouper}}</h3>
+            <div class="post-group_content">
+                {% for post in group.list %}
+                <div class="minipost">
+                    <a class="minipost__title" href="{{url_for('postb.view',alias=post.alias)}}">
+                        {{post.pagetitle}}
+                    </a>
+                    <span class="minipost__date">
+                        {% if post.status==2 %}
+                            архив
+                        {% else %}
+                            {{post.publishedon.strftime("%B %d, %Y")}}
+                        {% endif %}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
     </div>
-  {% endfor %}
-</div>
 {% endblock %}
