@@ -2,7 +2,8 @@ sqlalchemy==0.8.1
 Flask-SQLAlchemy==0.16
 Flask-Wtf
 Flask-Admin
-flask-markdown2
+flask-markdown
+py-gfm
 Flask-Script
 bumpversion
 Flask-Debugtoolbar
