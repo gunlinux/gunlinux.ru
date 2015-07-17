@@ -1,7 +1,9 @@
 #Install
 
 
-`$ ./bootstrap.sh`
+```bash
+$ ./bootstrap.sh
+```
 
 #Configs
 
