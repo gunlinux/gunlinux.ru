@@ -16,9 +16,7 @@
         {% endif %}
         </div>
         <div class="post__body">
-            {% markdown %}
-                {{post.content|safe}}
-            {% endmarkdown %}
+            {{ post.content|safe|markdown }}
         </div>
     </article>
 {% endblock %}

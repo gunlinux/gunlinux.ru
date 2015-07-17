@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 import datetime
-from flask import render_template, Blueprint
+from flask import render_template, Blueprint, request, jsonify
 from sqlalchemy import or_
 from pro.models.post import Post
-
 
 post = Blueprint("postb", __name__)
 
@@ -26,6 +25,12 @@ def view(alias=None):
         Post.status > 0).first_or_404()
     pages = Post.query.filter_by(status=3).order_by(Post.id).all()
     return render_template('post.html', post=post, pages=pages)
+
+
+@post.route('/md/', methods=["POST", "GET"])
+def getmd():
+    post = request.form.get('data')
+    return render_template('postmd.html', post=post)
 
 
 @post.route('/robots.txt')
