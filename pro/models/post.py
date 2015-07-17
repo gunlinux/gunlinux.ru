@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """ SqlAlchemy models """
-from .. import db
+from pro.extensions import db
 import datetime
 
 

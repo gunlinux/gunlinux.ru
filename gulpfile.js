@@ -35,3 +35,4 @@ gulp.task('csstest', ['sass'], function () {
 
 gulp.task('default', ['sass', 'csstest']);
 
+gulp.task('test', ['csstest']);

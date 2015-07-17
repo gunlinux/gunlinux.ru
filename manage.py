@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
 from pro import create_app, db
-from pro.postb.models import Post
+from pro.models.post import Post
 
 from flask_script import Manager, Shell
 
@@ -15,7 +15,7 @@ manager.add_command("shell", Shell(make_context=make_shell_context))
 
 
 @manager.command
-def test(coverage=False):
+def test():
     """Run the unit tests."""
     import unittest
     tests = unittest.TestLoader().discover('tests')

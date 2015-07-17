@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 import datetime
-from flask import render_template
+from flask import render_template, Blueprint
 from sqlalchemy import or_
-from .models import Post
-from . import postb
+from pro.models.post import Post
 
 
-@postb.route('/')
+post = Blueprint("postb", __name__)
+
+
+@post.route('/')
 def index():
     conds = [Post.status == '1', Post.status == '2']
     posts = Post.query.filter(
@@ -18,7 +20,7 @@ def index():
         pages=pages)
 
 
-@postb.route('/<alias>')
+@post.route('/<alias>')
 def view(alias=None):
     post = Post.query.filter(Post.alias == alias).filter(
         Post.status > 0).first_or_404()
@@ -26,7 +28,7 @@ def view(alias=None):
     return render_template('post.html', post=post, pages=pages)
 
 
-@postb.route('/robots.txt')
+@post.route('/robots.txt')
 def robots():
     return '''
 User-agent: *
@@ -36,7 +38,7 @@ Host: gunlinux.org
 '''
 
 
-@postb.route('/rss.xml')
+@post.route('/rss.xml')
 def rss():
     date = datetime.datetime.now()
     list_posts = Post.query.filter(Post.status == 1).order_by(

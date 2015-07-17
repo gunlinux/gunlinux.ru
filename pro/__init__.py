@@ -1,19 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_admin import Admin
-from flask_debugtoolbar import DebugToolbarExtension
-from flask_markdown import markdown
-
 from config import config
+from flask import Flask
+from pro.extensions import toolbar, db, admin_ext
+from flask_markdown import markdown
+from pro.post.views import post
+from pro.admin import create_admin
 
 
-db = SQLAlchemy()
-flask_admin = Admin(
-    base_template='admin/index.html',
-    template_mode='bootstrap3')
-toolbar = DebugToolbarExtension()
+def configure_extensions(app):
+    """Configures the extensions."""
+    db.init_app(app)
+    admin_ext.init_app(app)
+    toolbar.init_app(app)
+    markdown(app)
+
+
+def configure_blueprints(app):
+    app.register_blueprint(post)
 
 
 def create_app(config_name):
@@ -21,12 +25,8 @@ def create_app(config_name):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
     config[config_name].init_app(app)
-    db.init_app(app)
-    flask_admin.init_app(app)
-    toolbar.init_app(app)
-    markdown(app)
-    from .postb import postb as posts_blueprint
-    app.register_blueprint(posts_blueprint)
-    import admin
-
+    configure_extensions(app)
+    configure_blueprints(app)
+    if not app.config['TESTING']:
+        create_admin(admin_ext)
     return app
