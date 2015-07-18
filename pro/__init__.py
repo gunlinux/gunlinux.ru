@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 from config import config
 from flask import Flask
-from flaskext.markdown import Markdown
-from pro.extensions import toolbar, db, admin_ext
+
+from pro.extensions import toolbar, db, admin_ext, md
 
 from pro.post.views import post
 from pro.admin import create_admin
@@ -15,7 +15,7 @@ def configure_extensions(app):
     db.init_app(app)
     admin_ext.init_app(app)
     toolbar.init_app(app)
-    md = Markdown(app)
+    md.init_app(app)
     md.register_extension(PartialGithubFlavoredMarkdownExtension)
 
 
