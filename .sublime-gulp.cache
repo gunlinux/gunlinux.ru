@@ -1,0 +1,1 @@
+{"/Users/loki/git/gunlinux.org/gulpfile.js":{"sha1":"cf37df5ec56d70b05f1c9d9f69500c41f466b1e8","tasks":{"sass":{"name":"sass","dependencies":""},"csstest":{"name":"csstest","dependencies":"sass"},"default":{"name":"default","dependencies":"sass csstest"},"test":{"name":"test","dependencies":"csstest"}}}}
