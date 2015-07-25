@@ -2,3 +2,7 @@
 @import "page.css";
 @import "header.css";
 @import "post.css";
+
+.highlight code {
+	line-height: 1.5;
+}
