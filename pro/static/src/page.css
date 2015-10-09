@@ -1,5 +1,6 @@
 html {
     font-size: 21px;
+    font-family: 'PT Serif', 'Helvetica', 'Arial', sans-serif;
 }
 
 .page {
@@ -8,7 +9,6 @@ html {
   margin: auto;
   padding: 10px 0 30px 0;
   font-size: 21px;
-  font-family: 'PT Serif', serif;
   @media (max-width:767px) {
   	width: 100%;
   	max-width: 100%;
@@ -16,3 +16,6 @@ html {
   }
 }
 
+.content {
+  margin-top: 2em;
+}

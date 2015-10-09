@@ -12,7 +12,7 @@ pro/static/css/style.css
 pro/static/js/svg.js
 server.log
 pro/base.db
-pro/static/css/app*.css
+pro/static/css/styles.css
 pro/static/js/app*.js
 pro/static/css/admin.min.css
 pro/static/js/admin.js

@@ -1,21 +1,22 @@
 {
   "name": "gunlinuxblog",
-  "version": "0.1.1",
-  "description": "",
-  "main": "gulpfile.js",
+  "version": "0.1.2",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
   "repository": {
     "type": "git",
     "url": "git@github.com:gunlinux/gunlinuxblog.git"
   },
-  "author": "gunlinux",
   "license": "MIT",
+  "homepage": "https://gunlinux.org",
   "devDependencies": {
-    "autoprefixer-core": "^5.2.0",
+    "autoprefixer": "^6.0.3",
+    "autoprefixer-core": "^6.0.1",
     "gulp": "^3.9.0",
-    "gulp-csslint": "^0.1.5",
-    "gulp-postcss": "^5.1.8",
-    "gulp-watch": "^4.2.4",
-    "postcss-import": "^6.0.0",
-    "postcss-nested": "^0.3.2"
+    "gulp-concat": "^2.6.0",
+    "gulp-notify": "^2.2.0",
+    "gulp-postcss": "^6.0.1",
+    "gulp-sourcemaps": "^1.6.0"
   }
 }

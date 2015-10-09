@@ -9,7 +9,8 @@ class Post(db.Model):
         '0': u'Черновик',
         '1': u'Опубликован',
         '2': u'Архив',
-        '3': u'Страница'
+        '3': u'Страница',
+        '4': u'Special'
     }
     ''' orm model for blog post'''
     __tablename__ = 'posts'
@@ -20,6 +21,8 @@ class Post(db.Model):
     createdon = db.Column(db.DateTime, default=datetime.datetime.now)
     publishedon = db.Column(db.DateTime, default=datetime.datetime.now)
     status = db.Column(db.Integer, default=0)
+    bg = db.Column(db.String(255), default='')
+    bgmobile = db.Column(db.String(255), default='')
 
     def __repr__(self):
         return '<Post {0}>'.format(self.alias)

@@ -1,7 +1,7 @@
 b{% extends 'admin/model/edit.html' %}
 {% block head_css %}
     {{super()}}
-        <link rel="stylesheet" href="/static/components/highlight/src/styles/zenburn.css">
+    <link rel="stylesheet" href="/static/components/highlight/src/styles/zenburn.css">
 	<link rel="stylesheet" href="/static/css/admin.css?v=bad00c159a8471ae2b789d75ed81e2da">
 	<link rel="stylesheet" href="/static/components/bootstrap-markdown/css/bootstrap-markdown.min.css">
 {% endblock %}
@@ -9,16 +9,13 @@ b{% extends 'admin/model/edit.html' %}
 {% block tail %}
     {{ super() }}
     <script src="/static/components/bootstrap-markdown/js/bootstrap-markdown.js"></script>
-    <!--<script src="/static/components/markdown-js/dist/markdown.min.js
-    -->
-"></script>
 	<script>
 		$('#content').markdown({
             autofocus:false,
             savable:false,
             onPreview: function(e) {
                 var previewContent ;
-                 var originalContent = e.getContent();
+                var originalContent = e.getContent();
                 var request = new XMLHttpRequest();
                 var data = 'data=' + encodeURIComponent(originalContent);
                 request.open('POST', '/md/', false);

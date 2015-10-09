@@ -1,38 +1,44 @@
 // configuration
-var input = 'pro/static/src/style.css';
+var css = 'pro/static/src/*.css';
 var output = 'pro/static/css/';
 var autoprefixerOptions = {browsers: ['> 1%', 'IE 7']};
 
 var gulp = require('gulp');
 var postcss = require('gulp-postcss');
-var csslint = require('gulp-csslint');
+var notify = require('gulp-notify');
+var sourcemaps = require('gulp-sourcemaps');
+var concat = require('gulp-concat');
+
+// utils
+function errorhandler() {
+    var args = Array.prototype.slice.call(arguments);
+    // Send error to notification center with gulp-notify
+    notify.onError({
+        title: 'Compile Error',
+        message: '<%= error %>'
+    }).apply(this, args);
+
+    // Keep gulp from hanging on this task
+    this.emit('end');
+};
 
 processors = [
-    require('postcss-import')({path: ['pro/static/sass']}),
-    require('autoprefixer-core'),
     require('postcss-nested'),
-    require('autoprefixer-core')(autoprefixerOptions)
+    require('autoprefixer')(autoprefixerOptions)
 ];
 
-gulp.task('sass', function () {
-    return gulp.src(input)
-        .pipe(postcss(processors))
+gulp.task('styles', function () {
+    return gulp.src(css)
+        .pipe(sourcemaps.init())
+        .pipe(postcss(processors).on('error', errorhandler))
+        .pipe(concat('styles.css'))
+        .pipe(sourcemaps.write('.'))
         .pipe(gulp.dest(output));
 });
 
-gulp.task('csstest', ['sass'], function () {
-    return gulp.src('pro/static/css/style.css')
-        .pipe(csslint({
-            'compatible-vendor-prefixes':false,
-            'box-sizing':false,
-            'star-property-hack':false,
-            'unique-headings':false,
-            'qualified-headings':false,
-            'font-sizes':false
-        }))
-        .pipe(csslint.reporter());
+gulp.task('watch', function () {
+    // Отслеживание файлов .css
+    gulp.watch(css, ['styles']);
 });
 
-gulp.task('default', ['sass', 'csstest']);
-
-gulp.task('test', ['csstest']);
+gulp.task('default', ['styles']);
