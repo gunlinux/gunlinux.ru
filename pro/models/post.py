@@ -22,7 +22,6 @@ class Post(db.Model):
     publishedon = db.Column(db.DateTime, default=datetime.datetime.now)
     status = db.Column(db.Integer, default=0)
     bg = db.Column(db.String(255), default='')
-    bgmobile = db.Column(db.String(255), default='')
 
     def __repr__(self):
         return '<Post {0}>'.format(self.alias)
