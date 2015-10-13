@@ -47,7 +47,8 @@ Host: gunlinux.org
 
 @post.route('/rss.xml')
 def rss():
+    conds = [Post.status == '1', Post.status == '2', Post.status == '4']
     date = datetime.datetime.now()
-    list_posts = Post.query.filter(Post.status == 1).order_by(
+    list_posts = Post.query.filter(or_(*conds)).order_by(
         Post.publishedon.desc()).all()
     return render_template('rss.xml', posts=list_posts, date=date)
