@@ -1,4 +1,5 @@
 *.py[co]
+*.cache
 pro/static/components/*
 pro/static/upload/*
 gunicorn.conf

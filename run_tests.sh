@@ -5,6 +5,4 @@ source config.sh
 [ $? -ne 0 ] && exit 1
 prospector -A -F .
 [ $? -ne 0 ] && exit 1
-gulp test
-[ $? -ne 0 ] && exit 1
 exit 0

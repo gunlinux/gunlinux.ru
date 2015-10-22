@@ -1,0 +1,30 @@
+.header {
+    text-align: center;
+    font-size: 1rem;
+    padding: 1em 0 3em 0;
+    @media (max-width:767px) {
+        padding: 3em 1em;
+    }
+    &__logo {
+        font-weight: bold;
+        text-decoration: none;
+        font-size: 1.17em;
+        color: #333;
+        float: left;
+        &:hover {
+            color: #000;
+        }
+    }
+    &__nav {
+        float: right;
+    }
+    &__divider {
+        width: 20%;
+        padding-top: 50px;
+        margin: 0 auto;;
+        display: block;
+        clear: both;
+        border-bottom: 1px solid #ccc;
+    }
+}
+    

@@ -1,14 +1,12 @@
 // configuration
 var css = 'pro/static/src/*.css';
 var output = 'pro/static/css/';
-var autoprefixerOptions = {browsers: ['> 1%', 'IE 7']};
 
 var gulp = require('gulp');
 var postcss = require('gulp-postcss');
 var notify = require('gulp-notify');
 var sourcemaps = require('gulp-sourcemaps');
-var concat = require('gulp-concat');
-
+var inlinesource = require('gulp-inline-source');
 // utils
 function errorhandler() {
     var args = Array.prototype.slice.call(arguments);
@@ -22,23 +20,41 @@ function errorhandler() {
     this.emit('end');
 };
 
+var autoPrefixerOptions = {browsers: ['last 2 versions']};
+
 processors = [
+    require('postcss-import'),
     require('postcss-nested'),
-    require('autoprefixer')(autoprefixerOptions)
+    require('postcss-cssnext')({
+        browsers: ['last 2 versions', 'ie 10', 'ie 11'],
+        features: {
+            rem: true
+        }
+    }),
+    require('postcss-discard-comments'),
+    require('autoprefixer')(autoPrefixerOptions),
+    require('cssnano')({autoprefixer: autoPrefixerOptions})
 ];
 
 gulp.task('styles', function () {
     return gulp.src(css)
         .pipe(sourcemaps.init())
         .pipe(postcss(processors).on('error', errorhandler))
-        .pipe(concat('styles.css'))
         .pipe(sourcemaps.write('.'))
         .pipe(gulp.dest(output));
 });
 
+
+gulp.task('inlinesource', function () {
+    return gulp.src('pro/templates/layout.html')
+        .pipe(inlinesource({compress: false}))
+        .pipe(gulp.dest('pro/templates/'));
+});
+
+
 gulp.task('watch', function () {
     // Отслеживание файлов .css
-    gulp.watch(css, ['styles']);
+    gulp.watch('pro/static/src/**/*.css', ['styles']);
 });
 
 gulp.task('default', ['styles']);

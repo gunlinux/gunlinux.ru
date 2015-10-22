@@ -1,0 +1,32 @@
+html {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+ol, ul {
+	list-style: none;
+  padding:0;
+  margin: 0;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  vertical-align: middle;
+}
+
+:root {
+  --fontSizeBase: 1.4rem;
+}
+
+body {
+  font-size: var(--fontSizeBase);
+  font-family: 'Proba Pro Medium', 'Helvetica', 'Arial', sans-serif;
+}
+
