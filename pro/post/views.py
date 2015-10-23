@@ -19,6 +19,12 @@ def index():
         pages=pages)
 
 
+@post.route('/works')
+def works():
+    pages = Post.query.filter_by(status=3).order_by(Post.id).all()
+    return render_template('works.html', pages=pages)
+
+
 @post.route('/<alias>')
 def view(alias=None):
     post = Post.query.filter(Post.alias == alias).filter(

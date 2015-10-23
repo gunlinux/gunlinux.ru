@@ -1,0 +1,92 @@
+{% extends "layout.html" %}
+
+{% block styles %}
+    <link rel="stylesheet" href="/static/components/highlight/src/styles/zenburn.css">
+{% endblock %}
+
+{% block content %}
+    <article class="page__content post">
+        <h1 class="post__title">Works</h1>
+        <div class="works">
+            <div class="work">
+                <div class="work__preview">
+                    <img src="/static/upload/work-oco.png" alt="">
+                </div>
+                <div class="work__content">
+                    <div class="work__blured">
+                        <img src="/static/upload/work-oco.png" alt="">
+                    </div>
+                    <div class="work__text">
+                        <a class="work__link" href="http://ocopro.camera" target="_blank">2015, front-end, Oco Pro</a>
+                        <p class="work__textitem"><b>Год:</b>2015</p>
+                        <p class="work__textitem"><b>Роль:</b>front-end</p>
+                        <p class="work__textitem"><i>Gulp, css, landing, bem</i></p>
+                    </div>
+                </div>
+            </div>
+            <div class="work">
+                <div class="work__preview">
+                    <img src="/static/upload/work-stars.png" alt="">
+                </div>
+                <div class="work__content">
+                    <div class="work__blured">
+                        <img src="/static/upload/work-stars.png" alt="">
+                    </div>
+                    <div class="work__text">
+                        <a class="work__link"  target="_blank">2015, Кремлевские Звезды</a>
+                        <p class="work__textitem"><b>Год:</b>2015</p>
+                        <p class="work__textitem"><b>Роль:</b>front-end</p>
+                        <p class="work__textitem"><i>Спецпроект, svg, media</i></p>
+                    </div>
+                </div>
+            </div>
+            <div class="work">
+                <div class="work__preview">
+                    <img src="/static/upload/work-iconic.png" alt="">
+                </div>
+                <div class="work__content">
+                    <div class="work__blured">
+                        <img src="/static/upload/work-iconic.png" alt="">
+                    </div>
+                    <div class="work__text">
+                        <a class="work__link" href="http://iconicmobile.ru" target="_blank">2014, front-end, Iconic</a>
+                        <p class="work__textitem"><b>Год:</b>2014</p>
+                        <p class="work__textitem"><b>Роль:</b>front-end</p>
+                        <p class="work__textitem"><i>Bootstrap, video, svg</i></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="work">
+                <div class="work__preview">
+                    <img src="/static/upload/work-tikoff.png" alt="">
+                </div>
+                <div class="work__content">
+                    <div class="work__blured">
+                        <img src="/static/upload/work-tikoff.png" alt="">
+                    </div>
+                    <div class="work__text">
+                        <a class="work__link" href="http://тикофф.рф" target="_blank">2014, сеть кофеен «ТиКофф»</a>
+                        <p class="work__textitem"><b>Год:</b>2014</p>
+                        <p class="work__textitem"><b>Роль:</b>front-end</p>
+                        <p class="work__textitem"><i>Bootstrap, mobile</i></p>
+                    </div>
+                </div>
+            </div>
+    </article>
+{% endblock %}
+
+{% block scripts %}
+<script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script>
+$('.work__preview').on('click', function () {
+    var job = $(this).parent();
+    console.log('job click');
+    console.log(job);
+    if (!job.hasClass('work--active')) {
+        $('.work').removeClass('work--active');
+        job.addClass('work--active');
+    }
+});
+</script>
+{% endblock %}

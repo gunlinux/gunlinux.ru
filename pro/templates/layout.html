@@ -27,6 +27,7 @@
                 {% for page in pages %}
                     <a href="{{url_for('postb.view',alias=page.alias)}}" class="nav__link">{{page.pagetitle}}</a>
                 {% endfor %}
+                <a href="{{url_for('postb.works')}}" class="nav__link">Works</a>
             </nav>
         </div>
     </div>
