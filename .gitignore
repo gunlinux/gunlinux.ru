@@ -3,6 +3,7 @@
 pro/static/components/*
 pro/static/upload/*
 gunicorn.conf
+pro/static/css/styles.css.map
 vhash.json
 tmp
 config.sh
