@@ -44,17 +44,15 @@ gulp.task('styles', function () {
         .pipe(gulp.dest(output));
 });
 
-
-gulp.task('inlinesource', function () {
+gulp.task('inlinesource', ['styles'], function () {
     return gulp.src('pro/templates/layout.html')
         .pipe(inlinesource({compress: false}))
         .pipe(gulp.dest('pro/templates/'));
 });
 
-
 gulp.task('watch', function () {
     // Отслеживание файлов .css
-    gulp.watch('pro/static/src/**/*.css', ['styles']);
+    gulp.watch('pro/static/src/**/*.css', ['styles', 'inlinesource']);
 });
 
 gulp.task('default', ['styles']);

@@ -1,11 +1,11 @@
 {% extends "layout.html" %}
 
 {% block content %}
-    <div class="content">
+    <article class="page__content">
     {% for group in posts|groupby('publishedon.year')|sort(reverse=True)  %}
-        <div class="post-group">
-            <h3 class="post-group__title">{{group.grouper}}</h3>
-            <div class="post-group_content">
+        <div class="postGroup">
+            <h3 class="postGroup__title">{{group.grouper}}</h3>
+            <div class="postGroup__content">
                 {% for post in group.list %}
                 <div class="minipost">
                     <a class="minipost__title" href="{{url_for('postb.view',alias=post.alias)}}">
@@ -23,5 +23,5 @@
             </div>
         </div>
     {% endfor %}
-    </div>
+    </article>
 {% endblock %}

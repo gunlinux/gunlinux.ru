@@ -1,0 +1,9 @@
+.postGroup {
+    margin-bottom: 3rem;
+    @media (max-width:767px) { 
+        padding: 0 1rem;
+    }
+    &__title {
+        font-weight: bold;
+    }
+}

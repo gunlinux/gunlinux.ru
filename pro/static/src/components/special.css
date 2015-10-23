@@ -7,22 +7,14 @@
 	}
 	.header {
 	    text-align: center;
-	    padding: 1em 0 3em 0;
-	}
-	.header__divider {
-		display: none;
 	}
 
     .post {
-	     @media (max-width:767px) { 
-	        padding: 0 1em;
-	     }
 	    &__title {
 	    	text-align: center;
 	        line-height: 1.1;
 	        text-shadow: 2px 2px 1px rgba(0, 0, 0, 0.3);
 	        font-family: 'Open-Sans', 'Helvetica', 'Arial', sans-serif;
-	        letter-spacing: 0.8px;
 	        color: #fff;
 	        font-weight: 700;
 			padding: 0 1em;

@@ -2,12 +2,11 @@
 .nav {
     &__link {
         color: #444;
-        transition: all .2s ease-in-out;
+        transition: all 0.2s ease-in-out;
         text-decoration: none;
         margin-left: 1rem;
         position: relative;
         display: inline-block;
-        padding: 3px 0 6px 0;
         &:hover {
             color: #000;
             text-decoration: none; 
@@ -15,9 +14,6 @@
                 width: 100%;
                 filter: progid: DXImageTransform.Microsoft.Alpha(enabled=false);
                 opacity: 1;
-                -moz-transition-delay: 0s;
-                -o-transition-delay: 0s;
-                -webkit-transition-delay: 0s;
                 transition-delay: 0s;
             }
         }
