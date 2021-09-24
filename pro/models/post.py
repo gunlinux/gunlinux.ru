@@ -1,30 +1,29 @@
-# -*- coding: utf-8 -*-
-""" SqlAlchemy models """
-from pro.extensions import db
+"""SqlAlchemy models."""
+
 import datetime
+
+from pro.extensions import db
+
+TITLE_LEN = 255
+URL_LEN = 255
 
 
 class Post(db.Model):
+    """orm model for blog post."""
+
     STATUS = {
-        '0': u'Черновик',
-        '1': u'Опубликован',
-        '2': u'Архив',
-        '3': u'Страница',
-        '4': u'Special'
+        '0': 'Черновик',
+        '1': 'Опубликован',
+        '2': 'Архив',
+        '3': 'Страница',
+        '4': 'Special',
     }
-    ''' orm model for blog post'''
     __tablename__ = 'posts'
     id = db.Column(db.Integer, primary_key=True)
-    pagetitle = db.Column(db.String(255), default='')
-    alias = db.Column(db.String(255), default='')
+    pagetitle = db.Column(db.String(TITLE_LEN), default='')
+    alias = db.Column(db.String(TITLE_LEN), default='')
     content = db.Column(db.Text)
     createdon = db.Column(db.DateTime, default=datetime.datetime.now)
     publishedon = db.Column(db.DateTime, default=datetime.datetime.now)
     status = db.Column(db.Integer, default=0)
-    bg = db.Column(db.String(255), default='')
-
-    def __repr__(self):
-        return '<Post {0}>'.format(self.alias)
-
-    def __unicode__(self):
-        return '<Post {0}>'.format(self.pagetitle)
+    bg = db.Column(db.String(URL_LEN), default='')

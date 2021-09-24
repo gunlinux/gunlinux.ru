@@ -2,12 +2,14 @@
 import datetime
 from flask import render_template, Blueprint, request
 from sqlalchemy import or_
+from pro import cache
 from pro.models.post import Post
 
 post = Blueprint("postb", __name__)
 
 
 @post.route('/')
+@cache.cached(timeout=50)
 def index():
     conds = [Post.status == '1', Post.status == '2', Post.status == '4']
     posts = Post.query.filter(
@@ -26,13 +28,14 @@ def works():
 
 
 @post.route('/<alias>')
+@cache.cached(timeout=50)
 def view(alias=None):
     post = Post.query.filter(Post.alias == alias).filter(
         Post.status > 0).first_or_404()
-    pages = Post.query.filter_by(status=3).order_by(Post.id).all()
+    #pages = Post.query.filter_by(status=3).order_by(Post.id).all()
     if post.status == 4:
-        return render_template('special.html', post=post, pages=pages)
-    return render_template('post.html', post=post, pages=pages)
+        return render_template('special.html', post=post, pages=[])
+    return render_template('post.html', post=post, pages=[])
 
 
 @post.route('/md/', methods=["POST", "GET"])
@@ -42,6 +45,7 @@ def getmd():
 
 
 @post.route('/robots.txt')
+@cache.cached(timeout=50)
 def robots():
     return '''
 User-agent: *
@@ -52,6 +56,7 @@ Host: gunlinux.org
 
 
 @post.route('/rss.xml')
+@cache.cached(timeout=50)
 def rss():
     conds = [Post.status == '1', Post.status == '2', Post.status == '4']
     date = datetime.datetime.now()
