@@ -1,44 +1,62 @@
+"""config module."""
 import os
+
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config(object):
-    PORT = os.environ.get('PORT')
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'hard to guess string'
-    SQLALCHEMY_ECHO = False
-    SQLALCHEMY_COMMIT_ON_TEARDOWN = True
-    DEBUG = True
-    SERVER_NAME = os.environ.get('SERVER_NAME')
-    EXTRA_DEBUG = bool(os.environ.get('EXTRA_DEBUG'))
-    DEBUG_TB_ENABLED = EXTRA_DEBUG
-    DEBUG_TB_PROFILER_ENABLED = EXTRA_DEBUG
-    DEBUG_TB_INTERCEPT_REDIRECTS = False
+    """[summary].
 
-    @staticmethod
-    def init_app(app):
-        pass
+    Args:
+        object ([type]): [description]
+    """
+    CACHE_TYPE = "SimpleCache"
+    CACHE_DEFAULT_TIMEOUT = 300
+    PORT = os.environ.get('PORT') or '5555'
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'hard to guess string'
+    DEBUG = False 
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ECHO = False
 
 
 class DevelopmentConfig(Config):
+    """[summary].
+
+    Args:
+        Config ([type]): [description]
+    """
+
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, '../tmp/data-dev.sqlite')
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + \
+        os.path.join(basedir, '../tmp/dev.db')
 
 
 class TestingConfig(Config):
+    """[summary].
+
+    Args:
+        Config ([type]): [description]
+    """
+
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, '../tmp/data-test.sqlite')
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + \
+        os.path.join(basedir, '../tmp/test.db')
 
 
 class ProductionConfig(Config):
+    """[summary].
+
+    Args:
+        Config ([type]): [description]
+    """
+
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, '../data.sqlite')
+        'sqlite:///' + os.path.join(basedir, '../tmp/data.sqlite')
 
 
 config = {
     'development': DevelopmentConfig,
     'testing': TestingConfig,
     'production': ProductionConfig,
-    'default': DevelopmentConfig
+    'default': DevelopmentConfig,
 }

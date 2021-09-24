@@ -1,4 +1,6 @@
 *.py[co]
+.vscode
+.idea
 *.cache
 pro/static/components/*
 pro/static/upload/*
@@ -57,3 +59,5 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+pro/static/upload/*
+tmp/*

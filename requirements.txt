@@ -1,11 +1,9 @@
-sqlalchemy==0.8.1
-Flask-SQLAlchemy==0.16
+Flask
 Flask-Wtf
 Flask-Admin
+Flask-SQLAlchemy
 py-gfm
-https://github.com/gunlinux/flask-markdown/archive/develop.zip
-Flask-Script
-bumpversion
-Flask-Debugtoolbar
+flask-markdown
+wemake-python-styleguide
 gunicorn
-prospector
+flask-caching
