@@ -7,24 +7,15 @@ cp config.example.sh config.sh
 
 cp gunicorn.example.conf gunicorn.conf
 
-mkdir -p pro/static/upload tmp pro/static/components
+mkdir -p pro/static/upload tmp 
 
+python3 -m venv venv
 
-virtualenv venv
+source venv/bin/activate
 
 pip install -r requirements.txt 
 
-
-npm install
-
-gulp
-
-bower install
-
-python pro/static/components/highlight/tools/build.py
-
-
-./manage.py dbinit
+$ flask dbinit
 
 ```
 
@@ -36,19 +27,25 @@ python pro/static/components/highlight/tools/build.py
 
 #Debug
 
-`$ source env/bin/activate`
+```bash 
+$ source env/bin/activate
 
-`$ source config.sh`
+$ source config.sh
 
-`$ ./manage runserver -p PORT`
+$ flask run
+```
 
 #Deploy
 
-`$ source env/bin/activate`
+```bash
 
-`$ source config.sh`
+$ source env/bin/activate
 
-`$ gunicorn -c gunicorn.conf manage:app `
+$ source config.sh
+
+$ gunicorn -c gunicorn.conf "manage:create_app()" 
+
+```
 
 #Contribution
 
