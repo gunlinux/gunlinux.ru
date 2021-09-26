@@ -7,9 +7,10 @@
     float: left;
     margin-top: -1px;
     transform-style: preserve-3d;
-    &:hover {
-        cursor: pointer;
-    }
+}
+
+.work:hover {
+    cursor: pointer;
 }
 
 .work--active .work__preview {

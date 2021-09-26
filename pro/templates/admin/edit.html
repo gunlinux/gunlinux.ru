@@ -1,14 +1,13 @@
 b{% extends 'admin/model/edit.html' %}
 {% block head_css %}
     {{super()}}
-    <link rel="stylesheet" href="/static/components/highlight/src/styles/zenburn.css">
 	<link rel="stylesheet" href="/static/css/admin.css?v=bad00c159a8471ae2b789d75ed81e2da">
-	<link rel="stylesheet" href="/static/components/bootstrap-markdown/css/bootstrap-markdown.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-markdown/2.10.0/css/bootstrap-markdown.min.css" integrity="sha512-CUHPfvm73R8lgOyl0oyhnGfM5RlGV7yRyj98ZeX3/cBsLLuSVRaqKHhahj6B04H3Q63jZcQHHZZXIonj03eUzQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 {% endblock %}
 
 {% block tail %}
     {{ super() }}
-    <script src="/static/components/bootstrap-markdown/js/bootstrap-markdown.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-markdown/2.9.0/js/bootstrap-markdown.min.js"></script>
 	<script>
 		$('#content').markdown({
             autofocus:false,
@@ -26,6 +25,6 @@ b{% extends 'admin/model/edit.html' %}
             },
         });
 	</script>
-    <script src="/static/components/highlight/build/highlight.pack.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
 {% endblock %}

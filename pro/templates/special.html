@@ -1,7 +1,8 @@
 {% extends "layout.html" %}
 
 {% block styles %}
-    <link rel="stylesheet" href="/static/components/highlight/src/styles/zenburn.css">
+    <link rel="stylesheet"
+      href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/default.min.css">
     <style>
         body {
             background-image:  url(/static/img/bg.png), url("{{post.bg}}");
@@ -32,6 +33,6 @@
 {% endblock %}
 
 {% block scripts %}
-    <script src="/static/components/highlight/build/highlight.pack.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
 {% endblock %}

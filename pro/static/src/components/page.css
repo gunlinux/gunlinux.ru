@@ -3,14 +3,14 @@
   max-width: 768px;
   margin: auto;
   padding: 0.5rem 0 2rem 0;
-  @media (max-width:767px) {
-  	width: 100%;
+}
+
+@media (max-width:767px) {
+  .page {
+    width: 100%;
     padding-right: 0;
     padding-left: 0;
-  	max-width: 100%;
-  	min-width: 100%;
-  }
-  &__content {
-    
+    max-width: 100%;
+    min-width: 100%;
   }
 }

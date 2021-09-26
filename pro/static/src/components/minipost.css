@@ -1,27 +1,32 @@
 .minipost {
     padding: 0.5rem 0;
-       
-    &__title {
-        @media (max-width:767px) { 
-            clear: both;
-            text-align: left;
-        }
-        transition: all 0.2s ease-in-out;
-        color: #333;
-        text-align: center;
-        text-decoration: none;
-        border-bottom: 1px solid #ccc;
-        &:hover {
-            border-color: #000;
-            color: #000;
-        }
+}
+
+@media (max-width:767px) { 
+    .minipost__date { 
+        display: block;
+        float: none;
     }
-    &__date {
-        color: #ccc;
-        float: right;
-        @media (max-width:767px) { 
-            display: block;
-            float: none;
-        }
+    .minipost__title {
+        clear: both;
+        text-align: left;
     }
+}
+
+.minipost__title {
+    transition: all 0.2s ease-in-out;
+    color: #333;
+    text-align: center;
+    text-decoration: none;
+    border-bottom: 1px solid #ccc;
+}
+
+.minipost__title:hover {
+    border-color: #000;
+    color: #000;
+}
+
+.minipost__date {
+    color: #ccc;
+    float: right;
 }
