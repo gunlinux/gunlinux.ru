@@ -32,10 +32,10 @@ def works():
 def view(alias=None):
     post = Post.query.filter(Post.alias == alias).filter(
         Post.status > 0).first_or_404()
-    #pages = Post.query.filter_by(status=3).order_by(Post.id).all()
+    pages = Post.query.filter_by(status=3).order_by(Post.id).all()
     if post.status == 4:
-        return render_template('special.html', post=post, pages=[])
-    return render_template('post.html', post=post, pages=[])
+        return render_template('special.html', post=post, pages=pages)
+    return render_template('post.html', post=post, pages=pages)
 
 
 @post.route('/md/', methods=["POST", "GET"])
