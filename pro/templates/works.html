@@ -17,7 +17,7 @@
                         <img src="/static/upload/work-naki.png" alt="">
                     </div>
                     <div class="work__text">
-                        <a class="work__link" href="http://nikanava.com" target="_blank" title="Интернет БИРЖА АВТОЗАПЧАСТЕЙ «Никанава»">2014-2015, БИРЖА АВТОЗАПЧАСТЕЙ «Никанава»</a>
+                        <a class="work__link" href="https://nikanava.com" target="_blank" title="Интернет БИРЖА АВТОЗАПЧАСТЕЙ «Никанава»">2014-2015, БИРЖА АВТОЗАПЧАСТЕЙ «Никанава»</a>
                         <p class="work__textitem"><b>Год:</b>2014-2015</p>
                         <p class="work__textitem"><b>Роль:</b>backend/ front-end</p>
                         <p class="work__textitem"><i>Flask, Gulp</i></p>
@@ -30,11 +30,10 @@
 
 {% block scripts %}
    <script src="https://code.jquery.com/jquery-2.2.4.min.js"   integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="   crossorigin="anonymous">
+   </script>
 <script>
 $('.work__preview').on('click', function () {
     var job = $(this).parent();
-    console.log('job click');
-    console.log(job);
     if (!job.hasClass('work--active')) {
         $('.work').removeClass('work--active');
         job.addClass('work--active');
