@@ -1,3 +1,5 @@
+[![Maintainability](https://api.codeclimate.com/v1/badges/a096eddf8f8dbfdbd05b/maintainability)](https://codeclimate.com/github/gunlinux/gunlinux.ru/maintainability)
+
 ## Install
 
 
