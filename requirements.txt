@@ -4,8 +4,7 @@ Flask-Admin
 Flask-SQLAlchemy
 py-gfm
 flask-markdown
-wemake-python-styleguide
 gunicorn
 flask-caching
-wemake-python-styleguide
 pytest
+pytest-cov
