@@ -6,7 +6,7 @@ pytest:
 
 test-coverage:
 	( \
-    source venv/bin/activate; \
+    . venv/bin/activate;\
 		FLASK_ENV=testing FLASK_APP=pro pytest --cov=pro --cov-report xml\
 	)
 
