@@ -1,11 +1,11 @@
 lint:
-	flake8 pro app.py
+	python3 -m flake8	pro app.py
 
 pytest:
-	FLASK_ENV=testing FLASK_APP=pro pytest
+	FLASK_ENV=testing FLASK_APP=pro python3 -m pytest
 
 test-coverage:
-	FLASK_ENV=testing FLASK_APP=pro pytest --cov=pro --cov-report xml
+	FLASK_ENV=testing FLASK_APP=pro python3 -m pytest --cov=pro --cov-report xml
 
 check: lint pytest
 
