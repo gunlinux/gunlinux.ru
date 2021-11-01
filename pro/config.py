@@ -14,7 +14,7 @@ class Config(object):
     CACHE_DEFAULT_TIMEOUT = 300
     PORT = os.environ.get('PORT') or '5555'
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'hard to guess string'
-    DEBUG = False 
+    DEBUG = False
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = False
 
