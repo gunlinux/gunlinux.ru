@@ -23,10 +23,11 @@ jobs:
         run: |
           mkdir -p pro/static/upload tmp
           python3 -m venv venv
-          source venv/bin/activate
+          . venv/bin/activate
           pip install -r requirements.txt 
       - name: Run linter and pytest
         run: |
+          . venv/bin/activate
           make check
       - name: Test & publish code coverage
         uses: paambaati/codeclimate-action@v2.7.4
