@@ -5,7 +5,10 @@ pytest:
 	FLASK_ENV=testing FLASK_APP=pro pytest
 
 test-coverage:
-	FLASK_ENV=testing FLASK_APP=pro pytest --cov=pro --cov-report xml
+	( \
+    source venv/bin/activate; \
+		FLASK_ENV=testing FLASK_APP=pro pytest --cov=pro --cov-report xml\
+	)
 
 check: lint pytest
 
