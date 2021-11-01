@@ -2,6 +2,7 @@
 .vscode
 .idea
 *.cache
+coverage.xml
 pro/static/components/*
 pro/static/upload/*
 gunicorn.conf
