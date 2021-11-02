@@ -11,8 +11,6 @@ $ cp config.example.sh config.sh
 
 $ cp gunicorn.example.conf gunicorn.conf
 
-$ mkdir -p pro/static/upload tmp 
-
 $ python3 -m venv venv
 
 $ source venv/bin/activate
@@ -47,12 +45,12 @@ $ source env/bin/activate
 
 $ source config.sh
 
-$ gunicorn -c gunicorn.conf "manage:create_app()" 
+$ gunicorn -c gunicorn.conf "app:create_app()" 
 
 ```
 
 ## Contribution
 
-Check for a PEP-0008 compliance:
+Check for linter and tests
 
-`$ pep8 --ignore=E501,E128 pro`
+`$ make check`

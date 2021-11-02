@@ -9,3 +9,4 @@ flask-caching
 pytest
 pytest-cov
 flake8
+psycopg2-binary

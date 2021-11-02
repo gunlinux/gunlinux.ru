@@ -27,8 +27,8 @@ class DevelopmentConfig(Config):
     """
 
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + \
-        os.path.join(basedir, '../tmp/dev.db')
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+        'sqlite:///' + os.path.join(basedir, '../tmp/dev.db')
 
 
 class TestingConfig(Config):
@@ -51,7 +51,7 @@ class ProductionConfig(Config):
     """
 
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, '../tmp/data.sqlite')
+        'sqlite:///' + os.path.join(basedir, '../tmp/data.db')
 
 
 config = {
