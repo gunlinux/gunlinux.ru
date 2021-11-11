@@ -45,7 +45,7 @@ def robots():
 User-agent: *
 Crawl-delay: 2
 Disallow: /tag/*
-Host: gunlinux.org
+Host: gunlinux.ru
 '''
 
 
