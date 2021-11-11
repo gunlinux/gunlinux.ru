@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import datetime
-from flask import render_template, Blueprint, request
+from flask import render_template, Blueprint, request, make_response
 from sqlalchemy import or_
 from pro import cache
 from pro.models.post import Post
@@ -55,4 +55,7 @@ def rss():
     date = datetime.datetime.now()
     list_posts = Post.query.filter(Post.status >= PAGE_SPECIAL).order_by(
         Post.publishedon.desc()).all()
-    return render_template('rss.xml', posts=list_posts, date=date)
+    rss_xml = render_template('rss.xml', posts=list_posts, date=date)
+    response = make_response(rss_xml)
+    response.headers['Content-Type'] = 'application/rss+xml'
+    return response
