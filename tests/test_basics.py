@@ -1,48 +1,35 @@
 import pytest
+import os
 
 from pro import create_app
 from pro import db
 
 
-@pytest.fixture
-def client():
+@pytest.fixture(scope='module')
+def test_client():
+    os.environ['FLASK_ENV'] = 'testing'
     app = create_app()
+    db.init_app(app)
+    testing_client = app.test_client()
+    ctx = app.app_context()
+    ctx.push()
+    db.create_all()
+    yield testing_client
+    db.drop_all()
+    ctx.pop()
 
-    with app.test_client() as client:
-        with app.app_context():
-            db.create_all()
-        yield client
 
-
-def test_empty_db(client):
+def test_empty_db(test_client):
     """Start with a blank database."""
-
-    rv = client.get('/')
+    rv = test_client.get('/')
     assert b'page__content' in rv.data
 
 
-'''
-import unittest
-from flask import current_app
-from pro import create_app, db
+def test_app_is_testing(test_client):
+    assert test_client.application.config['TESTING'] is True
 
 
-class BasicsTestCase(unittest.TestCase):
-    def setUp(self):
-        self.app = create_app()
-        self.app_context = self.app.app_context()
-        self.app_context.push()
-        db.create_all()
-
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
-        self.app_context.pop()
-
-    def test_app_exists(self):
-        self.assertFalse(current_app is None)
-
-    def test_app_is_testing(self):
-        self.assertTrue(current_app.config['TESTING'])
-
-'''
+def test_rss(test_client):
+    rv = test_client.get('/rss.xml')
+    assert rv.status_code == 200
+    assert rv.mimetype == 'application/rss+xml'
