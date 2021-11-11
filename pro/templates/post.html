@@ -8,7 +8,7 @@
     <article class="page__content post">
         <h1 class="post__title">{{post.pagetitle}}</h1>
         <div class="post__date">
-        {% if post.status==1 %}
+        {% if post.status>3 %}
             {{post.publishedon.strftime("%B %d, %Y")}}
         {% endif %}
         {% if post.status==2 %}

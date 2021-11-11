@@ -6,18 +6,18 @@ from pro.extensions import db
 
 TITLE_LEN = 255
 URL_LEN = 255
+POST_STATUSES = {
+    0: 'Draft',
+    1: 'Page',
+    2: 'Archive',
+    3: 'Special',
+    4: 'Published',
+}
 
 
 class Post(db.Model):
     """orm model for blog post."""
 
-    STATUS = {
-        '0': 'Черновик',
-        '1': 'Опубликован',
-        '2': 'Архив',
-        '3': 'Страница',
-        '4': 'Special',
-    }
     __tablename__ = 'posts'
     id = db.Column(db.Integer, primary_key=True)
     pagetitle = db.Column(db.String(TITLE_LEN), default='')

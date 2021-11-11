@@ -7,18 +7,18 @@ from pro.models.post import Post
 
 post = Blueprint("postb", __name__)
 
+PAGE_STATUS = 1
+PAGE_SPECIAL = 3
+
 
 @post.route('/')
 @cache.cached(timeout=50)
 def index():
-    conds = [Post.status == '1', Post.status == '2', Post.status == '4']
+    conds = [Post.status > PAGE_STATUS]
     posts = Post.query.filter(
         or_(*conds)).order_by(Post.publishedon.desc()).all()
-    pages = Post.query.filter_by(status=3).order_by(Post.id).all()
-    return render_template(
-        "posts.html",
-        posts=posts,
-        pages=pages)
+    pages = Post.query.filter_by(status=PAGE_STATUS).order_by(Post.id).all()
+    return render_template("posts.html", posts=posts, pages=pages)
 
 
 @post.route('/<alias>')
@@ -26,8 +26,8 @@ def index():
 def view(alias=None):
     post = Post.query.filter(Post.alias == alias).filter(
         Post.status > 0).first_or_404()
-    pages = Post.query.filter_by(status=3).order_by(Post.id).all()
-    if post.status == 4:
+    pages = Post.query.filter_by(status=PAGE_STATUS).order_by(Post.id).all()
+    if post.status == PAGE_SPECIAL:
         return render_template('special.html', post=post, pages=pages)
     return render_template('post.html', post=post, pages=pages)
 
@@ -52,7 +52,7 @@ Host: gunlinux.org
 @post.route('/rss.xml')
 @cache.cached(timeout=50)
 def rss():
-    conds = [Post.status == '1', Post.status == '2', Post.status == '4']
+    conds = [Post.status > PAGE_STATUS]
     date = datetime.datetime.now()
     list_posts = Post.query.filter(or_(*conds)).order_by(
         Post.publishedon.desc()).all()

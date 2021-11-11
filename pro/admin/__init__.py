@@ -3,13 +3,13 @@ import os
 
 from flask_admin.contrib import fileadmin, sqla
 from pro.extensions import db
-from pro.models.post import Post
+from pro.models.post import Post, POST_STATUSES
 from wtforms.fields import SelectField
 
 
 def _status(view, _, model, name):
     view, name = name, view
-    return Post.STATUS.get(str(model.status))
+    return POST_STATUSES.get(model.status, None)
 
 
 class UserView(sqla.ModelView):
@@ -20,7 +20,7 @@ class UserView(sqla.ModelView):
 
     form_overrides = dict(status=SelectField)
     form_args = dict(
-        status=dict(choices=Post.STATUS.items()),
+        status=dict(choices=POST_STATUSES.items()),
     )
     column_formatters = {
         'status': _status
