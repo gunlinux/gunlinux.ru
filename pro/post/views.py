@@ -52,8 +52,7 @@ Host: gunlinux.ru
 @post.route('/rss.xml')
 @cache.cached(timeout=50)
 def rss():
-    conds = [Post.status > PAGE_STATUS]
     date = datetime.datetime.now()
-    list_posts = Post.query.filter(or_(*conds)).order_by(
+    list_posts = Post.query.filter(Post.status >= PAGE_SPECIAL).order_by(
         Post.publishedon.desc()).all()
     return render_template('rss.xml', posts=list_posts, date=date)

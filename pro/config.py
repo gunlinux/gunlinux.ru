@@ -5,11 +5,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config(object):
-    """[summary].
 
-    Args:
-        object ([type]): [description]
-    """
     CACHE_TYPE = "SimpleCache"
     CACHE_DEFAULT_TIMEOUT = 300
     PORT = os.environ.get('PORT') or '5555'
@@ -19,22 +15,12 @@ class Config(object):
 
 
 class DevelopmentConfig(Config):
-    """[summary].
-
-    Args:
-        Config ([type]): [description]
-    """
 
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, '../tmp/dev.db')
 
 
 class TestingConfig(Config):
-    """[summary].
-
-    Args:
-        Config ([type]): [description]
-    """
 
     TESTING = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + \
@@ -42,11 +28,6 @@ class TestingConfig(Config):
 
 
 class ProductionConfig(Config):
-    """[summary].
-
-    Args:
-        Config ([type]): [description]
-    """
 
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, '../tmp/data.db')

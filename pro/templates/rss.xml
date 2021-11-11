@@ -2,17 +2,17 @@
 <rss version="2.0">
   <channel>
     <title>gunlinux</title>
-    <link>http://gunlinux.org</link>
+    <link>http://gunlinux.ru</link>
     <description>gunlinux blog abour</description>
     <language>ru-ru</language>
     <pubDate>{{date.strftime("%a, %d %b %Y %H:%M:%S %z")}}</pubDate>
  
     <lastBuildDate>{{date.strftime("%a, %d %b %Y %H:%M:%S %z")}}</lastBuildDate>
-    <generator>gunlinux.org</generator>
+    <generator>gunlinux.ru</generator>
     {% for post in posts %}
           <item>
               <title>{{post.pagetitle}}</title>
-              <link>http://gunlinux.org/{{post.alias}}</link>
+              <link>https://gunlinux.ru/{{post.alias}}</link>
               <description>{{post.teaser}}</description>
               <pubDate>{{post.publishedon.strftime("%a, %d %b %Y %H:%M:%S %z")}}<!--Tue, 03 Jun 2003 09:39:21 GMT--></pubDate>
             </item>
