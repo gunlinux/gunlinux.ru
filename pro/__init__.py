@@ -5,7 +5,6 @@ import unittest
 import click
 from flask import Flask
 from flask.cli import with_appcontext
-from mdx_partial_gfm import PartialGithubFlavoredMarkdownExtension
 
 
 from pro.admin import create_admin
@@ -31,7 +30,7 @@ def configure_extensions(app):
     """Configures the extensions."""
     db.init_app(app)
     admin_ext.init_app(app)
-    md(app, extensions=[PartialGithubFlavoredMarkdownExtension()])
+    md(app)
     cache.init_app(app)
 
 

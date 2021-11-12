@@ -3,7 +3,6 @@ Flask-Wtf
 WTForms==2.3.3
 Flask-Admin
 Flask-SQLAlchemy
-py-gfm
 flask-markdown
 gunicorn
 flask-caching
