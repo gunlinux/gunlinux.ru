@@ -30,7 +30,7 @@ def configure_extensions(app):
     """Configures the extensions."""
     db.init_app(app)
     admin_ext.init_app(app)
-    md(app)
+    md.init_app(app)
     cache.init_app(app)
 
 
