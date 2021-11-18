@@ -10,3 +10,4 @@ pytest
 pytest-cov
 flake8
 psycopg2-binary
+flask-migrate
