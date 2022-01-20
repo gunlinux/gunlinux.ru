@@ -1,8 +1,8 @@
 import pytest
 import os
 
-from pro import create_app
-from pro import db
+from blog import create_app
+from blog import db
 
 
 @pytest.fixture(scope='module')

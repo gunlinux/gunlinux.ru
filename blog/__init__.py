@@ -7,10 +7,10 @@ from flask import Flask
 from flask.cli import with_appcontext
 
 
-from pro.admin import create_admin
-from pro.config import config
-from pro.extensions import admin_ext, db, md, cache
-from pro.post.views import post
+from blog.admin import create_admin
+from blog.config import config
+from blog.extensions import admin_ext, db, md, cache
+from blog.post.views import post
 
 
 @click.command('dbinit')

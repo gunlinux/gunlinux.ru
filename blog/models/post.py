@@ -2,7 +2,7 @@
 
 import datetime
 
-from pro.extensions import db
+from blog.extensions import db
 
 TITLE_LEN = 255
 URL_LEN = 255

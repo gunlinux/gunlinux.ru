@@ -2,8 +2,8 @@
 import os
 
 from flask_admin.contrib import fileadmin, sqla
-from pro.extensions import db
-from pro.models.post import Post, POST_STATUSES
+from blog.extensions import db
+from blog.models.post import Post, POST_STATUSES
 from wtforms.fields import SelectField
 
 

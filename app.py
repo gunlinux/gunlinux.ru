@@ -1,4 +1,4 @@
-from pro import create_app
+from blog import create_app
 
 
 if __name__ == '__main__':

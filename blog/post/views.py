@@ -2,8 +2,8 @@
 import datetime
 from flask import render_template, Blueprint, request, make_response
 from sqlalchemy import or_
-from pro import cache
-from pro.models.post import Post
+from blog import cache
+from blog.models.post import Post
 
 post = Blueprint("postb", __name__)
 
