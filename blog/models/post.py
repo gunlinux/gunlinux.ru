@@ -21,7 +21,7 @@ class Post(db.Model):
     __tablename__ = 'posts'
     id = db.Column(db.Integer, primary_key=True)
     pagetitle = db.Column(db.String(TITLE_LEN), default='')
-    alias = db.Column(db.String(TITLE_LEN), default='')
+    alias = db.Column(db.String(TITLE_LEN), default='', unique=True, nullable=False)
     content = db.Column(db.Text)
     createdon = db.Column(db.DateTime, default=datetime.datetime.now)
     publishedon = db.Column(db.DateTime, default=datetime.datetime.now)

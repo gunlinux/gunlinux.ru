@@ -9,7 +9,7 @@ from flask.cli import with_appcontext
 
 from blog.admin import create_admin
 from blog.config import config
-from blog.extensions import admin_ext, db, md, cache
+from blog.extensions import admin_ext, db, md, cache, migrate
 from blog.post.views import post
 
 
@@ -32,6 +32,7 @@ def configure_extensions(app):
     admin_ext.init_app(app)
     md.init_app(app)
     cache.init_app(app)
+    migrate.init_app(app=app, db=db)
 
 
 def create_app():
