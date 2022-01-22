@@ -30,6 +30,8 @@ class Post(db.Model):
     bg = db.Column(db.String(URL_LEN), default='')
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
     category = db.relationship(Category, backref="Post")
+    tags = db.relationship("Tag", secondary="posts_tags")
+
 
     def __str__(self):
         return f'{self.pagetitle}'

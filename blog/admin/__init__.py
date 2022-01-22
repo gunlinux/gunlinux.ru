@@ -5,6 +5,7 @@ from flask_admin.contrib import fileadmin, sqla
 from blog.extensions import db
 from blog.models.post import Post, POST_STATUSES
 from blog.models.category import Category
+from blog.models.tags import Tag
 from wtforms.fields import SelectField
 
 
@@ -32,6 +33,7 @@ class UserView(sqla.ModelView):
 def create_admin(config_admin):
     config_admin.add_view(UserView(Post, db.session, endpoint=''))
     config_admin.add_view(UserView(Category, db.session, endpoint=''))
+    config_admin.add_view(UserView(Tag, db.session, endpoint=''))
     path = os.path.join(os.path.dirname(__file__), '../static/upload')
     config_admin.add_view(
         fileadmin.FileAdmin(
