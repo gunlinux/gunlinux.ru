@@ -3,7 +3,7 @@
 import datetime
 
 from blog.extensions import db
-from blog.models.category import Category
+from blog.category.models import Category
 
 TITLE_LEN = 255
 URL_LEN = 255
@@ -31,7 +31,6 @@ class Post(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
     category = db.relationship(Category, backref="Post")
     tags = db.relationship("Tag", secondary="posts_tags")
-
 
     def __str__(self):
         return f'{self.pagetitle}'

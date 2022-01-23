@@ -3,9 +3,9 @@ import os
 
 from flask_admin.contrib import fileadmin, sqla
 from blog.extensions import db
-from blog.models.post import Post, POST_STATUSES
-from blog.models.category import Category
-from blog.models.tags import Tag
+from blog.post.models import Post, POST_STATUSES
+from blog.category.models import Category
+from blog.tags.models import Tag
 from wtforms.fields import SelectField
 
 

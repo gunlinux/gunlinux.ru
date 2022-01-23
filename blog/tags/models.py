@@ -1,5 +1,5 @@
 from blog.extensions import db
-from sqlalchemy.ext.declarative import declarative_base
+
 
 class Posts_Tags(db.Model):
     __tablename__ = 'posts_tags'

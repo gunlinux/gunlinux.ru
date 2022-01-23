@@ -15,15 +15,19 @@
             Архив
         {% endif %}
         </div>
+        <div class="post__tags">
+            {% for tag in post.tags %}
+                {{tag}}
+            {% endfor %}
+        </div>
         <div class="post__body">
             {{ post.content|safe|markdown }}
-        </div>
+       </div>
+
     </article>
 {% endblock %}
 
 {% block scripts %}
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
     <script>
-        hljs.initHighlightingOnLoad();
-    </script>
-{% endblock %}
+        hljs.initHighlightingOnLoad(); </script> {% endblock %}
