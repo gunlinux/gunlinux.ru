@@ -11,6 +11,7 @@ from blog.admin import create_admin
 from blog.config import config
 from blog.extensions import admin_ext, db, md, cache, migrate
 from blog.post.views import post
+from blog.tags.views import tagsb
 
 
 @click.command('dbinit')
@@ -44,5 +45,6 @@ def create_app():
     if not app.config['TESTING']:
         create_admin(admin_ext)
     app.register_blueprint(post)
+    app.register_blueprint(tagsb)
 
     return app

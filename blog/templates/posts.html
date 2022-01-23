@@ -2,6 +2,9 @@
 
 {% block content %}
     <article class="page__content">
+        {% if tag %}
+            <h3 class="page__title">Посты c тэгом: {{tag.title}}</h3>
+        {% endif %}
     {% for group in posts|groupby('publishedon.year')|sort(reverse=True)  %}
         <div class="postGroup">
             <h3 class="postGroup__title">{{group.grouper}}</h3>

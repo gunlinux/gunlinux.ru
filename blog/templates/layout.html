@@ -20,6 +20,7 @@
     <link rel="stylesheet" href="/static/src/components/post.css">
     <link rel="stylesheet" href="/static/src/components/nav.css">
     <link rel="stylesheet" href="/static/src/components/special.css">
+    <link rel="stylesheet" href="/static/src/components/tags.css">
     {% block styles %}
     {% endblock %}
 </head>
@@ -28,6 +29,7 @@
         <a href="/" class="header__logo" title="На главную">@gunlinux</a>
         <div class="header__nav">
             <nav class="nav">
+                <a href="{{url_for('tagsb.index')}}" class="nav__link">tags</a>
                 {% for page in pages %}
                     <a href="{{url_for('postb.view',alias=page.alias)}}" class="nav__link">{{page.pagetitle}}</a>
                 {% endfor %}

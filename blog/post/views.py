@@ -27,7 +27,6 @@ def view(alias=None):
     post = Post.query.filter(Post.alias == alias).filter(
         Post.status > 0).first_or_404()
     pages = Post.query.filter_by(status=PAGE_STATUS).order_by(Post.id).all()
-    print(dir(post))
     if post.status == PAGE_SPECIAL:
         return render_template('special.html', post=post, pages=pages)
     return render_template('post.html', post=post, pages=pages)
