@@ -15,9 +15,11 @@ class Tag(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255))
     alias = db.Column(db.String(255), unique=True, default=None)
-    posts = db.relationship("Post", secondary="posts_tags", back_populates="tags")
+    posts = db.relationship("Post", secondary="posts_tags",
+                            back_populates="tags")
 
     def __init__(self, title):
         self.title = title
+
     def __str__(self):
         return f'{self.title}'
