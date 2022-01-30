@@ -30,9 +30,25 @@ def test_post(test_client):
     assert b'ptitle' in rv.data
 
 
+def test_page(test_client):
+    testpage = Post(pagetitle='pagetitle', alias='pagealias', content='pagecontent', status=4)
+    db.session.add(testpage)
+    db.session.commit()
+    rv = test_client.get('/pagealias')
+    assert rv.status == '200 OK'
+    assert b'pagecontent' in rv.data
+    assert b'pagetitle' in rv.data
+
+
 def test_post_index(test_client):
     rv = test_client.get('/')
     assert rv.status == '200 OK'
     assert b'ptitle' in rv.data
+
+
+def test_page_index(test_client):
+    rv = test_client.get('/')
+    assert rv.status == '200 OK'
+    assert b'pagealias' in rv.data
 
 
