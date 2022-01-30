@@ -1,5 +1,5 @@
 lint:
-	flake8	pro app.py
+	flake8 blog app.py
 
 pytest:
 	FLASK_ENV=testing FLASK_APP=pro pytest
