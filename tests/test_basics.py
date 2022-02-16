@@ -3,6 +3,7 @@ import os
 
 from blog import create_app
 from blog import db
+from flask_migrate import Migrate
 
 
 @pytest.fixture(scope='module')
@@ -10,6 +11,8 @@ def test_client():
     os.environ['FLASK_ENV'] = 'testing'
     app = create_app()
     db.init_app(app)
+    migrate = Migrate()
+    migrate.init_app(app, db)
     testing_client = app.test_client()
     ctx = app.app_context()
     ctx.push()
