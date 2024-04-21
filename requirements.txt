@@ -1,6 +1,6 @@
 Flask
 Flask-Wtf
-WTForms==2.3.3
+WTForms
 Flask-Admin
 Flask-SQLAlchemy
 gunicorn
