@@ -3,7 +3,6 @@ Flask-Wtf
 WTForms==2.3.3
 Flask-Admin
 Flask-SQLAlchemy
-flask-MD
 gunicorn
 flask-caching
 pytest
@@ -11,3 +10,5 @@ pytest-cov
 flake8
 psycopg2-binary
 flask-migrate
+python-dotenv
+markdown

@@ -27,7 +27,7 @@
             {{post.publishedon.strftime("%B %d, %Y")}}
         </div>
         <div class="post__body">
-            {{ post.content|safe|markdown }}
+            {{ post.markdown|safe }}
         </div>
     </article>
 {% endblock %}
