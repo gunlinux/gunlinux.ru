@@ -60,3 +60,5 @@ pip-log.txt
 #Mr Developer
 .mr.developer.cfg
 tmp/*
+coverage.xml
+.env
