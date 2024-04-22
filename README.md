@@ -1,5 +1,5 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/a096eddf8f8dbfdbd05b/maintainability)](https://codeclimate.com/github/gunlinux/gunlinux.ru/maintainability)
-[![Python CI](https://github.com/gunlinux/gunlinux.ru/actions/workflows/main.yml/badge.svg)](https://github.com/gunlinux/gunlinux.ru/actions/workflows/main.yml)
+[![Python application](https://github.com/gunlinux/gunlinux.ru/actions/workflows/python-app.yml/badge.svg)](https://github.com/gunlinux/gunlinux.ru/actions/workflows/python-app.yml)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/a096eddf8f8dbfdbd05b/test_coverage)](https://codeclimate.com/github/gunlinux/gunlinux.ru/test_coverage)
 
 ## Install
