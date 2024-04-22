@@ -1,17 +1,21 @@
 """[summary]."""
 
 import unittest
+import os
 
 import click
 from flask import Flask
 from flask.cli import with_appcontext
-
+from dotenv import load_dotenv
 
 from blog.admin import create_admin
 from blog.config import config
-from blog.extensions import admin_ext, db, md, cache, migrate
+from blog.extensions import db, cache, migrate, admin_ext
 from blog.post.views import post
 from blog.tags.views import tagsb
+
+
+load_dotenv()
 
 
 @click.command('dbinit')
@@ -31,14 +35,13 @@ def configure_extensions(app):
     """Configures the extensions."""
     db.init_app(app)
     admin_ext.init_app(app)
-    md.init_app(app)
     cache.init_app(app)
     migrate.init_app(app=app, db=db)
 
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object(config[app.config['ENV']])
+    app.config.from_object(config.get(os.environ.get('FLASK_ENV', 'development')))
     configure_extensions(app)
     app.cli.add_command(cli_dbinit)
     app.cli.add_command(cli_test)

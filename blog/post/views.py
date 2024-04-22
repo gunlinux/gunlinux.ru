@@ -1,6 +1,6 @@
-# -*- coding: utf-8 -*-
 import datetime
-from flask import render_template, Blueprint, request, make_response
+import markdown
+from flask import jsonify, render_template, Blueprint, request, make_response
 from sqlalchemy import or_
 from blog import cache
 from blog.post.models import Post
@@ -35,7 +35,10 @@ def view(alias=None):
 @post.route('/md/', methods=["POST", "GET"])
 def getmd():
     post = request.form.get('data')
-    return render_template('postmd.html', post=post)
+    out = {
+        "data": markdown.markdown(post)
+    }
+    return jsonify(out)
 
 
 @post.route('/robots.txt')

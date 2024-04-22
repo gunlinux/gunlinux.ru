@@ -1,6 +1,7 @@
 """SqlAlchemy models."""
 
 import datetime
+import markdown
 
 from blog.extensions import db
 from blog.category.models import Category
@@ -31,6 +32,10 @@ class Post(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
     category = db.relationship(Category, backref="Post")
     tags = db.relationship("Tag", secondary="posts_tags")
+
+    @property
+    def markdown(self):
+        return markdown.markdown(self.content)
 
     def __str__(self):
         return f'{self.pagetitle}'
