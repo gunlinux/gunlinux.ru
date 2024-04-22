@@ -41,7 +41,9 @@ def configure_extensions(app):
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object(config.get(os.environ.get('FLASK_ENV', 'development')))
+    app.config.from_object(
+        config.get(os.environ.get("FLASK_ENV", "development"))
+    )
     configure_extensions(app)
     app.cli.add_command(cli_dbinit)
     app.cli.add_command(cli_test)
