@@ -6,20 +6,21 @@ from blog import db
 from flask_migrate import Migrate
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture()
 def test_client():
     os.environ['FLASK_ENV'] = 'testing'
     app = create_app()
-    db.init_app(app)
-    migrate = Migrate()
-    migrate.init_app(app, db)
-    testing_client = app.test_client()
-    ctx = app.app_context()
-    ctx.push()
-    db.create_all()
-    yield testing_client
-    db.drop_all()
-    ctx.pop()
+    app.config.update({
+        "TESTING": True,
+        "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:"
+    })
+    with app.test_client() as client:
+        with app.app_context():
+            db.create_all()
+        yield client
+        with app.app_context():
+            db.session.remove()
+            db.drop_all()
 
 
 def test_empty_db(test_client):
