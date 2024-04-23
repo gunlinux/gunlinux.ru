@@ -2,6 +2,7 @@
 
 import unittest
 import os
+import logging
 
 import click
 from flask import Flask
@@ -16,6 +17,7 @@ from blog.tags.views import tagsb
 
 
 load_dotenv()
+logger = logging.getLogger(__name__)
 
 
 @click.command('dbinit')
@@ -41,7 +43,9 @@ def configure_extensions(app):
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object(config.get(os.environ.get('FLASK_ENV', 'development')))
+    env = os.environ.get('FLASK_ENV', 'development')
+    logger.debug('current FLASK_ENV %s', env)
+    app.config.from_object(config.get(env))
     configure_extensions(app)
     app.cli.add_command(cli_dbinit)
     app.cli.add_command(cli_test)
