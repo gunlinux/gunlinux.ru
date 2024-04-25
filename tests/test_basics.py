@@ -3,17 +3,15 @@ import os
 
 from blog import create_app
 from blog import db
-from flask_migrate import Migrate
 
 
 @pytest.fixture()
 def test_client():
-    os.environ['FLASK_ENV'] = 'testing'
+    os.environ["FLASK_ENV"] = "testing"
     app = create_app()
-    app.config.update({
-        "TESTING": True,
-        "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:"
-    })
+    app.config.update(
+        {"TESTING": True, "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:"}
+    )
     with app.test_client() as client:
         with app.app_context():
             db.create_all()
@@ -25,15 +23,15 @@ def test_client():
 
 def test_empty_db(test_client):
     """Start with a blank database."""
-    rv = test_client.get('/')
-    assert b'page__content' in rv.data
+    rv = test_client.get("/")
+    assert b"page__content" in rv.data
 
 
 def test_app_is_testing(test_client):
-    assert test_client.application.config['TESTING'] is True
+    assert test_client.application.config["TESTING"] is True
 
 
 def test_rss(test_client):
-    rv = test_client.get('/rss.xml')
+    rv = test_client.get("/rss.xml")
     assert rv.status_code == 200
-    assert rv.mimetype == 'application/rss+xml'
+    assert rv.mimetype == "application/rss+xml"
