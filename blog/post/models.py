@@ -1,10 +1,15 @@
 """SqlAlchemy models."""
-
+from typing import TYPE_CHECKING
 import datetime
 import markdown
 
 from blog.extensions import db
-from blog.category.models import Category
+from sqlalchemy import DateTime, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
+
+if TYPE_CHECKING:
+    from blog.category.models import Category
 
 TITLE_LEN = 255
 URL_LEN = 255
@@ -21,16 +26,21 @@ class Post(db.Model):
     """orm model for blog post."""
 
     __tablename__ = 'posts'
-    id = db.Column(db.Integer, primary_key=True)
-    pagetitle = db.Column(db.String(TITLE_LEN), default='')
-    alias = db.Column(db.String(TITLE_LEN), unique=True, nullable=False)
-    content = db.Column(db.Text)
-    createdon = db.Column(db.DateTime, default=datetime.datetime.now)
-    publishedon = db.Column(db.DateTime, default=datetime.datetime.now)
-    status = db.Column(db.Integer, default=0)
-    bg = db.Column(db.String(URL_LEN), default='')
-    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
-    category = db.relationship(Category, backref="Post")
+    id: Mapped[int] = mapped_column(primary_key=True)
+    pagetitle: Mapped[str]
+    alias: Mapped[str] = mapped_column(nullable=False, unique=True)
+    content: Mapped[str]
+    createdon: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    publishedon: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    status: Mapped[int] = mapped_column(default=4)
+    bg: Mapped[str] = mapped_column(default='')
+    category_id: Mapped[int] = mapped_column(ForeignKey('categories.id'), nullable=True)
+    # category = db.relationship(Category, backref="Post")
+    category: Mapped["Category"] = relationship(back_populates="posts")
     tags = db.relationship("Tag", secondary="posts_tags")
 
     @property

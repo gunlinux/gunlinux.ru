@@ -1,7 +1,11 @@
 """SqlAlchemy models."""
+from typing import List, TYPE_CHECKING
 
+from sqlalchemy.orm import Mapped, relationship
 
 from blog.extensions import db
+if TYPE_CHECKING:
+    from blog.post.models import Post
 
 
 class Category(db.Model):
@@ -11,6 +15,7 @@ class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255), default='')
     alias = db.Column(db.String(255), unique=True, nullable=False)
+    posts: Mapped[List["Post"]] = relationship()
 
     def __init__(self, title, alias):
         self.title = title

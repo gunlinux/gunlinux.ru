@@ -24,7 +24,7 @@ def post_helper(prefix='post', status=4):
     post.pagetitle = f"{prefix}_title"
     post.alias = f"{prefix}_alias"
     post.content = f"{prefix}_content"
-    post.status = 4
+    post.status = status
     return post
 
 

@@ -1,8 +1,8 @@
 import datetime
 import markdown
 from flask import jsonify, render_template, Blueprint, request, make_response
-from sqlalchemy import or_
-from blog import cache
+import sqlalchemy as sa
+from blog import cache, db
 from blog.post.models import Post
 
 post = Blueprint("postb", __name__)
@@ -14,19 +14,20 @@ PAGE_SPECIAL = 3
 @post.route('/')
 @cache.cached(timeout=50)
 def index():
-    conds = [Post.status > PAGE_STATUS]
-    posts = Post.query.filter(
-        or_(*conds)).order_by(Post.publishedon.desc()).all()
-    pages = Post.query.filter_by(status=PAGE_STATUS).order_by(Post.id).all()
+    post_query = sa.select(Post).where(Post.status > PAGE_STATUS)
+    posts = db.session.scalars(post_query).all()
+    pages_query = sa.select(Post).where(Post.status == PAGE_STATUS)
+    pages = db.session.scalars(pages_query).all()
     return render_template("posts.html", posts=posts, pages=pages)
 
 
 @post.route('/<alias>')
 @cache.cached(timeout=50)
 def view(alias=None):
-    post = Post.query.filter(Post.alias == alias).filter(
-        Post.status > 0).first_or_404()
-    pages = Post.query.filter_by(status=PAGE_STATUS).order_by(Post.id).all()
+    post = Post.query.filter(Post.alias == alias).filter(Post.status > 0).first_or_404()
+    pages_query = sa.select(Post).where(Post.status == PAGE_STATUS)
+    pages = db.session.scalars(pages_query).all()
+
     if post.status == PAGE_SPECIAL:
         return render_template('special.html', post=post, pages=pages)
     return render_template('post.html', post=post, pages=pages)
@@ -34,7 +35,7 @@ def view(alias=None):
 
 @post.route('/md/', methods=["POST", "GET"])
 def getmd():
-    post = request.form.get('data')
+    post = request.form.get('data', '')
     out = {
         "data": markdown.markdown(post)
     }
