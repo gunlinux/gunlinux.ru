@@ -37,7 +37,8 @@ class Post(db.Model):
         DateTime(timezone=True), server_default=func.now()
     )
     publishedon: Mapped[datetime.datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+        DateTime(timezone=True), server_default=func.now(),
+        nullable=True,
     )
     status: Mapped[int] = mapped_column(default=4)
     bg: Mapped[str] = mapped_column(default='')
