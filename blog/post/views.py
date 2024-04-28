@@ -15,8 +15,8 @@ PAGE_SPECIAL = 3
 @cache.cached(timeout=50)
 def index():
     page_category = current_app.config['PAGE_CATEGORY']
-    post_query = sa.select(Post).where(Post.publishedon != None,
-                                       Post.category_id == None)
+    post_query = sa.select(Post).where(Post.publishedon != None,  # noqa: E711
+                                       Post.category_id == None)  # noqa: E711
     posts = db.session.scalars(post_query).all()
     pages_query = sa.select(Post).where(Post.category_id == page_category)
     pages = db.session.scalars(pages_query).all()
@@ -27,7 +27,9 @@ def index():
 @post.route('/<alias>')
 @cache.cached(timeout=50)
 def view(alias=None):
-    post_query = sa.select(Post).where(Post.publishedon != None, Post.alias == alias)
+    post_query = sa.select(Post).where(
+        Post.publishedon != None, Post.alias == alias  # noqa: E711
+    )
     post = db.first_or_404(post_query)
     pages_query = sa.select(Post).where(Post.status == PAGE_STATUS)
     pages = db.session.scalars(pages_query).all()
@@ -59,8 +61,8 @@ Host: gunlinux.ru
 @cache.cached(timeout=50)
 def rss():
     date = datetime.datetime.now()
-    post_query = sa.select(Post).where(Post.publishedon != None,
-                                       Post.category_id == None)
+    post_query = sa.select(Post).where(Post.publishedon != None,  # noqa: E711
+                                       Post.category_id == None)  # noqa: E711
     list_posts = db.session.scalars(post_query).all()
     rss_xml = render_template('rss.xml', posts=list_posts, date=date)
     response = make_response(rss_xml)
