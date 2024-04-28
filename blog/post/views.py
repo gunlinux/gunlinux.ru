@@ -28,8 +28,6 @@ def view(alias=None):
     pages_query = sa.select(Post).where(Post.status == PAGE_STATUS)
     pages = db.session.scalars(pages_query).all()
 
-    if post.status == PAGE_SPECIAL:
-        return render_template('special.html', post=post, pages=pages)
     return render_template('post.html', post=post, pages=pages)
 
 
