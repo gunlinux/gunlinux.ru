@@ -76,7 +76,7 @@ def test_page_index(test_client):
 
     with test_client.application.app_context():
         post_query = sa.select(Post).where(
-            Post.publishedon != None, Post.alias == "page_alias" # noqa: E711
+            Post.publishedon != None, Post.alias == "page_alias"  # noqa: E711
         )
         post = db.first_or_404(post_query)
         assert post.category_id == 1

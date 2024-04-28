@@ -1,6 +1,5 @@
 """SqlAlchemy models."""
 from typing import List, TYPE_CHECKING
-from dataclasses import dataclass
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -8,7 +7,7 @@ from blog.extensions import db
 if TYPE_CHECKING:
     from blog.post.models import Post
 
-@dataclass
+
 class Category(db.Model):
     """orm model for blog post."""
 

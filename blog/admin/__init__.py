@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 
 from flask_admin.contrib import fileadmin, sqla
@@ -6,7 +5,6 @@ from blog.extensions import db
 from blog.post.models import Post
 from blog.category.models import Category
 from blog.tags.models import Tag
-from wtforms.fields import SelectField
 
 
 class UserView(sqla.ModelView):
