@@ -16,13 +16,6 @@ if TYPE_CHECKING:
 
 TITLE_LEN = 255
 URL_LEN = 255
-POST_STATUSES = {
-    0: 'Draft',
-    1: 'Page',
-    2: 'Archive',
-    3: 'Special',
-    4: 'Published',
-}
 
 
 class Post(db.Model):
@@ -40,7 +33,6 @@ class Post(db.Model):
         DateTime(timezone=True), server_default=func.now(),
         nullable=True,
     )
-    status: Mapped[int] = mapped_column(default=4)
     bg: Mapped[str] = mapped_column(default='')
     category_id: Mapped[int] = mapped_column(ForeignKey('categories.id'), nullable=True)
     category: Mapped["Category"] = relationship(back_populates="posts")

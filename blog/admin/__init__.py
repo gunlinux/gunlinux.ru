@@ -3,15 +3,10 @@ import os
 
 from flask_admin.contrib import fileadmin, sqla
 from blog.extensions import db
-from blog.post.models import Post, POST_STATUSES
+from blog.post.models import Post
 from blog.category.models import Category
 from blog.tags.models import Tag
 from wtforms.fields import SelectField
-
-
-def _status(view, _, model, name):
-    view, name = name, view
-    return POST_STATUSES.get(model.status, None)
 
 
 class UserView(sqla.ModelView):
@@ -19,13 +14,6 @@ class UserView(sqla.ModelView):
     create_template = 'admin/create.html'
     edit_template = 'admin/edit.html'
 
-    form_overrides = dict(status=SelectField)
-    form_args = dict(
-        status=dict(choices=POST_STATUSES.items()),
-    )
-    column_formatters = {
-        'status': _status
-    }
     column_default_sort = ('id', True)
 
 
