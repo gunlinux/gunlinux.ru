@@ -2,7 +2,6 @@
 from typing import TYPE_CHECKING, List
 import datetime
 import markdown
-
 from blog.extensions import db
 from sqlalchemy import DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -33,7 +32,7 @@ class Post(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     pagetitle: Mapped[str]
     alias: Mapped[str] = mapped_column(nullable=False, unique=True)
-    content: Mapped[str]
+    content: Mapped[str] = mapped_column(type_=db.Text)
     createdon: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

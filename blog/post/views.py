@@ -35,9 +35,9 @@ def view(alias=None):
 
 @post.route('/md/', methods=["POST", "GET"])
 def getmd():
-    post = request.form.get('data', '')
+    post_data = request.form.get('data', '')
     out = {
-        "data": markdown.markdown(post)
+        "data": markdown.markdown(post_data)
     }
     return jsonify(out)
 

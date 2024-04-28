@@ -15,7 +15,6 @@ def _status(view, _, model, name):
 
 
 class UserView(sqla.ModelView):
-    form_excluded_columns = ['children', ]
     column_exclude_list = ['content', 'alias']
     create_template = 'admin/create.html'
     edit_template = 'admin/edit.html'
@@ -30,8 +29,13 @@ class UserView(sqla.ModelView):
     column_default_sort = ('id', True)
 
 
+class PostView(UserView):
+    column_hide_backrefs = False
+    column_list = ('pagetitle', 'puslishedon', 'tags',)
+
+
 def create_admin(config_admin):
-    config_admin.add_view(UserView(Post, db.session, endpoint=''))
+    config_admin.add_view(PostView(Post, db.session, endpoint=''))
     config_admin.add_view(UserView(Category, db.session, endpoint=''))
     config_admin.add_view(UserView(Tag, db.session, endpoint=''))
     path = os.path.join(os.path.dirname(__file__), '../static/upload')

@@ -23,7 +23,8 @@ class Tag(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str]
     alias: Mapped[str] = mapped_column(unique=True)
-    posts: Mapped[List["Post"]] = relationship(secondary=posts_tags, back_populates="tags")
+    posts: Mapped[List["Post"]] = relationship(secondary=posts_tags,
+                                               back_populates="tags")
 
     def __init__(self, title):
         self.title = title
