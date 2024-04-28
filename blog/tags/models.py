@@ -26,8 +26,5 @@ class Tag(db.Model):
     posts: Mapped[List["Post"]] = relationship(secondary=posts_tags,
                                                back_populates="tags")
 
-    def __init__(self, title):
-        self.title = title
-
     def __str__(self):
         return f'{self.title}'
