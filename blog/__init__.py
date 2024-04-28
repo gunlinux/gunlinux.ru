@@ -1,12 +1,9 @@
 """[summary]."""
 
-import unittest
 import os
 import logging
 
-import click
 from flask import Flask
-from flask.cli import with_appcontext
 from dotenv import load_dotenv
 
 from blog.admin import create_admin
@@ -18,19 +15,6 @@ from blog.tags.views import tagsb
 
 load_dotenv()
 logger = logging.getLogger(__name__)
-
-
-@click.command('dbinit')
-@with_appcontext
-def cli_dbinit():
-    db.create_all()
-
-
-@click.command('test')
-def cli_test():
-    """Run the unit tests."""
-    tests = unittest.TestLoader().discover('tests')
-    unittest.TextTestRunner(verbosity=2).run(tests)
 
 
 def configure_extensions(app):
@@ -47,8 +31,6 @@ def create_app():
     logger.debug('current FLASK_ENV %s', env)
     app.config.from_object(config.get(env))
     configure_extensions(app)
-    app.cli.add_command(cli_dbinit)
-    app.cli.add_command(cli_test)
     if not app.config['TESTING']:
         create_admin(admin_ext)
     app.register_blueprint(post)

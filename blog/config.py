@@ -12,6 +12,7 @@ class Config(object):
     SECRET_KEY = environ.get("SECRET_KEY") or "hard to guess string"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = False
+    PAGE_CATEGORY = int(environ.get("PAGE_CATEGORY", 0))
 
 
 class DevelopmentConfig(Config):
@@ -24,6 +25,7 @@ class TestingConfig(Config):
 
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    PAGE_CATEGORY = 1
 
 
 class ProductionConfig(Config):
