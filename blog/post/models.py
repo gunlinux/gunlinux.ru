@@ -11,6 +11,7 @@ from sqlalchemy.sql import func
 if TYPE_CHECKING:
     from blog.category.models import Category
 
+
 TITLE_LEN = 255
 URL_LEN = 255
 POST_STATUSES = {
@@ -41,7 +42,7 @@ class Post(db.Model):
     category_id: Mapped[int] = mapped_column(ForeignKey('categories.id'), nullable=True)
     # category = db.relationship(Category, backref="Post")
     category: Mapped["Category"] = relationship(back_populates="posts")
-    tags = db.relationship("Tag", secondary="posts_tags")
+    # tags = db.relationship("Tag", secondary="posts_tags")
 
     @property
     def markdown(self):
