@@ -15,11 +15,7 @@
                         {{post.pagetitle}}
                     </a>
                     <span class="minipost__date">
-                        {% if post.status==2 %}
-                            архив
-                        {% else %}
-                            {{post.publishedon.strftime("%B %d, %Y")}}
-                        {% endif %}
+                        {{post.publishedon.strftime("%B %d, %Y")}}
                     </span>
                 </div>
                 {% endfor %}
