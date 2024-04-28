@@ -25,6 +25,7 @@ class TestingConfig(Config):
 
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    PAGE_CATEGORY = 1
 
 
 class ProductionConfig(Config):
