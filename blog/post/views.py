@@ -5,10 +5,8 @@ import sqlalchemy as sa
 from blog import cache, db
 from blog.post.models import Post
 
-post = Blueprint("postb", __name__)
 
-PAGE_STATUS = 1
-PAGE_SPECIAL = 3
+post = Blueprint("postb", __name__)
 
 
 @post.route('/')
@@ -27,11 +25,12 @@ def index():
 @post.route('/<alias>')
 @cache.cached(timeout=50)
 def view(alias=None):
+    page_category = current_app.config['PAGE_CATEGORY']
     post_query = sa.select(Post).where(
         Post.publishedon != None, Post.alias == alias  # noqa: E711
     )
     post = db.first_or_404(post_query)
-    pages_query = sa.select(Post).where(Post.status == PAGE_STATUS)
+    pages_query = sa.select(Post).where(Post.category_id == page_category)
     pages = db.session.scalars(pages_query).all()
 
     return render_template('post.html', post=post, pages=pages)
