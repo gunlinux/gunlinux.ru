@@ -1,5 +1,5 @@
 """SqlAlchemy models."""
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 import datetime
 import markdown
 
@@ -7,9 +7,12 @@ from blog.extensions import db
 from sqlalchemy import DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
+from blog.tags.models import posts_tags
+
 
 if TYPE_CHECKING:
     from blog.category.models import Category
+    from blog.tags.models import Tag
 
 
 TITLE_LEN = 255
@@ -40,9 +43,8 @@ class Post(db.Model):
     status: Mapped[int] = mapped_column(default=4)
     bg: Mapped[str] = mapped_column(default='')
     category_id: Mapped[int] = mapped_column(ForeignKey('categories.id'), nullable=True)
-    # category = db.relationship(Category, backref="Post")
     category: Mapped["Category"] = relationship(back_populates="posts")
-    # tags = db.relationship("Tag", secondary="posts_tags")
+    tags: Mapped[List["Tag"]] = relationship(secondary=posts_tags, back_populates="posts")
 
     @property
     def markdown(self):
