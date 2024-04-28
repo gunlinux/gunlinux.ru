@@ -22,4 +22,4 @@ class Category(db.Model):
         self.alias = alias
 
     def __str__(self):
-        return f'{self.title}'
+        return f'Category(id={self.id}, title={self.title})'
