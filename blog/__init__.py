@@ -11,6 +11,7 @@ from blog.config import config
 from blog.extensions import db, cache, migrate, admin_ext
 from blog.post.views import post
 from blog.tags.views import tagsb
+from blog.user.views import user_blueprint 
 
 
 load_dotenv()
@@ -35,5 +36,6 @@ def create_app():
         create_admin(admin_ext)
     app.register_blueprint(post)
     app.register_blueprint(tagsb)
+    app.register_blueprint(user_blueprint)
 
     return app
