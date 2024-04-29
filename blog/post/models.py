@@ -31,7 +31,7 @@ class Post(db.Model):
         nullable=True,
     )
     category_id: Mapped[int] = mapped_column(ForeignKey('categories.id'), nullable=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=True)
     user: Mapped["User"] = relationship(back_populates="posts")
     category: Mapped["Category"] = relationship(back_populates="posts")
     tags: Mapped[List["Tag"]] = relationship(secondary=posts_tags, back_populates="posts")
