@@ -17,6 +17,8 @@ class User(db.Model):
     __tablename__ = 'users'
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(nullable=False)
+    password: Mapped[str]
+    authenticated: Mapped[bool] = mapped_column(default=False)
     createdon: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
