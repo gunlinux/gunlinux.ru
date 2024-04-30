@@ -13,3 +13,4 @@ flask-migrate
 python-dotenv
 markdown
 flask-login
+pre-commit
