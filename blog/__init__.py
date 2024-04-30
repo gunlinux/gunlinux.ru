@@ -8,10 +8,10 @@ from dotenv import load_dotenv
 
 from blog.admin import create_admin
 from blog.config import config
-from blog.extensions import db, cache, migrate, admin_ext
+from blog.extensions import db, cache, migrate, admin_ext, login_manager
 from blog.post.views import post
 from blog.tags.views import tagsb
-from blog.user.views import user_blueprint 
+from blog.user.views import user_blueprint
 
 
 load_dotenv()
@@ -24,6 +24,7 @@ def configure_extensions(app):
     admin_ext.init_app(app)
     cache.init_app(app)
     migrate.init_app(app=app, db=db)
+    login_manager.init_app(app=app)
 
 
 def create_app():
@@ -37,5 +38,4 @@ def create_app():
     app.register_blueprint(post)
     app.register_blueprint(tagsb)
     app.register_blueprint(user_blueprint)
-
     return app

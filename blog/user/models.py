@@ -1,17 +1,23 @@
 """SqlAlchemy models."""
 from typing import TYPE_CHECKING, List
 import datetime
-from blog.extensions import db
+from blog.extensions import db, login_manager
 from sqlalchemy import DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
+from flask_login import UserMixin
 
 
 if TYPE_CHECKING:
-    from blog.post.models import Post 
+    from blog.post.models import Post
 
 
-class User(db.Model):
+@login_manager.user_loader
+def load_user(id):
+    return db.session.get(User, int(id))
+
+
+class User(UserMixin, db.Model):
     """orm model for users."""
 
     __tablename__ = 'users'
@@ -23,6 +29,12 @@ class User(db.Model):
         DateTime(timezone=True), server_default=func.now()
     )
     posts: Mapped[List["Post"]] = relationship()
+
+    def is_authenticated(self):  # pyright: ignore[ reportIncompatibleMethodOverride]
+        return self.authenticated
+
+    def get_id(self):
+        return str(self.id)
 
     def __str__(self):
         return f'{self.name}'
