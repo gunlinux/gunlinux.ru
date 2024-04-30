@@ -5,7 +5,8 @@ from blog.extensions import db
 from blog.post.models import Post
 from blog.category.models import Category
 from blog.tags.models import Tag
-from blog.user.models import User 
+from blog.user.models import User
+
 
 class UserView(sqla.ModelView):
     column_exclude_list = ['content', 'alias']
