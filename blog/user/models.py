@@ -6,6 +6,7 @@ from sqlalchemy import DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from flask_login import UserMixin
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 if TYPE_CHECKING:
@@ -35,6 +36,12 @@ class User(UserMixin, db.Model):
 
     def get_id(self):
         return str(self.id)
+
+    def set_password(self, password):
+        self.password = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
 
     def __str__(self):
         return f'{self.name}'
