@@ -5,37 +5,43 @@ import sqlalchemy as sa
 from sqlalchemy import or_
 from blog import cache, db
 from blog.post.models import Post
+from functools import wraps
 
 
 post = Blueprint("postb", __name__)
 
 
+def pages_gen(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        page_category = current_app.config["PAGE_CATEGORY"]
+        pages_query = sa.select(Post).where(Post.category_id == page_category)
+        pages = db.session.scalars(pages_query).all()
+        return f(pages=pages, *args, **kwargs)
+    return decorated_function
+
+
 @post.route('/')
 @cache.cached(timeout=50)
-def index():
-    page_category = current_app.config['PAGE_CATEGORY']
+@pages_gen
+def index(**kwargs):
     post_query = sa.select(Post).where(Post.publishedon != None,  # noqa: E711
                                        Post.category_id == None)  # noqa: E711
     posts = db.session.scalars(post_query).all()
-    pages_query = sa.select(Post).where(Post.category_id == page_category)
-    pages = db.session.scalars(pages_query).all()
-
-    return render_template("posts.html", posts=posts, pages=pages)
+    return render_template("posts.html", posts=posts, **kwargs)
 
 
 @post.route('/<alias>')
 @cache.cached(timeout=50)
-def view(alias=None):
+@pages_gen
+def view(alias=None, **kwargs):
     page_category = current_app.config["PAGE_CATEGORY"]
     post_query = sa.select(Post).where(
         or_(Post.publishedon != None, Post.category_id == page_category),  # noqa: E711
         Post.alias == alias,  # noqa: E711
     )
     post = db.first_or_404(post_query)
-    pages_query = sa.select(Post).where(Post.category_id == page_category)
-    pages = db.session.scalars(pages_query).all()
-
-    return render_template('post.html', post=post, pages=pages)
+    return render_template('post.html', post=post, **kwargs)
 
 
 @post.route('/md/', methods=["POST", "GET"])
