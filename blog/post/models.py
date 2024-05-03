@@ -12,10 +12,7 @@ from blog.tags.models import posts_tags
 if TYPE_CHECKING:
     from blog.category.models import Category
     from blog.tags.models import Tag
-
-
-TITLE_LEN = 255
-URL_LEN = 255
+    from blog.user.models import User
 
 
 class Post(db.Model):
@@ -33,8 +30,9 @@ class Post(db.Model):
         DateTime(timezone=True), server_default=func.now(),
         nullable=True,
     )
-    bg: Mapped[str] = mapped_column(default='')
     category_id: Mapped[int] = mapped_column(ForeignKey('categories.id'), nullable=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=True)
+    user: Mapped["User"] = relationship(back_populates="posts")
     category: Mapped["Category"] = relationship(back_populates="posts")
     tags: Mapped[List["Tag"]] = relationship(secondary=posts_tags, back_populates="posts")
 

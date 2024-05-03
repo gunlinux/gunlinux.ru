@@ -1,10 +1,12 @@
 import os
 
 from flask_admin.contrib import fileadmin, sqla
+from flask_login import current_user
 from blog.extensions import db
 from blog.post.models import Post
 from blog.category.models import Category
 from blog.tags.models import Tag
+from blog.user.models import User
 
 
 class UserView(sqla.ModelView):
@@ -14,19 +16,28 @@ class UserView(sqla.ModelView):
 
     column_default_sort = ('id', True)
 
+    def is_accessible(self):
+        return current_user.is_authenticated
+
 
 class PostView(UserView):
     column_hide_backrefs = False
     column_list = ('pagetitle', 'puslishedon', 'tags',)
 
 
+class MyFileAdmin(fileadmin.FileAdmin):
+    def is_accessible(self):
+        return current_user.is_authenticated
+
+
 def create_admin(config_admin):
     config_admin.add_view(PostView(Post, db.session, endpoint=''))
     config_admin.add_view(UserView(Category, db.session, endpoint=''))
     config_admin.add_view(UserView(Tag, db.session, endpoint=''))
+    config_admin.add_view(UserView(User, db.session, endpoint=''))
     path = os.path.join(os.path.dirname(__file__), '../static/upload')
     config_admin.add_view(
-        fileadmin.FileAdmin(
+        MyFileAdmin(
             path, '/static/upload',
             name='files'
         )

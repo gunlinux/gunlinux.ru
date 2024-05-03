@@ -2,6 +2,7 @@ import datetime
 import markdown
 from flask import jsonify, render_template, Blueprint, request, make_response, current_app
 import sqlalchemy as sa
+from sqlalchemy import or_
 from blog import cache, db
 from blog.post.models import Post
 
@@ -25,9 +26,10 @@ def index():
 @post.route('/<alias>')
 @cache.cached(timeout=50)
 def view(alias=None):
-    page_category = current_app.config['PAGE_CATEGORY']
+    page_category = current_app.config["PAGE_CATEGORY"]
     post_query = sa.select(Post).where(
-        Post.publishedon != None, Post.alias == alias  # noqa: E711
+        or_(Post.publishedon != None, Post.category_id == page_category),  # noqa: E711
+        Post.alias == alias,  # noqa: E711
     )
     post = db.first_or_404(post_query)
     pages_query = sa.select(Post).where(Post.category_id == page_category)
