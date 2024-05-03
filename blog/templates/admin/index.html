@@ -7,3 +7,15 @@
 {% block page_body %}
 	{{super()}}
 {% endblock %}
+
+{% block menu_links %}
+<ul class="nav navbar-nav navbar-right">
+  {{super()}}
+  {% if current_user.is_authenticated %}
+  <li><a  href="{{ url_for('userb.logout') }}">({{  current_user.name }}) logout</a></li>
+  {% else %}
+    <li><a  href="{{ url_for('userb.login') }}">login</a></li>
+  {% endif %}
+</ul>
+{% endblock %}
+
