@@ -14,4 +14,18 @@ test-coverage:
 
 check: lint pytest
 
+run:
+	flask db upgrade
+	flask run --host="0.0.0.0" --debug 
+
+docker-build:
+	docker build . --tag="gunlinux:0.0.3"
+
+docker:
+	-docker stop gunlinux
+	-docker rm gunlinux
+	docker run -d --name gunlinux -v /home/loki/projects/gunlinux.ru/tmp:/app/tmp -p 5000:5000 gunlinux:0.0.3  
+
+docker-shell:
+	docker exec -it gunlinux bash 
 
