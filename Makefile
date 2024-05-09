@@ -1,5 +1,3 @@
-all: check
-
 lint:
 	flake8 blog app.py
 
@@ -24,7 +22,7 @@ docker-build:
 docker:
 	-docker stop gunlinux
 	-docker rm gunlinux
-	docker run -d --name gunlinux -v /home/loki/projects/gunlinux.ru/tmp:/app/tmp -p 5000:5000 gunlinux:0.0.3  
+	docker run -d -e BLOG_ADMIN=${BLOG_ADMIN} -e BLOG_PASSWORD=${BLOG_PASSWORD} --name gunlinux -v /home/loki/projects/gunlinux.ru/tmp:/app/tmp -p 5000:5000 gunlinux:0.0.3  
 
 docker-shell:
 	docker exec -it gunlinux bash 
