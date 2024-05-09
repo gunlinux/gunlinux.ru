@@ -29,3 +29,6 @@ docker:
 docker-shell:
 	docker exec -it gunlinux bash 
 
+docker-check:
+	docker exec gunlinux make check 
+

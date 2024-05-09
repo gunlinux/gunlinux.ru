@@ -7,8 +7,6 @@
 
 ```bash
 
-$ cp config.example.sh config.sh
-
 $ cp gunicorn.example.conf gunicorn.conf
 
 $ python3 -m venv venv
@@ -23,27 +21,23 @@ $ flask dbinit
 
 ## Configs
 
-* config.sh
+* .env 
 
 * gunicorn.conf
 
 ## Debug
 
 ```bash 
-$ source env/bin/activate
+$ source venv/bin/activate
 
-$ source config.sh
-
-$ flask run
+$ flask run --debug
 ```
 
 ## Deploy
 
 ```bash
 
-$ source env/bin/activate
-
-$ source config.sh
+$ source venv/bin/activate
 
 $ gunicorn -c gunicorn.conf "app:create_app()" 
 
