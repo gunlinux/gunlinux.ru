@@ -5,12 +5,9 @@ Flask-Admin
 Flask-SQLAlchemy
 gunicorn
 flask-caching
-pytest
-pytest-cov
-flake8
+python-dotenv
 psycopg2-binary
 flask-migrate
 python-dotenv
 markdown
 flask-login
-pre-commit

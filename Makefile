@@ -27,5 +27,5 @@ docker:
 	docker run -d --name gunlinux -v /home/loki/projects/gunlinux.ru/tmp:/app/tmp -p 5000:5000 gunlinux:0.0.3  
 
 docker-shell:
-	docker exec -it gunlinux bash 
+	docker run -it gunlinux:0.0.3 sh 
 
