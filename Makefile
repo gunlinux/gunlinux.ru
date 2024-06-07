@@ -1,3 +1,6 @@
+VERSION = 0.0.5
+
+
 all: check
 
 lint:
@@ -19,13 +22,15 @@ run:
 	flask run --host="0.0.0.0" --debug 
 
 docker-build:
-	docker build . --tag="gunlinux:0.0.3"
+	docker build . --tag="gunlinux:$(VERSION)"
 
 docker:
 	-docker stop gunlinux
 	-docker rm gunlinux
-	docker run -d --name gunlinux -v /home/loki/projects/gunlinux.ru/tmp:/app/tmp -p 5000:5000 gunlinux:0.0.3  
+	docker run --rm -d --name gunlinux -v /home/loki/projects/gunlinux.ru/tmp:/app/tmp -p 5000:5000 gunlinux:$(VERSION)
 
 docker-shell:
-	docker run -it gunlinux:0.0.3 sh 
+	docker run --rm -it --entrypoint="" gunlinux:$(VERSION) sh 
 
+docker-test:
+	docker build --target test-image -t gunlinux:$(VERSION)-test .
