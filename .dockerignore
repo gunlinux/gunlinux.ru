@@ -1,3 +1,7 @@
 Dockerfile
 tmp/*.db
+__pycache__
+blog/static/img/
 .git
+venv
+.env
