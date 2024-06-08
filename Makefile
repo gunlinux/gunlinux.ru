@@ -30,7 +30,7 @@ docker:
 	docker run --rm -d --name gunlinux -v /home/loki/projects/gunlinux.ru/tmp:/app/tmp -p 5000:5000 gunlinux:$(VERSION)
 
 docker-shell:
-	docker run --rm -it --entrypoint="" gunlinux:$(VERSION) sh 
+	docker run --rm -it --entrypoint="" -p 5000:5000 gunlinux:$(VERSION) sh 
 
 docker-test:
 	docker build --target test-image -t gunlinux:$(VERSION)-test .

@@ -50,7 +50,7 @@ RUN adduser \
     --shell "/sbin/nologin" \
     --no-create-home \
     --uid "${UID}" \
-    appuser
+    appuser && chown  appuser  /app
 
 USER appuser
 COPY --from=build-image /app/venv /app/venv
@@ -65,5 +65,5 @@ ENV PATH=/app/venv/bin:$PATH
 
 # Run the application.
 ENTRYPOINT [ "./entrypoint.sh" ]
-CMD [ "gunicorn -c gunicorn.py 'app:create_app()'" ]
+#CMD [ "gunicorn", "-c", "gunicorn.py", "'app:create_app()'" ]
 

@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  gunlinux:
+    image: gunlinux:0.0.6
+    hostname: gunlinux
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - SQLALCHEMY_DATABASE_URI=${SQLALCHEMY_DATABASE_URI}
+      - FLASK_ENV=${FLASK_ENV:-development}
+      - PAGE_CATEGORY=${PAGE_CATEGORY}
+      - DB_HOST=${POSTGRES_HOST}
+      - DB_PORT=${POSTGRES_PORT:-5432}
+    ports:
+      - 5000:5000
+    depends_on:
+      - postgres
+    command: "gunicorn -c gunicorn.py 'app:create_app()'"
+
+  postgres:
+    hostname: ${POSTGRES_HOST}
+    container_name: postgres_container
+    image: postgres
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-loki}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-123123}
+      PGDATA: /data/postgres
+    volumes:
+      - postgres:/data/postgres
+    restart: unless-stopped
+
+volumes:
+  postgres:
