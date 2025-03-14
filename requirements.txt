@@ -1,14 +1,5 @@
-Flask
-Flask-Wtf
-WTForms
-Flask-Admin
-Flask-SQLAlchemy
 gunicorn
-flask-caching
-python-dotenv
 psycopg2-binary
-flask-migrate
-python-dotenv
-markdown
-flask-login
 gevent
+
+python-dotenv

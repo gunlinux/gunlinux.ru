@@ -1,8 +1,9 @@
 import sqlalchemy as sa
-from flask import render_template, Blueprint
+from flask import Blueprint, render_template
+
+from blog import db
 from blog.post.views import pages_gen
 from blog.tags.models import Tag
-from blog import db
 
 tagsb = Blueprint("tagsb", __name__, url_prefix="/tags")
 

@@ -3,11 +3,18 @@ VERSION = 0.0.6
 
 all: check
 
-lint:
-	flake8 blog app.py
 
-pytest:
-	FLASK_ENV=testing FLASK_APP=pro pytest
+lint: ruff-lint ruff-lint-format-check lint-types
+
+ruff-lint:
+	uvx ruff check .
+
+ruff-lint-format-check:
+	uvx ruff format --check .
+
+lint-types:
+	uv run pyright .
+
 
 test-coverage:
 	( \
@@ -15,7 +22,7 @@ test-coverage:
 		FLASK_ENV=testing FLASK_APP=blog pytest --cov=blog --cov-report xml\
 	)
 
-check: lint pytest
+check: lint test
 
 run:
 	flask db upgrade

@@ -2,19 +2,20 @@ import os
 
 from flask_admin.contrib import fileadmin, sqla
 from flask_login import current_user
+
+from blog.category.models import Category
 from blog.extensions import db
 from blog.post.models import Post
-from blog.category.models import Category
 from blog.tags.models import Tag
 from blog.user.models import User
 
 
 class UserView(sqla.ModelView):
-    column_exclude_list = ['content', 'alias']
-    create_template = 'admin/create.html'
-    edit_template = 'admin/edit.html'
+    column_exclude_list = ["content", "alias"]
+    create_template = "admin/create.html"
+    edit_template = "admin/edit.html"
 
-    column_default_sort = ('id', True)
+    column_default_sort = ("id", True)
 
     def is_accessible(self):
         return current_user.is_authenticated
@@ -22,7 +23,11 @@ class UserView(sqla.ModelView):
 
 class PostView(UserView):
     column_hide_backrefs = False
-    column_list = ('pagetitle', 'puslishedon', 'tags',)
+    column_list = (
+        "pagetitle",
+        "puslishedon",
+        "tags",
+    )
 
 
 class MyFileAdmin(fileadmin.FileAdmin):
@@ -31,14 +36,9 @@ class MyFileAdmin(fileadmin.FileAdmin):
 
 
 def create_admin(config_admin):
-    config_admin.add_view(PostView(Post, db.session, endpoint=''))
-    config_admin.add_view(UserView(Category, db.session, endpoint=''))
-    config_admin.add_view(UserView(Tag, db.session, endpoint=''))
-    config_admin.add_view(UserView(User, db.session, endpoint=''))
-    path = os.path.join(os.path.dirname(__file__), '../static/upload')
-    config_admin.add_view(
-        MyFileAdmin(
-            path, '/static/upload',
-            name='files'
-        )
-    )
+    config_admin.add_view(PostView(Post, db.session, endpoint=""))
+    config_admin.add_view(UserView(Category, db.session, endpoint=""))
+    config_admin.add_view(UserView(Tag, db.session, endpoint=""))
+    config_admin.add_view(UserView(User, db.session, endpoint=""))
+    path = os.path.join(os.path.dirname(__file__), "../static/upload")
+    config_admin.add_view(MyFileAdmin(path, "/static/upload", name="files"))
