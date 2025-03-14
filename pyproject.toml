@@ -1,0 +1,37 @@
+[project]
+name = "gunlinuxblog"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "loki", email = "gunlinux@ya.ru" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "flask-admin>=1.6.1",
+    "flask-caching>=2.3.1",
+    "flask-login>=0.6.3",
+    "flask-migrate>=4.1.0",
+    "flask-sqlalchemy>=3.1.1",
+    "flask-wtf>=1.2.2",
+    "markdown>=3.7",
+    "python-dotenv>=1.0.1",
+]
+
+[project.scripts]
+gunlinuxblog = "gunlinuxblog:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["gunlinuxblog"]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.15.0",
+    "pyright>=1.1.396",
+    "pytest>=8.3.5",
+    "pytest-cov>=6.0.0",
+]

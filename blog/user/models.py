@@ -1,13 +1,15 @@
 """SqlAlchemy models."""
-from typing import TYPE_CHECKING, List
+
 import datetime
-from blog.extensions import db, login_manager
+from typing import TYPE_CHECKING, List
+
+from flask_login import UserMixin
 from sqlalchemy import DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
-from flask_login import UserMixin
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
+from blog.extensions import db, login_manager
 
 if TYPE_CHECKING:
     from blog.post.models import Post
@@ -21,7 +23,7 @@ def load_user(id):
 class User(UserMixin, db.Model):
     """orm model for users."""
 
-    __tablename__ = 'users'
+    __tablename__ = "users"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(nullable=False)
     password: Mapped[str]
@@ -44,4 +46,4 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password, password)
 
     def __str__(self):
-        return f'{self.name}'
+        return f"{self.name}"
