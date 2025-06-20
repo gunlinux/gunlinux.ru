@@ -1,0 +1,26 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - master #  or any other branch you want to deploy from
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: test secrests
+      run: |
+        echo ${{ secrets.USERNAME  }}
+
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+          ssh-private-key: |
+            ${{ secrets.PRIVATE_KEY_SSH }}
+
+    - name: Deploy to Server
+      run: |
+        ssh -o "StrictHostKeyChecking=no" "loki@gunlinux.ru" 'bash -s' < .github/deploy.sh
