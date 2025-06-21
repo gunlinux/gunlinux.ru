@@ -29,8 +29,8 @@ test-coverage:
 check: lint test
 
 run:
-	flask db upgrade
-	flask run --host="0.0.0.0" --debug 
+	uv run flask db upgrade
+	uv run flask run --host="0.0.0.0" --debug 
 
 docker-build:
 	docker build . --tag="gunlinux:$(VERSION)"
