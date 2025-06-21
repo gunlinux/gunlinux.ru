@@ -3,6 +3,7 @@ name: Deploy to Server
 on:
   workflow_run:
     workflows: ["Python Code quality"]
+    branches: [master]
     types:
       - completed
 jobs:
