@@ -371,6 +371,7 @@ dependencies = [
     { name = "markdown" },
     { name = "psycopg2-binary" },
     { name = "python-dotenv" },
+    { name = "wtforms" },
 ]
 
 [package.dev-dependencies]
@@ -394,6 +395,7 @@ requires-dist = [
     { name = "markdown", specifier = ">=3.7" },
     { name = "psycopg2-binary", specifier = ">=2.9.10" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
+    { name = "wtforms", specifier = "==2.2.1" },
 ]
 
 [package.metadata.requires-dev]
@@ -819,14 +821,11 @@ wheels = [
 
 [[package]]
 name = "wtforms"
-version = "3.2.1"
+version = "2.2.1"
 source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "markupsafe" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/01/e4/633d080897e769ed5712dcfad626e55dbd6cf45db0ff4d9884315c6a82da/wtforms-3.2.1.tar.gz", hash = "sha256:df3e6b70f3192e92623128123ec8dca3067df9cfadd43d59681e210cfb8d4682", size = 137801, upload-time = "2024-10-21T11:34:00.108Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cd/1d/7221354ebfc32b868740d02e44225c2ce00769b0d3dc370e463e2bc4b446/WTForms-2.2.1.tar.gz", hash = "sha256:0cdbac3e7f6878086c334aa25dc5a33869a3954e9d1e015130d65a69309b3b61", size = 156904, upload-time = "2018-06-07T22:16:35.601Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/08/c9/2088fb5645cd289c99ebe0d4cdcc723922a1d8e1beaefb0f6f76dff9b21c/wtforms-3.2.1-py3-none-any.whl", hash = "sha256:583bad77ba1dd7286463f21e11aa3043ca4869d03575921d1a1698d0715e0fd4", size = 152454, upload-time = "2024-10-21T11:33:58.44Z" },
+    { url = "https://files.pythonhosted.org/packages/9f/c8/dac5dce9908df1d9d48ec0e26e2a250839fa36ea2c602cc4f85ccfeb5c65/WTForms-2.2.1-py2.py3-none-any.whl", hash = "sha256:e3ee092c827582c50877cdbd49e9ce6d2c5c1f6561f849b3b068c1b8029626f1", size = 166353, upload-time = "2018-06-07T22:16:33.906Z" },
 ]
 
 [[package]]
