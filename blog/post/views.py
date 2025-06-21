@@ -15,6 +15,7 @@ from sqlalchemy import or_
 
 from blog import cache, db
 from blog.post.models import Post
+from blog.category.models import Category
 
 post = Blueprint("postb", __name__)
 
@@ -52,7 +53,10 @@ def view(alias=None, **kwargs):
         Post.alias == alias,
     )
     post = db.first_or_404(post_query)
-    return render_template("post.html", post=post, **kwargs)
+    page_category_obj = db.first_or_404(
+        sa.select(Category).where(Category.id == Post.category_id)
+    )
+    return render_template(page_category_obj.template, post=post, **kwargs)
 
 
 @post.route("/md/", methods=["POST", "GET"])
