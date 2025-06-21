@@ -1,4 +1,4 @@
-VERSION = 0.0.6
+VERSION = 0.0.7
 
 
 all: check
@@ -14,6 +14,10 @@ ruff-lint-format-check:
 
 lint-types:
 	uv run pyright .
+
+
+test:
+	FLASK_ENV=testing FLASK_APP=blog uv run pytest
 
 
 test-coverage:
