@@ -18,7 +18,7 @@ class Category(db.Model):
     title: Mapped[str] = mapped_column(default="")
     alias: Mapped[str] = mapped_column(unique=True)
     posts: Mapped[list["Post"]] = relationship()
-    template: Mapped[str] = mapped_column(default='post.html', nullable=False)
+    template: Mapped[str] = mapped_column(nullable=True)
 
     def __str__(self):
-        return f"Category(id={self.id}, title={self.title})"
+        return f"Category(id={self.id}, title={self.title}, template={self.template})"

@@ -24,7 +24,7 @@ def pages_gen(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         page_category = current_app.config["PAGE_CATEGORY"]
-        pages_query = sa.select(Post).where(Post.category_id == page_category)
+        pages_query = sa.select(Post).where(Post.category_id.in_(page_category))
         pages = db.session.scalars(pages_query).all()
         return f(pages=pages, *args, **kwargs)
 
@@ -47,16 +47,19 @@ def index(**kwargs):
 @cache.cached(timeout=50)
 @pages_gen
 def view(alias=None, **kwargs):
-    page_category = current_app.config["PAGE_CATEGORY"]
+    page_categories = current_app.config["PAGE_CATEGORY"]  # (1,3,)
     post_query = sa.select(Post).where(
-        or_(Post.publishedon.isnot(None), Post.category_id == page_category),
+        or_(Post.publishedon.isnot(None), Post.category_id.in_(page_categories)),
         Post.alias == alias,
     )
     post = db.first_or_404(post_query)
-    page_category_obj = db.first_or_404(
-        sa.select(Category).where(Category.id == Post.category_id)
-    )
-    return render_template(page_category_obj.template, post=post, **kwargs)
+
+    page_category_obj = db.session.scalars(
+        sa.select(Category).where(Category.id == post.category_id)
+    ).first()
+    if page_category_obj:
+        return render_template(page_category_obj.template, post=post, **kwargs)
+    return render_template("post.html", post=post, **kwargs)
 
 
 @post.route("/md/", methods=["POST", "GET"])

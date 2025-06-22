@@ -9,7 +9,9 @@
         <h1 class="post__title">{{post.pagetitle}}</h1>
         {% if post.category_id != config['PAGE_CATEGORY'] %}
           <div class="post__date">
-            {{post.publishedon.strftime("%B %d, %Y")}}
+            {% if post.publishedon %}
+              {{post.publishedon.strftime("%B %d, %Y")}}
+            {% endif %}
           </div>
         {% endif %}
 
@@ -30,4 +32,5 @@
 {% block scripts %}
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
     <script>
-        hljs.initHighlightingOnLoad(); </script> {% endblock %}
+        hljs.initHighlightingOnLoad(); </script>
+{% endblock %}
