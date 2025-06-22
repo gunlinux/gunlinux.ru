@@ -1,6 +1,6 @@
 """SqlAlchemy models."""
 
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -17,7 +17,8 @@ class Category(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(default="")
     alias: Mapped[str] = mapped_column(unique=True)
-    posts: Mapped[List["Post"]] = relationship()
+    posts: Mapped[list["Post"]] = relationship()
+    template: Mapped[str] = mapped_column(nullable=True)
 
     def __str__(self):
-        return f"Category(id={self.id}, title={self.title})"
+        return f"Category(id={self.id}, title={self.title}, template={self.template})"

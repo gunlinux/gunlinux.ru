@@ -1,4 +1,4 @@
-VERSION = 0.0.6
+VERSION = 0.0.7
 
 
 all: check
@@ -16,6 +16,10 @@ lint-types:
 	uv run pyright .
 
 
+test:
+	FLASK_ENV=testing FLASK_APP=blog uv run pytest
+
+
 test-coverage:
 	( \
     . venv/bin/activate;\
@@ -25,8 +29,8 @@ test-coverage:
 check: lint test
 
 run:
-	flask db upgrade
-	flask run --host="0.0.0.0" --debug 
+	uv run flask db upgrade
+	uv run flask run --host="0.0.0.0" --debug 
 
 docker-build:
 	docker build . --tag="gunlinux:$(VERSION)"
