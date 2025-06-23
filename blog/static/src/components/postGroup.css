@@ -1,13 +1,13 @@
 .postGroup {
-    margin-bottom: 3rem;
+  margin-bottom: 3rem;
 }
 
 .postGroup__title {
-    font-weight: bold;
+  font-weight: bold;
 }
 
 @media (max-width:767px) { 
-    .postGroup {
-        padding: 0 1rem;
-    }
+  .postGroup {
+    padding: 0 1rem;
+  }
 }
