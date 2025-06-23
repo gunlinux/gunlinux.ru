@@ -2,7 +2,7 @@
     padding: 0.5rem 0;
 }
 
-@media (max-width:767px) { 
+@media (max-width: 767px) { 
     .minipost__date { 
         display: block;
         float: none;
@@ -15,27 +15,27 @@
 
 .minipost__title {
     transition: all 0.2s ease-in-out;
-    color: #333;
+    color: var(--color-text-light);
     text-align: center;
     text-decoration: none;
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid var(--color-text-lighter);
 }
 
 .minipost__title:hover {
-    border-color: #000;
-    color: #000;
+    border-color: var(--color-text);
+    color: var(--color-text);
 }
 
 .minipost__date {
-    color: #ccc;
+    color: var(--color-text-lighter);
     float: right;
 }
 
 .minipost__position {
-    color: #ccc;
+    color: var(--color-text-lighter);
     float: right;
 }
 
 .minipost__content {
-  margin-top: 1em;
+    margin-top: 1em;
 }

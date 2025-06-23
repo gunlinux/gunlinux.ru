@@ -1,28 +1,27 @@
 .header {
     text-align: center;
-    font-size: 1.55rem;
+    font-size: calc(var(--fontSizeBase) * 1.55);
     padding: 1rem 0 5rem 0;
 }
 
 .header__logo {
-        font-weight: bold;
-        text-decoration: none;
-        color: #333;
-        float: left;
+    font-weight: bold;
+    text-decoration: none;
+    color: var(--color-text-light);
+    float: left;
 }
 
 .header__logo:hover {
-    color: #000;
+    color: var(--color-text);
 }
 
 .header__nav {
     float: right;
 }
 
-@media (max-width:767px) {
+@media (max-width: 767px) {
     .header {
         padding-left: 1rem;
         padding-right: 1rem;
     }
 }
- 

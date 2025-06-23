@@ -2,4 +2,10 @@
   font-family: 'Open Sans', 'Helvetica', 'Arial', sans-serif;
   --fontSizeBase: 1rem;
   --widthMain: 1180px;
+  /* Base Colors */
+  --color-text: #000;
+  --color-text-light: #444;
+  --color-text-lighter: #ccc;
+  --color-text-link: #474747;
+  --color-text-link-hover: #000;
 }

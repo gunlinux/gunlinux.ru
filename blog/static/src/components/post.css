@@ -2,21 +2,21 @@
     text-align: center;
     line-height: 1.1;
     letter-spacing: 0.15rem;
-    color: #000;
-    font-size: 3rem;
+    color: var(--color-text);
+    font-size: calc(var(--fontSizeBase) * 3);
     font-weight: 700;
     margin: 0.5rem 0;
 }
 
 .post__date {
-    color: #ccc;
+    color: var(--color-text-lighter);
     font-weight: 300;
     text-align: center;
 }
 
 .post__body {
     padding: 2rem 1rem;
-    color: #444;
+    color: var(--color-text-light);
     line-height: 1.4;
 }
 
@@ -25,7 +25,7 @@
     display: block;
     height: 0;
     padding: 0;
-    overflow: hidden
+    overflow: hidden;
 }
 
 .embed-responsive .embed-responsive-item, 
@@ -61,32 +61,32 @@
 }
 
 .post__body h1 {
-    font-size: 2rem;
+    font-size: calc(var(--fontSizeBase) * 2);
 }
 
 .post__body h2 {
-    font-size: 1.7rem;
+    font-size: calc(var(--fontSizeBase) * 1.7);
 }
 
 .post__body h3 {
-    font-size: 1.4rem;
+    font-size: calc(var(--fontSizeBase) * 1.4);
 }
 
 .post__body h4 {
-    font-size: 1.1rem;
+    font-size: calc(var(--fontSizeBase) * 1.1);
 }
 
 .post__body h5 {
-    font-size: 1rem;
+    font-size: var(--fontSizeBase);
     text-transform: uppercase;
 }
 
 .post__body a {
-    color: #474747;
+    color: var(--color-text-link);
     transition: color 0.3s ease;
 }
 
 .post__body a:hover {
-    color: #000;
+    color: var(--color-text-link-hover);
     text-decoration: none;
 }
