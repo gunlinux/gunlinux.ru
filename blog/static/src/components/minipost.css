@@ -30,3 +30,12 @@
     color: #ccc;
     float: right;
 }
+
+.minipost__position {
+    color: #ccc;
+    float: right;
+}
+
+.minipost__content {
+  margin-top: 1em;
+}

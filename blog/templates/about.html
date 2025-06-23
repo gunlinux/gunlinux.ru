@@ -1,0 +1,149 @@
+{% extends "layout.html" %}
+
+{% block styles %}
+ <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/default.min.css">
+{% endblock %}
+
+{% block content %}
+    <article class="page__content post">
+        <h1 class="post__title">{{post.pagetitle}}</h1>
+        {% if post.category_id != config['PAGE_CATEGORY'] %}
+          <div class="post__date">
+            {% if post.publishedon %}
+              {{post.publishedon.strftime("%B %d, %Y")}}
+            {% endif %}
+          </div>
+        {% endif %}
+
+        {% if post.category_id != config['PAGE_CATEGORY'] %}
+            <div class="post__tags tags">
+                {% for tag in post.tags %}
+                    <a class="tags__item" href="{{url_for('tagsb.view', alias=tag.alias)}}">{{tag}}</a>
+                {% endfor %}
+            </div>
+        {% endif %}
+        <div class="post__body">
+            {{ post.markdown|safe }}
+            <h4>Технологии:</h4>
+            <div class="about__tech">
+<a target="_blank" rel="noopener noreferrer nofollow" href="https://camo.githubusercontent.com/0d0779a129f1dcf6c31613b701fe0646fd4e4d2ed2a7cbd61b27fd5514baa938/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f707974686f6e2d3336373041303f7374796c653d666f722d7468652d6261646765266c6f676f3d707974686f6e266c6f676f436f6c6f723d666664643534"><img src="https://camo.githubusercontent.com/0d0779a129f1dcf6c31613b701fe0646fd4e4d2ed2a7cbd61b27fd5514baa938/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f707974686f6e2d3336373041303f7374796c653d666f722d7468652d6261646765266c6f676f3d707974686f6e266c6f676f436f6c6f723d666664643534" alt="Python" data-canonical-src="https://img.shields.io/badge/python-3670A0?style=for-the-badge&amp;logo=python&amp;logoColor=ffdd54" style="max-width: 100%;"></a> 
+<a target="_blank" rel="noopener noreferrer nofollow" href="https://camo.githubusercontent.com/caeca246a36e19149fde4f4bea527bd4b13ef7ed3ed059549d1cde0a5ff4abd8/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f666c61736b2d2532333030302e7376673f7374796c653d666f722d7468652d6261646765266c6f676f3d666c61736b266c6f676f436f6c6f723d7768697465"><img src="https://camo.githubusercontent.com/caeca246a36e19149fde4f4bea527bd4b13ef7ed3ed059549d1cde0a5ff4abd8/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f666c61736b2d2532333030302e7376673f7374796c653d666f722d7468652d6261646765266c6f676f3d666c61736b266c6f676f436f6c6f723d7768697465" alt="Flask" data-canonical-src="https://img.shields.io/badge/flask-%23000.svg?style=for-the-badge&amp;logo=flask&amp;logoColor=white" style="max-width: 100%;"></a>
+<a target="_blank" rel="noopener noreferrer nofollow" href="https://camo.githubusercontent.com/6359618ebe1fbaa0240c6110fb3661f3d412483fc61a127708cf4c23213bc195/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6e67696e782d2532333030393633392e7376673f7374796c653d666f722d7468652d6261646765266c6f676f3d6e67696e78266c6f676f436f6c6f723d7768697465"><img src="https://camo.githubusercontent.com/6359618ebe1fbaa0240c6110fb3661f3d412483fc61a127708cf4c23213bc195/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6e67696e782d2532333030393633392e7376673f7374796c653d666f722d7468652d6261646765266c6f676f3d6e67696e78266c6f676f436f6c6f723d7768697465" alt="Nginx" data-canonical-src="https://img.shields.io/badge/nginx-%23009639.svg?style=for-the-badge&amp;logo=nginx&amp;logoColor=white" style="max-width: 100%;"></a>
+<a target="_blank" rel="noopener noreferrer nofollow" href="https://camo.githubusercontent.com/0bb8ea52a0190d91bf72bab054dd33cbadd8392395d4ae862805a71918809217/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6769746c61622d2532333138313731372e7376673f7374796c653d666f722d7468652d6261646765266c6f676f3d6769746c6162266c6f676f436f6c6f723d7768697465"><img src="https://camo.githubusercontent.com/0bb8ea52a0190d91bf72bab054dd33cbadd8392395d4ae862805a71918809217/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6769746c61622d2532333138313731372e7376673f7374796c653d666f722d7468652d6261646765266c6f676f3d6769746c6162266c6f676f436f6c6f723d7768697465" alt="GitLab" data-canonical-src="https://img.shields.io/badge/gitlab-%23181717.svg?style=for-the-badge&amp;logo=gitlab&amp;logoColor=white" style="max-width: 100%;"></a>
+<a target="_blank" rel="noopener noreferrer nofollow" href="https://camo.githubusercontent.com/94d83dc5838e2784bee25fe9e019bc2fda128676f32cef2f06baa0f6f3849b8c/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6769742d2532334630353033332e7376673f7374796c653d666f722d7468652d6261646765266c6f676f3d676974266c6f676f436f6c6f723d7768697465"><img src="https://camo.githubusercontent.com/94d83dc5838e2784bee25fe9e019bc2fda128676f32cef2f06baa0f6f3849b8c/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6769742d2532334630353033332e7376673f7374796c653d666f722d7468652d6261646765266c6f676f3d676974266c6f676f436f6c6f723d7768697465" alt="Git" data-canonical-src="https://img.shields.io/badge/git-%23F05033.svg?style=for-the-badge&amp;logo=git&amp;logoColor=white" style="max-width: 100%;"></a>
+<a target="_blank" rel="noopener noreferrer nofollow" href="https://camo.githubusercontent.com/470df5ea3f00228b503351e80c51f1a7299fa8d513693f70cfd3fb3e2f61f041/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6269746275636b65742d2532333030343742332e7376673f7374796c653d666f722d7468652d6261646765266c6f676f3d6269746275636b6574266c6f676f436f6c6f723d7768697465"><img src="https://camo.githubusercontent.com/470df5ea3f00228b503351e80c51f1a7299fa8d513693f70cfd3fb3e2f61f041/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6269746275636b65742d2532333030343742332e7376673f7374796c653d666f722d7468652d6261646765266c6f676f3d6269746275636b6574266c6f676f436f6c6f723d7768697465" alt="Bitbucket" data-canonical-src="https://img.shields.io/badge/bitbucket-%230047B3.svg?style=for-the-badge&amp;logo=bitbucket&amp;logoColor=white" style="max-width: 100%;"></a>
+<a target="_blank" rel="noopener noreferrer nofollow" href="https://camo.githubusercontent.com/e39929a378d51fbc2b819c60b41e25514a8e24e2e42889cd936e9365dc0d438d/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f466173744150492d3030353537313f7374796c653d666f722d7468652d6261646765266c6f676f3d66617374617069"><img src="https://camo.githubusercontent.com/e39929a378d51fbc2b819c60b41e25514a8e24e2e42889cd936e9365dc0d438d/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f466173744150492d3030353537313f7374796c653d666f722d7468652d6261646765266c6f676f3d66617374617069" alt="FastAPI" data-canonical-src="https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&amp;logo=fastapi" style="max-width: 100%;"></a>
+<a target="_blank" rel="noopener noreferrer nofollow" href="https://camo.githubusercontent.com/de04bdc93d7c7da16e87e057b7de10f8d394fe3df1317e99bb9cbf2eb002bf5c/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6c75612d2532333243324437322e7376673f7374796c653d666f722d7468652d6261646765266c6f676f3d6c7561266c6f676f436f6c6f723d7768697465"><img src="https://camo.githubusercontent.com/de04bdc93d7c7da16e87e057b7de10f8d394fe3df1317e99bb9cbf2eb002bf5c/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6c75612d2532333243324437322e7376673f7374796c653d666f722d7468652d6261646765266c6f676f3d6c7561266c6f676f436f6c6f723d7768697465" alt="Lua" data-canonical-src="https://img.shields.io/badge/lua-%232C2D72.svg?style=for-the-badge&amp;logo=lua&amp;logoColor=white" style="max-width: 100%;"></a> <a target="_blank" rel="noopener noreferrer nofollow" href="https://camo.githubusercontent.com/5c82d764395b83e0de24cc28ef27c22f9ccd7c1a9a755a2eaa967b93c7977c7b/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f2d62747725323069253230757365253230617263682d3137393344313f7374796c653d666f722d7468652d6261646765266c6f676f3d617263686c696e7578266c6f676f436f6c6f723d7768697465"><img src="https://camo.githubusercontent.com/5c82d764395b83e0de24cc28ef27c22f9ccd7c1a9a755a2eaa967b93c7977c7b/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f2d62747725323069253230757365253230617263682d3137393344313f7374796c653d666f722d7468652d6261646765266c6f676f3d617263686c696e7578266c6f676f436f6c6f723d7768697465" alt="arch" data-canonical-src="https://img.shields.io/badge/-btw%20i%20use%20arch-1793D1?style=for-the-badge&amp;logo=archlinux&amp;logoColor=white" style="max-width: 100%;"></a> 
+<a target="_blank" rel="noopener noreferrer nofollow" href="https://camo.githubusercontent.com/3a92bbfe24b0e39eb989715352dea4d9572093d3082b52156168f3284d691769/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f2d4e656f76696d2d3537413134333f7374796c653d666f722d7468652d6261646765266c6f676f3d4e656f76696d266c6f676f436f6c6f723d7768697465"><img src="https://camo.githubusercontent.com/3a92bbfe24b0e39eb989715352dea4d9572093d3082b52156168f3284d691769/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f2d4e656f76696d2d3537413134333f7374796c653d666f722d7468652d6261646765266c6f676f3d4e656f76696d266c6f676f436f6c6f723d7768697465" alt="Neovim" data-canonical-src="https://img.shields.io/badge/-Neovim-57A143?style=for-the-badge&amp;logo=Neovim&amp;logoColor=white" style="max-width: 100%;"></a> <a target="_blank" rel="noopener noreferrer nofollow" href="https://camo.githubusercontent.com/c233c1f6692bdc8a71f4396075be4b1428445b565197f5b3d8bf13d31f1cc04f/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f2d446f636b65722d3035353239633f7374796c653d666f722d7468652d6261646765266c6f676f3d646f636b6572266c6f676f436f6c6f723d7768697465"><img src="https://camo.githubusercontent.com/c233c1f6692bdc8a71f4396075be4b1428445b565197f5b3d8bf13d31f1cc04f/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f2d446f636b65722d3035353239633f7374796c653d666f722d7468652d6261646765266c6f676f3d646f636b6572266c6f676f436f6c6f723d7768697465" alt="Docker" data-canonical-src="https://img.shields.io/badge/-Docker-05529c?style=for-the-badge&amp;logo=docker&amp;logoColor=white" style="max-width: 100%;"></a>
+            </div>
+
+            <div class="postGroup">
+              <h3 class="postGroup__title">2024–...</h3>
+              <div class="postGroup__content">
+                  <div class="minipost">
+                      <a class="minipost__title" href="https://domclick.ru/" target="_blank">
+                        Домклик
+                      </a>
+                      <span class="minipost__position">
+                       python developer 
+                      </span>
+                      <p class="minipost__content">
+                        витрины агентов/агентств недвижимости
+                      </p>
+                  </div>
+              </div>
+            </div>
+
+            <div class="postGroup">
+              <h3 class="postGroup__title">2022–2024</h3>
+              <div class="postGroup__content">
+                  <div class="minipost">
+                    <a class="minipost__title" href="https://avantelecom.ru/" target="_blank">
+                        Avantelecom
+                      </a>
+                      <span class="minipost__position">
+                       python developer 
+                      </span>
+                      <p class="minipost__content">
+                      Разработка ядра колл-центра, интеграции AI.
+                      </p>
+
+                  </div>
+              </div>
+            </div>
+
+            <div class="postGroup">
+              <h3 class="postGroup__title">2017–2022</h3>
+              <div class="postGroup__content">
+                  <div class="minipost">
+                      <a class="minipost__title" href="#">
+                        Ритейл
+                      </a>
+                      <span class="minipost__position">
+                        системный администратор
+                      </span>
+
+                      <p class="minipost__content">
+                        Администрирование сетей, баз данных, автоматизация
+                      </p>
+
+                  </div>
+              </div>
+            </div>
+
+            <div class="postGroup">
+              <h3 class="postGroup__title">2014–2017</h3>
+              <div class="postGroup__content">
+                  <div class="minipost">
+                      <a class="minipost__title" href="#">
+                        фриланс
+                      </a>
+                      <p class="minipost__content">
+                        Верстка, фулстек-разработка, разработка на python
+                      </p>
+
+                  </div>
+              </div>
+            </div>
+            <div class="postGroup">
+              <h3 class="postGroup__title">2011–2014</h3>
+              <div class="postGroup__content">
+                  <div class="minipost">
+                      <a class="minipost__title" href="https://baikal-Web.ru" target="_blank">
+                        Веб-студия Baikal-Web
+                      </a>
+                      <span class="minipost__position">
+                        фулстек разработчик/ системный администратор
+                      </span>
+                      <p class="minipost__content">
+                        Верстка, администрирование, разработка на python
+                      </p>
+                  </div>
+              </div>
+            </div>
+            <div class="postGroup">
+              <h3 class="postGroup__title">2006–2011</h3>
+              <div class="postGroup__content">
+                  <div class="minipost">
+                      <a class="minipost__title" href="/brand_new_day">
+                        Веб-студия Baikal-Web
+                      </a>
+                      <span class="minipost__position">
+                        математик-программист
+                      </span>
+                      <p class="minipost__content">
+                        Неоконченное высшее
+                      </p>
+                  </div>
+              </div>
+            </div>
+
+
+
+       </div>
+
+    </article>
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}
