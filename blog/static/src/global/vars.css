@@ -1,5 +1,37 @@
 :root {
   font-family: 'Open Sans', 'Helvetica', 'Arial', sans-serif;
   --fontSizeBase: 1rem;
-  --widthMain: 1180px;
+  --widthMain: 1380px;
+  /* Base Colors */
+  --color-text: #000;
+  --color-text-light: #444;
+  --color-text-lighter: #ccc;
+  --color-text-link: #474747;
+  --color-text-link-hover: #000;
+}
+
+[data-theme="dark"] {
+  /* Dark theme color overrides */
+  --color-text: #f0f0f0;
+  --color-text-light: #b0b0b0;
+  --color-text-lighter: #606060;
+  --color-text-link: #a0a0a0;
+  --color-text-link-hover: #ffffff;
+
+  /* Optional dark theme additions */
+  background-color: #121212;
+  color-scheme: dark;
+}
+
+/* System preference fallback */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-text: #f0f0f0;
+    --color-text-light: #b0b0b0;
+    --color-text-lighter: #606060;
+    --color-text-link: #a0a0a0;
+    --color-text-link-hover: #ffffff;
+    background-color: #121212;
+    color-scheme: dark;
+  }
 }
