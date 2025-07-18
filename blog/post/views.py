@@ -38,7 +38,7 @@ def index(**kwargs):
     post_query = sa.select(Post).where(
         Post.publishedon.isnot(None),
         Post.category_id.is_(None),
-    )
+    ).order_by(Post.publishedon.desc())
     posts = db.session.scalars(post_query).all()
     return render_template("posts.html", posts=posts, **kwargs)
 
