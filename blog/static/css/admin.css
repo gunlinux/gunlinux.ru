@@ -56,3 +56,89 @@
 .navbar-toggler-icon {
   filter: invert(1);
 }
+
+.md-editor {
+  border-color: #444;
+  background: #1e1e1e;
+  color: #ccc;
+}
+
+.md-editor>.md-header,
+.md-editor .md-footer {
+  background: #2a2a2a;
+  color: #ccc;
+}
+
+.md-editor>.md-preview {
+  background: #1e1e1e;
+  border-top: 1px dashed #444;
+  border-bottom: 1px dashed #444;
+  color: #ccc;
+}
+
+.md-editor>textarea {
+  background: #2a2a2a;
+  color: #eee;
+  border-top: 1px dashed #444;
+  border-bottom: 1px dashed #444;
+}
+
+.md-editor>textarea:focus {
+  background: #1e1e1e;
+  color: #fff;
+}
+
+.md-editor .md-controls .md-control {
+  color: #888;
+}
+
+.md-editor .md-controls .md-control:hover {
+  color: #eee;
+}
+
+.md-editor.md-fullscreen-mode {
+  background: #1e1e1e !important;
+}
+
+.md-editor.md-fullscreen-mode .md-input,
+.md-editor.md-fullscreen-mode .md-preview {
+  background: #1e1e1e !important;
+  color: #ccc;
+}
+
+.md-editor.md-fullscreen-mode .md-input:focus,
+.md-editor.md-fullscreen-mode .md-input:hover {
+  background: #1e1e1e !important;
+  color: #eee;
+}
+
+.md-editor.md-fullscreen-mode .md-preview {
+  color: #eee;
+}
+
+.md-editor.md-fullscreen-mode .btn {
+  color: #888;
+}
+
+.md-editor.md-fullscreen-mode .btn:hover,
+.md-editor.md-fullscreen-mode .btn:focus,
+.md-editor.md-fullscreen-mode .btn.active {
+  color: #fff;
+}
+
+.md-editor.md-fullscreen-mode .md-fullscreen-controls a {
+  color: #888;
+}
+
+.md-editor.md-fullscreen-mode .md-fullscreen-controls a:hover {
+  color: #fff;
+}
+
+.md-editor > .md-preview,
+.md-editor.md-fullscreen-mode .md-input, .md-editor.md-fullscreen-mode .md-preview,
+.md-editor.md-fullscreen-mode .md-input:focus,
+.md-editor.md-fullscreen-mode .md-input:hover,
+textarea #content,
+.md-editor.md-fullscreen-mode {
+  background: #222222 !important;
+}
