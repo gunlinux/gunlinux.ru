@@ -21,7 +21,9 @@
   border-bottom: 1px solid var(--color-text-lighter);
 }
 
-.minipost__title:hover {
+.minipost__title:hover,
+.minipost__title:visited {
+  background-color: red;
   border-color: var(--color-text);
   color: var(--color-text);
 }
