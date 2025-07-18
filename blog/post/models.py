@@ -16,6 +16,9 @@ if TYPE_CHECKING:
     from blog.user.models import User
 
 
+MARKDOWN_EXTENSIONS = ["markdown.extensions.fenced_code"]
+
+
 class Post(db.Model):
     """orm model for blog post."""
 
@@ -42,7 +45,7 @@ class Post(db.Model):
 
     @property
     def markdown(self):
-        return markdown.markdown(self.content)
+        return markdown.markdown(self.content, extensions=MARKDOWN_EXTENSIONS)
 
     def __str__(self):
         return f"{self.pagetitle}"
