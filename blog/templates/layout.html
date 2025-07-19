@@ -20,6 +20,7 @@
     <link rel="stylesheet" href="/static/src/components/nav.css">
     <link rel="stylesheet" href="/static/src/components/tags.css">
     <link rel="stylesheet" href="/static/src/components/refs.css">
+    <link rel="stylesheet" href="/static/src/components/footer.css">
     {% block styles %}
     {% endblock %}
 </head>
@@ -39,5 +40,6 @@
     {% endblock %}
     {% block scripts %}
     {% endblock %}
-</body>
+    {% include "footer.html" %}
+    </body>
 </html>
