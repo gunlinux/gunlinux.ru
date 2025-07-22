@@ -6,11 +6,11 @@ basedir = path.abspath(path.dirname(__file__))
 
 
 class Config(object):
-    CACHE_TYPE = "NullCache"
-    PORT = environ.get("PORT") or "5555"
-    SECRET_KEY = environ.get("SECRET_KEY") or "hard to guess string"
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_ECHO = False
+    CACHE_TYPE: str = "NullCache"
+    PORT: str = environ.get("PORT") or "5555"
+    SECRET_KEY: str = environ.get("SECRET_KEY") or "hard to guess string"
+    SQLALCHEMY_TRACK_MODIFICATIONS: bool = False
+    SQLALCHEMY_ECHO: bool = False
     YANDEX_VERIFICATION: str | None = environ.get("YANDEX_VERIFICATION", None)
 
     PAGE_CATEGORY: list[int] = [
@@ -19,23 +19,23 @@ class Config(object):
 
 
 class DevelopmentConfig(Config):
-    DEBUG = True
-    default_db_uri = f"sqlite:///{path.join(basedir, '../tmp/dev.db')}"
-    SQLALCHEMY_DATABASE_URI = environ.get("SQLALCHEMY_DATABASE_URI", default_db_uri)
+    DEBUG: bool = True
+    default_db_uri: str = f"sqlite:///{path.join(basedir, '../tmp/dev.db')}"
+    SQLALCHEMY_DATABASE_URI: str = environ.get("SQLALCHEMY_DATABASE_URI", default_db_uri)
 
 
 class TestingConfig(Config):
-    TESTING = True
-    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    TESTING: bool = True
+    SQLALCHEMY_DATABASE_URI: str = "sqlite:///:memory:"
     PAGE_CATEGORY: list[int] = [
         1,
     ]
 
 
 class ProductionConfig(Config):
-    SQLALCHEMY_DATABASE_URI = environ.get("SQLALCHEMY_DATABASE_URI", None)
-    CACHE_TYPE = "SimpleCache"
-    CACHE_DEFAULT_TIMEOUT = 300
+    SQLALCHEMY_DATABASE_URI: str | None = environ.get("SQLALCHEMY_DATABASE_URI", None)
+    CACHE_TYPE: str = "SimpleCache"
+    CACHE_DEFAULT_TIMEOUT: int = 300
 
 
 config = {
