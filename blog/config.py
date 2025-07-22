@@ -12,6 +12,7 @@ class Config(object):
     SQLALCHEMY_TRACK_MODIFICATIONS: bool = False
     SQLALCHEMY_ECHO: bool = False
     YANDEX_VERIFICATION: str | None = environ.get("YANDEX_VERIFICATION", None)
+    YANDEX_METRIKA: str = environ.get("YANDEX_METRIKA", "76938046")
 
     PAGE_CATEGORY: list[int] = [
         int(c) for c in environ.get("PAGE_CATEGORY", "0").split(",")
