@@ -36,7 +36,7 @@ def post_helper(prefix="post", page=False):
 
 def test_post(test_client):
     with test_client.application.app_context():
-        post = post_helper()
+        post = post_helper(page=False)
         db.session.add(post)
         db.session.commit()
     rv = test_client.get("/post_alias")

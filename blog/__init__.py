@@ -8,7 +8,7 @@ from flask import Flask
 
 from blog.admin import create_admin
 from blog.config import config
-from blog.extensions import admin_ext, cache, db, login_manager, migrate
+from blog.extensions import admin_ext, cache, db, login_manager, migrate, flask_sitemap
 from blog.post.views import post
 from blog.tags.views import tagsb
 from blog.user.views import user_blueprint
@@ -25,6 +25,7 @@ def configure_extensions(app):
     migrate.init_app(app=app, db=db)
     login_manager.init_app(app=app)
     login_manager.login_view = "userb.index"  # type: ignore
+    flask_sitemap.init_app(app)
 
 
 def create_app():

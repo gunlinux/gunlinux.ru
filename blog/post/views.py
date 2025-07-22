@@ -10,8 +10,10 @@ from flask import (
     make_response,
     render_template,
     request,
+    url_for,
 )
 from sqlalchemy import or_
+from blog.extensions import flask_sitemap
 
 from blog import cache, db
 from blog.post.models import Post
@@ -61,9 +63,30 @@ def view(alias=None, **kwargs):
     page_category_obj = db.session.scalars(
         sa.select(Category).where(Category.id == post.category_id)
     ).first()
-    if page_category_obj:
+    if page_category_obj and page_category_obj.template:
         return render_template(page_category_obj.template, post=post, **kwargs)
     return render_template("post.html", post=post, **kwargs)
+
+
+@flask_sitemap.register_generator
+def site_map_gen():
+    page_category = current_app.config["PAGE_CATEGORY"]
+    pages_query = sa.select(Post).where(Post.category_id.in_(page_category))
+    pages = db.session.scalars(pages_query).all()
+    for page in pages:
+        yield url_for("postb.view", alias=page.alias)
+    post_query = (
+        sa.select(Post)
+        .where(
+            Post.publishedon.isnot(None),
+            Post.category_id.is_(None),
+        )
+        .order_by(Post.publishedon.desc())
+    )
+
+    posts = db.session.scalars(post_query).all()
+    for post in posts:
+        yield url_for("postb.view", alias=post.alias)
 
 
 @post.route("/md/", methods=["POST", "GET"])
