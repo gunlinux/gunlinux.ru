@@ -11,6 +11,8 @@ class Config(object):
     SECRET_KEY = environ.get("SECRET_KEY") or "hard to guess string"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = False
+    YANDEX_VERIFICATION: str | None = environ.get("YANDEX_VERIFICATION", None)
+
     PAGE_CATEGORY: list[int] = [
         int(c) for c in environ.get("PAGE_CATEGORY", "0").split(",")
     ]

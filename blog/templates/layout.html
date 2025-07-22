@@ -5,11 +5,15 @@
     <meta charset="utf-8">
     <title>{% if post %}{{post.pagetitle}}{% else %}  Неразумный перфекционизм{% endif %}</title>
     <meta name="description" content="{% if post %}{{post.pagetitle}}{% endif %}">
+    {% if config['YANDEX_VERIFICATION'] %}
+      <meta name="yandex-verification" content="{{config['YANDEX_VERIFICATION']}}"/>
+    {% endif %}
     <link href="/static/img/favicon.ico" rel="shortcut icon" />
     <base href="{{config['BASE']}}">
     <link rel="stylesheet" href="/static/src/global/normalize.css">
     <link rel="stylesheet" href="/static/src/global/fonts.css">
     <link rel="stylesheet" href="/static/src/global/vars.css">
+
     <link rel="stylesheet" href="/static/src/global/reboot.css">
     <link rel="stylesheet" href="/static/src/global/global.css">
     <link rel="stylesheet" href="/static/src/components/header.css">
