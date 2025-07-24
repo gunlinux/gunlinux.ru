@@ -4,7 +4,7 @@
     <div class="footer__links">
       {% for icon in icons %}
         <a href="{{icon.url}}" title="{{icon.title}}" target="_blank" aria-label="{{icon.title}}" class="nav__link">
-          {{icon.content}}
+          {{icon.content|safe}}
         </a>
       {% endfor %}
     </div>
