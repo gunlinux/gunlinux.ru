@@ -5,7 +5,7 @@ from flask_login import current_user
 
 from blog.category.models import Category
 from blog.extensions import db
-from blog.post.models import Post
+from blog.post.models import Post, Icon
 from blog.tags.models import Tag
 from blog.user.models import User
 
@@ -40,5 +40,6 @@ def create_admin(config_admin):
     config_admin.add_view(UserView(Category, db.session, endpoint=""))
     config_admin.add_view(UserView(Tag, db.session, endpoint=""))
     config_admin.add_view(UserView(User, db.session, endpoint=""))
+    config_admin.add_view(UserView(Icon, db.session, endpoint=""))
     path = os.path.join(os.path.dirname(__file__), "../static/upload")
     config_admin.add_view(MyFileAdmin(path, "/static/upload", name="files"))

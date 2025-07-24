@@ -2,21 +2,11 @@
 
   <div class="footer__content">
     <div class="footer__links">
-      <a href="https://t.me/gunlinuxlog" class="nav__link" target="_blank" aria-label="Telegram">
-        <svg class="footer__icon" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M9.036 16.395l-.393 4.48c.563 0 .806-.24 1.1-.527l2.642-2.544 5.48 4.017c1.006.553 1.72.263 1.962-.928l3.553-16.667c.32-1.508-.547-2.102-1.512-1.743L2.06 9.367c-1.47.575-1.455 1.4-.256 1.772l4.882 1.525 11.34-7.137c.534-.33 1.02-.147.62.21L9.036 16.395z"/>
-        </svg>
-      </a>
-      <a href="https://www.youtube.com/@gunlinux" class="nav__link" target="_blank" aria-label="YouTube">
-        <svg class="footer__icon" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M19.6 3H4.4C3 3 2 4 2 5.4v13.2C2 20 3 21 4.4 21h15.2c1.4 0 2.4-1 2.4-2.4V5.4C22 4 21 3 19.6 3zm-8.6 14V7l7 5-7 5z"/>
-        </svg>
-      </a>
-      <a href="https://twitch.tv/gunlinux" class="nav__link" target="_blank" aria-label="Twitch">
-        <svg class="footer__icon" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M4 2L2 6v16h6v2h4l2-2h4l4-4V2H4zm16 12l-2 2h-4l-2 2v-2H6V4h14v10zm-3-6h-2v4h2V8zm-4 0h-2v4h2V8z"/>
-        </svg>
-      </a>
+      {% for icon in icons %}
+        <a href="{{icon.url}}" title="{{icon.title}}" target="_blank" aria-label="{{icon.title}}" class="nav__link">
+          {{icon.content}}
+        </a>
+      {% endfor %}
     </div>
   </div>
 </footer>
