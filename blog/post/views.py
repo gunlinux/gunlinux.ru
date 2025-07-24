@@ -16,7 +16,7 @@ from sqlalchemy import or_
 from blog.extensions import flask_sitemap
 
 from blog import cache, db
-from blog.post.models import Post
+from blog.post.models import Post, Icon
 from blog.category.models import Category
 
 post = Blueprint("postb", __name__)
@@ -28,7 +28,11 @@ def pages_gen(f):
         page_category = current_app.config["PAGE_CATEGORY"]
         pages_query = sa.select(Post).where(Post.category_id.in_(page_category))
         pages = db.session.scalars(pages_query).all()
-        return f(pages=pages, *args, **kwargs)
+
+        icons_query = sa.select(Icon)
+        icons = db.session.scalars(icons_query).all()
+
+        return f(pages=pages, icons=icons, *args, **kwargs)
 
     return decorated_function
 

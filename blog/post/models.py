@@ -1,6 +1,7 @@
 # blog/posts/models.py
 import datetime
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
+import typing
 
 import markdown
 from sqlalchemy import DateTime, ForeignKey, Text
@@ -22,9 +23,10 @@ MARKDOWN_EXTENSIONS = ["markdown.extensions.fenced_code"]
 class Post(db.Model):
     """orm model for blog post."""
 
-    __tablename__ = "posts"
+    __tablename__ = "posts"  # pyright: ignore[reportUnannotatedClassAttribute]
+
     id: Mapped[int] = mapped_column(primary_key=True)
-    pagetitle: Mapped[str]
+    pagetitle: Mapped[str] = mapped_column(nullable=False, unique=False)
     alias: Mapped[str] = mapped_column(nullable=False, unique=True)
     content: Mapped[str] = mapped_column(type_=Text)
     createdon: Mapped[datetime.datetime] = mapped_column(
@@ -39,7 +41,7 @@ class Post(db.Model):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=True)
     user: Mapped["User"] = relationship(back_populates="posts")
     category: Mapped["Category"] = relationship(back_populates="posts")
-    tags: Mapped[List["Tag"]] = relationship(
+    tags: Mapped[list["Tag"]] = relationship(
         secondary=posts_tags, back_populates="posts"
     )
 
@@ -47,5 +49,22 @@ class Post(db.Model):
     def markdown(self):
         return markdown.markdown(self.content, extensions=MARKDOWN_EXTENSIONS)
 
+    @typing.override
     def __str__(self):
         return f"{self.pagetitle}"
+
+
+class Icon(db.Model):
+    """orm model for icons."""
+
+    __tablename__ = "icons"  # pyright: ignore[reportUnannotatedClassAttribute]
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(nullable=False, unique=True)
+
+    url: Mapped[str] = mapped_column(nullable=False, unique=True)
+    content: Mapped[str] = mapped_column(type_=Text)
+
+    @typing.override
+    def __str__(self):
+        return f"{self.id} {self.title}"
