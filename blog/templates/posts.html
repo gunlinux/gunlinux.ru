@@ -5,7 +5,7 @@
         {% if tag %}
             <h3 class="page__title">Посты c тэгом: {{tag.title}}</h3>
         {% endif %}
-    {% for group in posts|groupby('publishedon.year')|sort(reverse=True)  %}
+    {% for group in posts|selectattr('publishedon')|groupby('publishedon.year')|sort(reverse=True)  %}
         <div class="postGroup">
             <h3 class="postGroup__title">{{group.grouper}}</h3>
             <div class="postGroup__content">

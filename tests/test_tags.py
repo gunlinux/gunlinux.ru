@@ -25,13 +25,28 @@ def test_get_posts_by_tag(test_client):
         tag = Tag(title="test-tag", alias="test-tag")  # type: ignore
         db.session.add(tag)
 
-        post1 = Post(pagetitle="Post 1", alias="post-1", content="Content 1")  # type: ignore
+        post1 = Post(
+            pagetitle="Post 1",
+            alias="post-1",
+            content="Content 1",
+            publishedon=db.func.now(),
+        )  # type: ignore
         post1.tags.append(tag)
 
-        post2 = Post(pagetitle="Post 2", alias="post-2", content="Content 2")  # type: ignore
+        post2 = Post(
+            pagetitle="Post 2",
+            alias="post-2",
+            content="Content 2",
+            publishedon=db.func.now(),
+        )  # type: ignore
         post2.tags.append(tag)
 
-        post3 = Post(pagetitle="Post 3", alias="post-3", content="Content 3")  # type: ignore
+        post3 = Post(
+            pagetitle="Post 3",
+            alias="post-3",
+            content="Content 3",
+            publishedon=db.func.now(),
+        )  # type: ignore
 
         db.session.add(post1)
         db.session.add(post2)
@@ -53,7 +68,12 @@ def test_post_have_tag(test_client):
         tag2 = Tag(title="test-tag2", alias="test-tag2")  # type: ignore
         db.session.add(tag2)
 
-        post1 = Post(pagetitle="Post 1", alias="post-1", content="Content 1")  # type: ignore
+        post1 = Post(
+            pagetitle="Post 1",
+            alias="post-1",
+            content="Content 1",
+            publishedon=db.func.now(),
+        )  # type: ignore
         post1.tags.append(tag1)
 
         db.session.add(post1)

@@ -32,5 +32,4 @@ class Post:
     def __post_init__(self):
         if self.createdon is None:
             self.createdon = datetime.datetime.now(datetime.timezone.utc)
-        if self.publishedon is None:
-            self.publishedon = datetime.datetime.now(datetime.timezone.utc)
+        # Don't set default for publishedon - it should be None for unpublished posts

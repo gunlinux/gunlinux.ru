@@ -1,19 +1,15 @@
 # blog/posts/models.py
-import datetime
 import typing
 from typing import TYPE_CHECKING
 
 import markdown
 from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
 
 from blog.extensions import db
 from blog.infrastructure.database import get_posts_table, get_posts_tags_table
 
 if TYPE_CHECKING:
-    from blog.category.models import Category
-    from blog.tags.models import Tag
-    from blog.user.models import User
+    pass
 
 
 MARKDOWN_EXTENSIONS = ["markdown.extensions.fenced_code"]
@@ -26,7 +22,9 @@ class Post(db.Model):
 
     user = relationship("User", back_populates="posts")
     category = relationship("Category", back_populates="posts")
-    tags = relationship("Tag", secondary=get_posts_tags_table(db.metadata), back_populates="posts")
+    tags = relationship(
+        "Tag", secondary=get_posts_tags_table(db.metadata), back_populates="posts"
+    )
 
     @property
     def markdown(self):

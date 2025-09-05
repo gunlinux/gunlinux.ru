@@ -29,6 +29,8 @@ def post_helper(prefix="post", page=False):
     post.pagetitle = f"{prefix}_title"
     post.alias = f"{prefix}_alias"
     post.content = f"{prefix}_content"
+    # All posts should be published for tests
+    post.publishedon = db.func.now()
     if page:
         post.category_id = 1
     return post
