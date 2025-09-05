@@ -1,5 +1,5 @@
 # blog/tags/models.py
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -17,7 +17,7 @@ class Tag(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str]
     alias: Mapped[str] = mapped_column(unique=True)
-    posts: Mapped[List["Post"]] = relationship(
+    posts: Mapped[list["Post"]] = relationship(
         secondary=posts_tags, back_populates="tags"
     )
 

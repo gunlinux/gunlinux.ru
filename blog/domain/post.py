@@ -1,32 +1,33 @@
 """Domain models for the Post entity."""
 
 from dataclasses import dataclass
-from typing import Optional, List
 import datetime
+from typing import TYPE_CHECKING
 
-from blog.category.models import Category
-from blog.tags.models import Tag
-from blog.user.models import User
+if TYPE_CHECKING:
+    from blog.category.models import Category
+    from blog.tags.models import Tag
+    from blog.user.models import User
 
 
 @dataclass
 class Post:
     """Domain model for blog post."""
 
-    id: Optional[int] = None
+    id: int | None = None
     pagetitle: str = ""
     alias: str = ""
     content: str = ""
-    createdon: Optional[datetime.datetime] = None
-    publishedon: Optional[datetime.datetime] = None
-    category_id: Optional[int] = None
-    user_id: Optional[int] = None
+    createdon: datetime.datetime | None = None
+    publishedon: datetime.datetime | None = None
+    category_id: int | None = None
+    user_id: int | None = None
 
     # These would typically be loaded separately in a real implementation
     # to avoid circular dependencies
-    user: Optional[User] = None
-    category: Optional[Category] = None
-    tags: Optional[List[Tag]] = None
+    user: "User | None" = None
+    category: "Category | None" = None
+    tags: "list[Tag] | None" = None
 
     def __post_init__(self):
         if self.createdon is None:

@@ -47,7 +47,9 @@ class CategoryRepository:
         category_orm = CategoryORM()
         category_orm.title = category.title
         category_orm.alias = category.alias
-        category_orm.template = category.template
+        # Handle the case where template might be None
+        if category.template is not None:
+            category_orm.template = category.template
         self.session.add(category_orm)
         self.session.flush()  # Get the ID without committing
         category.id = category_orm.id
@@ -62,7 +64,9 @@ class CategoryRepository:
 
         category_orm.title = category.title
         category_orm.alias = category.alias
-        category_orm.template = category.template
+        # Handle the case where template might be None
+        if category.template is not None:
+            category_orm.template = category.template
         self.session.flush()
         return category
 

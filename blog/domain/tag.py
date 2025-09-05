@@ -2,8 +2,10 @@
 
 from dataclasses import dataclass
 import typing
+from typing import TYPE_CHECKING
 
-from blog.post.models import Post
+if TYPE_CHECKING:
+    from blog.post.models import Post
 
 
 @dataclass
@@ -14,7 +16,7 @@ class Tag:
     title: str = ""
     alias: str = ""
 
-    posts: list["Post"] | None = None
+    posts: "list[Post] | None" = None
 
     @typing.override
     def __str__(self):

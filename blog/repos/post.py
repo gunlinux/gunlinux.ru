@@ -1,7 +1,5 @@
 """Repository for Post entities."""
 
-from typing import List, Optional
-
 import sqlalchemy as sa
 from sqlalchemy.orm import Session
 
@@ -13,10 +11,10 @@ from blog.domain.post import Post
 class PostRepository:
     """Repository for Post entities."""
 
-    def __init__(self, session: Optional[Session] = None):
+    def __init__(self, session: Session | None = None):
         self.session = session or db.session
 
-    def get_by_id(self, post_id: int) -> Optional[Post]:
+    def get_by_id(self, post_id: int) -> Post | None:
         """Get a post by its ID."""
         stmt = sa.select(PostORM).where(PostORM.id == post_id)
         post_orm = self.session.scalar(stmt)
@@ -24,7 +22,7 @@ class PostRepository:
             return self._to_domain_model(post_orm)
         return None
 
-    def get_by_alias(self, alias: str) -> Optional[Post]:
+    def get_by_alias(self, alias: str) -> Post | None:
         """Get a post by its alias."""
         stmt = sa.select(PostORM).where(PostORM.alias == alias)
         post_orm = self.session.scalar(stmt)
@@ -32,13 +30,13 @@ class PostRepository:
             return self._to_domain_model(post_orm)
         return None
 
-    def get_all(self) -> List[Post]:
+    def get_all(self) -> list[Post]:
         """Get all posts."""
         stmt = sa.select(PostORM)
         posts_orm = self.session.scalars(stmt).all()
         return [self._to_domain_model(post_orm) for post_orm in posts_orm]
 
-    def get_published_posts(self) -> List[Post]:
+    def get_published_posts(self) -> list[Post]:
         """Get all published posts ordered by published date."""
         stmt = (
             sa.select(PostORM)
@@ -51,7 +49,7 @@ class PostRepository:
         posts_orm = self.session.scalars(stmt).all()
         return [self._to_domain_model(post_orm) for post_orm in posts_orm]
 
-    def get_page_posts(self, page_category_ids: List[int]) -> List[Post]:
+    def get_page_posts(self, page_category_ids: list[int]) -> list[Post]:
         """Get posts that are pages (in specific categories)."""
         stmt = sa.select(PostORM).where(PostORM.category_id.in_(page_category_ids))
         posts_orm = self.session.scalars(stmt).all()
@@ -59,15 +57,19 @@ class PostRepository:
 
     def create(self, post: Post) -> Post:
         """Create a new post."""
-        post_orm = PostORM(
-            pagetitle=post.pagetitle,
-            alias=post.alias,
-            content=post.content,
-            createdon=post.createdon,
-            publishedon=post.publishedon,
-            category_id=post.category_id,
-            user_id=post.user_id,
-        )
+        post_orm = PostORM()
+        post_orm.pagetitle = post.pagetitle
+        post_orm.alias = post.alias
+        post_orm.content = post.content
+        # Handle datetime fields that might be None
+        if post.createdon is not None:
+            post_orm.createdon = post.createdon
+        if post.publishedon is not None:
+            post_orm.publishedon = post.publishedon
+        if post.category_id is not None:
+            post_orm.category_id = post.category_id
+        if post.user_id is not None:
+            post_orm.user_id = post.user_id
         self.session.add(post_orm)
         self.session.flush()  # Get the ID without committing
         post.id = post_orm.id
@@ -83,10 +85,15 @@ class PostRepository:
         post_orm.pagetitle = post.pagetitle
         post_orm.alias = post.alias
         post_orm.content = post.content
-        post_orm.createdon = post.createdon
-        post_orm.publishedon = post.publishedon
-        post_orm.category_id = post.category_id
-        post_orm.user_id = post.user_id
+        # Handle datetime fields that might be None
+        if post.createdon is not None:
+            post_orm.createdon = post.createdon
+        if post.publishedon is not None:
+            post_orm.publishedon = post.publishedon
+        if post.category_id is not None:
+            post_orm.category_id = post.category_id
+        if post.user_id is not None:
+            post_orm.user_id = post.user_id
         self.session.flush()
         return post
 

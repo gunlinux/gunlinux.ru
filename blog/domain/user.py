@@ -3,8 +3,10 @@
 import datetime
 import typing
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from blog.post.models import Post
+if TYPE_CHECKING:
+    from blog.post.models import Post
 
 
 @dataclass
@@ -16,7 +18,7 @@ class User:
     password: str = ""
     authenticated: bool = False
     createdon: datetime.datetime | None = None
-    posts: list["Post"] | None = None
+    posts: "list[Post] | None" = None
 
     def __post_init__(self):
         if self.createdon is None:

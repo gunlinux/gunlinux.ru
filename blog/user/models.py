@@ -1,7 +1,7 @@
 """SqlAlchemy models."""
 
 import datetime
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from flask_login import UserMixin
 from sqlalchemy import DateTime
@@ -27,11 +27,11 @@ class User(UserMixin, db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(nullable=False)
     password: Mapped[str]
-    authenticated: Mapped[bool] = mapped_column(default=False, nullable=True)
+    authenticated: Mapped[bool | None] = mapped_column(default=False, nullable=True)
     createdon: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
-    posts: Mapped[List["Post"]] = relationship()
+    posts: Mapped[list["Post"]] = relationship()
 
     def is_authenticated(self):  # pyright: ignore[ reportIncompatibleMethodOverride]
         return self.authenticated

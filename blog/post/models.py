@@ -1,7 +1,7 @@
 # blog/posts/models.py
 import datetime
-from typing import TYPE_CHECKING
 import typing
+from typing import TYPE_CHECKING
 
 import markdown
 from sqlalchemy import DateTime, ForeignKey, Text
@@ -32,13 +32,15 @@ class Post(db.Model):
     createdon: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
-    publishedon: Mapped[datetime.datetime] = mapped_column(
+    publishedon: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=True,
     )
-    category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"), nullable=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=True)
+    category_id: Mapped[int | None] = mapped_column(
+        ForeignKey("categories.id"), nullable=True
+    )
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     user: Mapped["User"] = relationship(back_populates="posts")
     category: Mapped["Category"] = relationship(back_populates="posts")
     tags: Mapped[list["Tag"]] = relationship(
