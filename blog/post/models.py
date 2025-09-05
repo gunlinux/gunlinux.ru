@@ -4,12 +4,11 @@ import typing
 from typing import TYPE_CHECKING
 
 import markdown
-from sqlalchemy import DateTime, ForeignKey, Text
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from blog.extensions import db
-from blog.tags.association import posts_tags
+from blog.infrastructure.database import get_posts_table, get_posts_tags_table
 
 if TYPE_CHECKING:
     from blog.category.models import Category
@@ -23,29 +22,11 @@ MARKDOWN_EXTENSIONS = ["markdown.extensions.fenced_code"]
 class Post(db.Model):
     """orm model for blog post."""
 
-    __tablename__ = "posts"  # pyright: ignore[reportUnannotatedClassAttribute]
+    __table__ = get_posts_table(db.metadata)
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    pagetitle: Mapped[str] = mapped_column(nullable=False, unique=False)
-    alias: Mapped[str] = mapped_column(nullable=False, unique=True)
-    content: Mapped[str] = mapped_column(type_=Text)
-    createdon: Mapped[datetime.datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
-    publishedon: Mapped[datetime.datetime | None] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        nullable=True,
-    )
-    category_id: Mapped[int | None] = mapped_column(
-        ForeignKey("categories.id"), nullable=True
-    )
-    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
-    user: Mapped["User"] = relationship(back_populates="posts")
-    category: Mapped["Category"] = relationship(back_populates="posts")
-    tags: Mapped[list["Tag"]] = relationship(
-        secondary=posts_tags, back_populates="posts"
-    )
+    user = relationship("User", back_populates="posts")
+    category = relationship("Category", back_populates="posts")
+    tags = relationship("Tag", secondary=get_posts_tags_table(db.metadata), back_populates="posts")
 
     @property
     def markdown(self):
@@ -61,12 +42,10 @@ class Icon(db.Model):
 
     __tablename__ = "icons"  # pyright: ignore[reportUnannotatedClassAttribute]
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    title: Mapped[str] = mapped_column(nullable=False, unique=True)
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255), nullable=False, unique=True)
+    url = db.Column(db.String(255), nullable=False, unique=True)
+    content = db.Column(db.Text)
 
-    url: Mapped[str] = mapped_column(nullable=False, unique=True)
-    content: Mapped[str] = mapped_column(type_=Text)
-
-    @typing.override
     def __str__(self):
         return f"{self.id} {self.title}"
