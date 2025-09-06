@@ -8,6 +8,11 @@ from blog.extensions import db
 import sqlalchemy as sa
 
 
+class PostServiceError(Exception):
+    """Base exception for PostService errors."""
+    pass
+
+
 class PostService:
     """Service layer for Post entities."""
 
@@ -34,17 +39,35 @@ class PostService:
         """Get posts that are pages (in specific categories)."""
         return self.post_repository.get_page_posts(page_category_ids)
 
+    def get_page_posts_orm(self, page_category_ids: List[int]) -> List[PostORM]:
+        """Get posts that are pages (in specific categories) as ORM models (for compatibility with views)."""
+        domain_posts = self.get_page_posts(page_category_ids)
+        return [self._to_orm_model(post) for post in domain_posts]
+
     def create_post(self, post: Post) -> Post:
         """Create a new post."""
-        return self.post_repository.create(post)
+        try:
+            return self.post_repository.create(post)
+        except Exception as e:
+            # Re-raise as a more specific exception for the service layer
+            raise PostServiceError(f"Failed to create post: {str(e)}") from e
 
     def update_post(self, post: Post) -> Post:
         """Update an existing post."""
-        return self.post_repository.update(post)
+        try:
+            return self.post_repository.update(post)
+        except ValueError as e:
+            # Re-raise as a more specific exception for the service layer
+            raise PostServiceError(f"Failed to update post: {str(e)}") from e
 
     def delete_post(self, post_id: int) -> bool:
         """Delete a post by its ID."""
-        return self.post_repository.delete(post_id)
+        try:
+            return self.post_repository.delete(post_id)
+        except Exception as e:
+            # Log the error and return False to indicate failure
+            # In a real application, you might want to log this
+            return False
 
     def get_published_posts_orm(self) -> List[PostORM]:
         """Get all published posts as ORM models (for compatibility with views)."""

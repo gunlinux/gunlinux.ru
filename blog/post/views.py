@@ -17,7 +17,11 @@ from blog.extensions import flask_sitemap
 from blog import cache, db
 from blog.post.models import Post, Icon
 from blog.repos.post import PostRepository
+from blog.repos.category import CategoryRepository
+from blog.repos.icon import IconRepository
 from blog.services.post import PostService
+from blog.services.category import CategoryService
+from blog.services.icon import IconService
 
 post = Blueprint("postb", __name__)
 
@@ -25,22 +29,22 @@ post = Blueprint("postb", __name__)
 def pages_gen(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        # Use service layer instead of direct database access
+        from blog.services.factory import ServiceFactory
+        
         page_category = current_app.config["PAGE_CATEGORY"]
-        pages_query = sa.select(Post).where(Post.category_id.in_(page_category))
-        pages = db.session.scalars(pages_query).all()
+        
+        # Get posts using PostService
+        post_service = ServiceFactory.create_post_service()
+        pages = post_service.get_page_posts_orm(page_category)
 
-        icons_query = sa.select(Icon)
-        icons = db.session.scalars(icons_query).all()
+        # Get icons using IconService
+        icon_service = ServiceFactory.create_icon_service()
+        icons = icon_service.get_all_icons_orm()
 
         return f(pages=pages, icons=icons, *args, **kwargs)
 
     return decorated_function
-
-
-def get_post_service():
-    """Create and return a PostService instance."""
-    post_repository = PostRepository()
-    return PostService(post_repository)
 
 
 @post.route("/")
@@ -48,7 +52,9 @@ def get_post_service():
 @pages_gen
 def index(**kwargs):
     # Use service layer instead of direct database access
-    post_service = get_post_service()
+    from blog.services.factory import ServiceFactory
+    
+    post_service = ServiceFactory.create_post_service()
     posts = post_service.get_published_posts_orm()
     return render_template("posts.html", posts=posts, **kwargs)
 
@@ -58,7 +64,9 @@ def index(**kwargs):
 @pages_gen
 def view(alias=None, **kwargs):
     # Use service layer instead of direct database access
-    post_service = get_post_service()
+    from blog.services.factory import ServiceFactory
+    
+    post_service = ServiceFactory.create_post_service()
     post = post_service.get_post_by_alias_orm(alias)
     if not post:
         # Handle 404 case
@@ -76,14 +84,14 @@ def view(alias=None, **kwargs):
 
         abort(404)
 
-    # Load category object if needed
+    # Load category object if needed using service layer
     page_category_obj = None
     if post.category_id:
         from blog.category.models import Category
-
-        page_category_obj = db.session.scalars(
-            sa.select(Category).where(Category.id == post.category_id)
-        ).first()
+        
+        # Use CategoryService instead of direct database access
+        category_service = ServiceFactory.create_category_service()
+        page_category_obj = category_service.get_category_by_id_orm(post.category_id)
 
     if page_category_obj and page_category_obj.template:
         return render_template(page_category_obj.template, post=post, **kwargs)
@@ -92,21 +100,19 @@ def view(alias=None, **kwargs):
 
 @flask_sitemap.register_generator
 def site_map_gen():
+    # Use service layer instead of direct database access
+    from blog.services.factory import ServiceFactory
+    
     page_category = current_app.config["PAGE_CATEGORY"]
-    pages_query = sa.select(Post).where(Post.category_id.in_(page_category))
-    pages = db.session.scalars(pages_query).all()
+    
+    # Get pages using PostService
+    post_service = ServiceFactory.create_post_service()
+    pages = post_service.get_page_posts_orm(page_category)
     for page in pages:
         yield url_for("postb.view", alias=page.alias)
-    post_query = (
-        sa.select(Post)
-        .where(
-            Post.publishedon.isnot(None),
-            Post.category_id.is_(None),
-        )
-        .order_by(Post.publishedon.desc())
-    )
-
-    posts = db.session.scalars(post_query).all()
+    
+    # Get posts using PostService
+    posts = post_service.get_published_posts_orm()
     for post in posts:
         yield url_for("postb.view", alias=post.alias)
 
@@ -132,12 +138,13 @@ Host: gunlinux.ru
 @post.route("/rss.xml")
 @cache.cached(timeout=50)
 def rss():
+    # Use service layer instead of direct database access
+    from blog.services.factory import ServiceFactory
+    
+    post_service = ServiceFactory.create_post_service()
+    list_posts = post_service.get_published_posts_orm()
+    
     date = datetime.datetime.now()
-    post_query = sa.select(Post).where(
-        Post.publishedon.isnot(None),
-        Post.category_id.is_(None),
-    )
-    list_posts = db.session.scalars(post_query).all()
     rss_xml = render_template("rss.xml", posts=list_posts, date=date)
     response = make_response(rss_xml)
     response.headers["Content-Type"] = "application/rss+xml"

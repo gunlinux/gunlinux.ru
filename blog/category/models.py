@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 class Category(db.Model):
-    """orm model for blog post."""
+    """orm model for blog category."""
 
     __table__ = get_categories_table(db.metadata)
 

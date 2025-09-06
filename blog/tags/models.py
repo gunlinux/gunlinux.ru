@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 class Tag(db.Model):
-    """orm model for blog post."""
+    """orm model for blog tag."""
 
     __table__ = get_tags_table(db.metadata)
 
