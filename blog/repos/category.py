@@ -1,20 +1,32 @@
 """Repository for Category entities."""
 
 import sqlalchemy as sa
-from sqlalchemy.orm import Session
+from typing import Any
 
 from blog.extensions import db
 from blog.category.models import Category as CategoryORM
-from blog.domain.category import Category
+from blog.domain.category import Category as CategoryDomain
+from blog.domain.post import Post as PostDomain
 
 
 class CategoryRepository:
     """Repository for Category entities."""
 
-    def __init__(self, session: Session | None = None):
+    def __init__(self, session: Any = None):
         self.session = session or db.session
 
-    def get_by_id(self, category_id: int) -> Category | None:
+    def get_category_orm_with_relationships(
+        self, category_id: int
+    ) -> CategoryORM | None:
+        """Get a category ORM model with all its relationships loaded."""
+        stmt = (
+            sa.select(CategoryORM)
+            .where(CategoryORM.id == category_id)
+            .options(sa.orm.joinedload(CategoryORM.posts))
+        )
+        return self.session.scalar(stmt)
+
+    def get_by_id(self, category_id: int) -> CategoryDomain | None:
         """Get a category by its ID."""
         stmt = sa.select(CategoryORM).where(CategoryORM.id == category_id)
         category_orm = self.session.scalar(stmt)
@@ -22,7 +34,7 @@ class CategoryRepository:
             return self._to_domain_model(category_orm)
         return None
 
-    def get_by_alias(self, alias: str) -> Category | None:
+    def get_by_alias(self, alias: str) -> CategoryDomain | None:
         """Get a category by its alias."""
         stmt = sa.select(CategoryORM).where(CategoryORM.alias == alias)
         category_orm = self.session.scalar(stmt)
@@ -30,19 +42,19 @@ class CategoryRepository:
             return self._to_domain_model(category_orm)
         return None
 
-    def get_all(self) -> list[Category]:
+    def get_all(self) -> list[CategoryDomain]:
         """Get all categories."""
         stmt = sa.select(CategoryORM)
-        categories_orm = self.session.scalars(stmt).all()
+        categories_orm = list(self.session.scalars(stmt).all())
         return [self._to_domain_model(category_orm) for category_orm in categories_orm]
 
-    def get_categories_with_posts(self) -> list[Category]:
+    def get_categories_with_posts(self) -> list[CategoryDomain]:
         """Get all categories with their posts."""
         stmt = sa.select(CategoryORM).options(sa.orm.joinedload(CategoryORM.posts))
-        categories_orm = self.session.scalars(stmt).unique().all()
+        categories_orm = list(self.session.scalars(stmt).unique().all())
         return [self._to_domain_model(category_orm) for category_orm in categories_orm]
 
-    def create(self, category: Category) -> Category:
+    def create(self, category: CategoryDomain) -> CategoryDomain:
         """Create a new category."""
         category_orm = CategoryORM()
         category_orm.title = category.title
@@ -55,7 +67,7 @@ class CategoryRepository:
         category.id = category_orm.id
         return category
 
-    def update(self, category: Category) -> Category:
+    def update(self, category: CategoryDomain) -> CategoryDomain:
         """Update an existing category."""
         stmt = sa.select(CategoryORM).where(CategoryORM.id == category.id)
         category_orm = self.session.scalar(stmt)
@@ -79,11 +91,32 @@ class CategoryRepository:
             return True
         return False
 
-    def _to_domain_model(self, category_orm: CategoryORM) -> Category:
+    def _to_domain_model(self, category_orm: CategoryORM) -> CategoryDomain:
         """Convert ORM model to domain model."""
-        return Category(
+        # Convert related posts if they exist
+        posts = None
+        if category_orm.posts:
+            posts = [
+                PostDomain(
+                    id=post_orm.id,
+                    pagetitle=post_orm.pagetitle or "",
+                    alias=post_orm.alias or "",
+                    content=post_orm.content or "",
+                    createdon=post_orm.createdon,
+                    publishedon=post_orm.publishedon,
+                    category_id=post_orm.category_id,
+                    user_id=post_orm.user_id,
+                    user=None,  # Avoid circular references
+                    category=None,  # Avoid circular references
+                    tags=None,  # Avoid circular references
+                )
+                for post_orm in category_orm.posts
+            ]
+
+        return CategoryDomain(
             id=category_orm.id,
-            title=category_orm.title,
-            alias=category_orm.alias,
+            title=category_orm.title or "",
+            alias=category_orm.alias or "",
             template=category_orm.template,
+            posts=posts,
         )

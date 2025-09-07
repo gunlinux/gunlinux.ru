@@ -3,13 +3,11 @@
 from typing import List, Optional
 from blog.repos.post import PostRepository
 from blog.domain.post import Post
-from blog.post.models import Post as PostORM
-from blog.extensions import db
-import sqlalchemy as sa
 
 
 class PostServiceError(Exception):
     """Base exception for PostService errors."""
+
     pass
 
 
@@ -39,11 +37,6 @@ class PostService:
         """Get posts that are pages (in specific categories)."""
         return self.post_repository.get_page_posts(page_category_ids)
 
-    def get_page_posts_orm(self, page_category_ids: List[int]) -> List[PostORM]:
-        """Get posts that are pages (in specific categories) as ORM models (for compatibility with views)."""
-        domain_posts = self.get_page_posts(page_category_ids)
-        return [self._to_orm_model(post) for post in domain_posts]
-
     def create_post(self, post: Post) -> Post:
         """Create a new post."""
         try:
@@ -64,40 +57,7 @@ class PostService:
         """Delete a post by its ID."""
         try:
             return self.post_repository.delete(post_id)
-        except Exception as e:
+        except Exception:
             # Log the error and return False to indicate failure
             # In a real application, you might want to log this
             return False
-
-    def get_published_posts_orm(self) -> List[PostORM]:
-        """Get all published posts as ORM models (for compatibility with views)."""
-        domain_posts = self.get_published_posts()
-        return [self._to_orm_model(post) for post in domain_posts]
-
-    def get_post_by_alias_orm(self, alias: str) -> Optional[PostORM]:
-        """Get a post by its alias as ORM model (for compatibility with views)."""
-        domain_post = self.get_post_by_alias(alias)
-        if domain_post:
-            return self._to_orm_model(domain_post)
-        return None
-
-    def _to_orm_model(self, post: Post) -> PostORM:
-        """Convert domain model to ORM model by loading from database."""
-        if post.id:
-            # Load the full ORM model from database to get relationships
-            stmt = sa.select(PostORM).where(PostORM.id == post.id)
-            post_orm = db.session.scalar(stmt)
-            if post_orm:
-                return post_orm
-
-        # If we can't load from database, create a new instance
-        post_orm = PostORM()
-        post_orm.id = post.id or 0
-        post_orm.pagetitle = post.pagetitle
-        post_orm.alias = post.alias
-        post_orm.content = post.content
-        post_orm.createdon = post.createdon
-        post_orm.publishedon = post.publishedon
-        post_orm.category_id = post.category_id
-        post_orm.user_id = post.user_id
-        return post_orm

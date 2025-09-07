@@ -3,13 +3,11 @@
 from typing import List, Optional
 from blog.repos.icon import IconRepository
 from blog.domain.icon import Icon
-from blog.post.models import Icon as IconORM
-from blog.extensions import db
-import sqlalchemy as sa
 
 
 class IconServiceError(Exception):
     """Base exception for IconService errors."""
+
     pass
 
 
@@ -18,6 +16,14 @@ class IconService:
 
     def __init__(self, icon_repository: IconRepository):
         self.icon_repository = icon_repository
+
+    def get_icon_orm_by_id(self, icon_id: int):
+        """Get an icon ORM model by its ID. Used for specific use cases requiring ORM models."""
+        return self.icon_repository.get_icon_orm_by_id(icon_id)
+
+    def get_all_icons_orm(self) -> List:
+        """Get all icons as ORM models. Used for specific use cases requiring ORM models."""
+        return self.icon_repository.get_all_icons_orm()
 
     def get_icon_by_id(self, icon_id: int) -> Optional[Icon]:
         """Get an icon by its ID."""
@@ -51,29 +57,7 @@ class IconService:
         """Delete an icon by its ID."""
         try:
             return self.icon_repository.delete(icon_id)
-        except Exception as e:
+        except Exception:
             # Log the error and return False to indicate failure
             # In a real application, you might want to log this
             return False
-
-    def get_all_icons_orm(self) -> List[IconORM]:
-        """Get all icons as ORM models (for compatibility with views)."""
-        domain_icons = self.get_all_icons()
-        return [self._to_orm_model(icon) for icon in domain_icons]
-
-    def _to_orm_model(self, icon: Icon) -> IconORM:
-        """Convert domain model to ORM model by loading from database."""
-        if icon.id:
-            # Load the full ORM model from database
-            stmt = sa.select(IconORM).where(IconORM.id == icon.id)
-            icon_orm = db.session.scalar(stmt)
-            if icon_orm:
-                return icon_orm
-
-        # If we can't load from database, create a new instance
-        icon_orm = IconORM()
-        icon_orm.id = icon.id or 0
-        icon_orm.title = icon.title
-        icon_orm.url = icon.url
-        icon_orm.content = icon.content
-        return icon_orm

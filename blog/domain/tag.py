@@ -2,21 +2,21 @@
 
 from dataclasses import dataclass
 import typing
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, List
 
 if TYPE_CHECKING:
-    from blog.post.models import Post
+    from blog.domain.post import Post as PostDomain
 
 
 @dataclass
 class Tag:
     """Domain model for blog tag."""
 
-    id: int | None = None
+    id: Optional[int] = None
     title: str = ""
     alias: str = ""
 
-    posts: "list[Post] | None" = None
+    posts: "Optional[List[PostDomain]]" = None
 
     @typing.override
     def __str__(self):

@@ -1,5 +1,0 @@
-gunicorn
-psycopg2-binary
-gevent
-
-python-dotenv

@@ -2,34 +2,42 @@
 
 from dataclasses import dataclass
 import datetime
-from typing import TYPE_CHECKING
+import markdown
+from typing import TYPE_CHECKING, Optional, List
 
 if TYPE_CHECKING:
-    from blog.category.models import Category
-    from blog.tags.models import Tag
-    from blog.user.models import User
+    from blog.domain.category import Category as CategoryDomain
+    from blog.domain.tag import Tag as TagDomain
+    from blog.domain.user import User as UserDomain
+
+
+MARKDOWN_EXTENSIONS = ["markdown.extensions.fenced_code"]
 
 
 @dataclass
 class Post:
     """Domain model for blog post."""
 
-    id: int | None = None
+    id: Optional[int] = None
     pagetitle: str = ""
     alias: str = ""
     content: str = ""
-    createdon: datetime.datetime | None = None
-    publishedon: datetime.datetime | None = None
-    category_id: int | None = None
-    user_id: int | None = None
+    createdon: Optional[datetime.datetime] = None
+    publishedon: Optional[datetime.datetime] = None
+    category_id: Optional[int] = None
+    user_id: Optional[int] = None
 
     # These would typically be loaded separately in a real implementation
     # to avoid circular dependencies
-    user: "User | None" = None
-    category: "Category | None" = None
-    tags: "list[Tag] | None" = None
+    user: "Optional[UserDomain]" = None
+    category: "Optional[CategoryDomain]" = None
+    tags: "Optional[List[TagDomain]]" = None
 
     def __post_init__(self):
         if self.createdon is None:
             self.createdon = datetime.datetime.now(datetime.timezone.utc)
         # Don't set default for publishedon - it should be None for unpublished posts
+
+    @property
+    def markdown(self):
+        return markdown.markdown(self.content or "", extensions=MARKDOWN_EXTENSIONS)

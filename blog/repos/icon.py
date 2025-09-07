@@ -1,7 +1,7 @@
 """Repository for Icon entities."""
 
 import sqlalchemy as sa
-from sqlalchemy.orm import Session
+from typing import Any
 
 from blog.extensions import db
 from blog.post.models import Icon as IconORM
@@ -11,8 +11,18 @@ from blog.domain.icon import Icon
 class IconRepository:
     """Repository for Icon entities."""
 
-    def __init__(self, session: Session | None = None):
+    def __init__(self, session: Any = None):
         self.session = session or db.session
+
+    def get_icon_orm_by_id(self, icon_id: int) -> IconORM | None:
+        """Get an icon ORM model by its ID. Used for specific use cases requiring ORM models."""
+        stmt = sa.select(IconORM).where(IconORM.id == icon_id)
+        return self.session.scalar(stmt)
+
+    def get_all_icons_orm(self) -> list[IconORM]:
+        """Get all icons as ORM models. Used for specific use cases requiring ORM models."""
+        stmt = sa.select(IconORM)
+        return list(self.session.scalars(stmt).all())
 
     def get_by_id(self, icon_id: int) -> Icon | None:
         """Get an icon by its ID."""
@@ -33,7 +43,7 @@ class IconRepository:
     def get_all(self) -> list[Icon]:
         """Get all icons."""
         stmt = sa.select(IconORM)
-        icons_orm = self.session.scalars(stmt).all()
+        icons_orm = list(self.session.scalars(stmt).all())
         return [self._to_domain_model(icon_orm) for icon_orm in icons_orm]
 
     def create(self, icon: Icon) -> Icon:

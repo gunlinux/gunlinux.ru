@@ -1,16 +1,17 @@
 """SqlAlchemy models."""
 
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from flask_login import UserMixin
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, relationship
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from blog.extensions import db
 from blog.infrastructure.database import get_users_table
 
 if TYPE_CHECKING:
-    pass
+    from blog.post.models import Post
 
 
 class User(UserMixin, db.Model):
@@ -18,7 +19,14 @@ class User(UserMixin, db.Model):
 
     __table__ = get_users_table(db.metadata)
 
-    posts = relationship("Post", back_populates="user")
+    # Type annotations for table columns
+    id: Mapped[int]
+    name: Mapped[str]
+    password: Mapped[str | None]
+    authenticated: Mapped[int | None]
+    createdon: Mapped[datetime | None]
+
+    posts: Mapped[list["Post"]] = relationship("Post", back_populates="user")
 
     def set_password(self, password: str) -> None:
         """Set password hash."""

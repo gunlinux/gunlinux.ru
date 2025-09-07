@@ -1,20 +1,40 @@
 """Repository for User entities."""
 
 import sqlalchemy as sa
-from sqlalchemy.orm import Session
+from typing import Any
 
 from blog.extensions import db
 from blog.user.models import User as UserORM
-from blog.domain.user import User
+from blog.domain.user import User as UserDomain
+from blog.domain.post import Post as PostDomain
 
 
 class UserRepository:
     """Repository for User entities."""
 
-    def __init__(self, session: Session | None = None):
+    def __init__(self, session: Any = None):
         self.session = session or db.session
 
-    def get_by_id(self, user_id: int) -> User | None:
+    def get_user_orm_with_relationships(self, user_id: int) -> UserORM | None:
+        """Get a user ORM model with all its relationships loaded."""
+        stmt = (
+            sa.select(UserORM)
+            .where(UserORM.id == user_id)
+            .options(sa.orm.joinedload(UserORM.posts))
+        )
+        return self.session.scalar(stmt)
+
+    def get_user_orm_by_id(self, user_id: int) -> UserORM | None:
+        """Get a user ORM model by its ID. Used for Flask-Login compatibility."""
+        stmt = sa.select(UserORM).where(UserORM.id == user_id)
+        return self.session.scalar(stmt)
+
+    def get_user_orm_by_name(self, name: str) -> UserORM | None:
+        """Get a user ORM model by their name. Used for Flask-Login compatibility."""
+        stmt = sa.select(UserORM).where(UserORM.name == name)
+        return self.session.scalar(stmt)
+
+    def get_by_id(self, user_id: int) -> UserDomain | None:
         """Get a user by its ID."""
         stmt = sa.select(UserORM).where(UserORM.id == user_id)
         user_orm = self.session.scalar(stmt)
@@ -22,7 +42,7 @@ class UserRepository:
             return self._to_domain_model(user_orm)
         return None
 
-    def get_by_name(self, name: str) -> User | None:
+    def get_by_name(self, name: str) -> UserDomain | None:
         """Get a user by their name."""
         stmt = sa.select(UserORM).where(UserORM.name == name)
         user_orm = self.session.scalar(stmt)
@@ -30,19 +50,19 @@ class UserRepository:
             return self._to_domain_model(user_orm)
         return None
 
-    def get_all(self) -> list[User]:
+    def get_all(self) -> list[UserDomain]:
         """Get all users."""
         stmt = sa.select(UserORM)
         users_orm = self.session.scalars(stmt).all()
         return [self._to_domain_model(user_orm) for user_orm in users_orm]
 
-    def get_users_with_posts(self) -> list[User]:
+    def get_users_with_posts(self) -> list[UserDomain]:
         """Get all users with their posts."""
         stmt = sa.select(UserORM).options(sa.orm.joinedload(UserORM.posts))
         users_orm = self.session.scalars(stmt).unique().all()
         return [self._to_domain_model(user_orm) for user_orm in users_orm]
 
-    def create(self, user: User) -> User:
+    def create(self, user: UserDomain) -> UserDomain:
         """Create a new user."""
         user_orm = UserORM()
         user_orm.name = user.name
@@ -59,7 +79,7 @@ class UserRepository:
         user.id = user_orm.id
         return user
 
-    def update(self, user: User) -> User:
+    def update(self, user: UserDomain) -> UserDomain:
         """Update an existing user."""
         stmt = sa.select(UserORM).where(UserORM.id == user.id)
         user_orm = self.session.scalar(stmt)
@@ -87,7 +107,7 @@ class UserRepository:
             return True
         return False
 
-    def authenticate(self, name: str, password: str) -> User | None:
+    def authenticate(self, name: str, password: str) -> UserDomain | None:
         """Authenticate a user by name and password."""
         stmt = sa.select(UserORM).where(UserORM.name == name)
         user_orm = self.session.scalar(stmt)
@@ -95,14 +115,35 @@ class UserRepository:
             return self._to_domain_model(user_orm)
         return None
 
-    def _to_domain_model(self, user_orm: UserORM) -> User:
+    def _to_domain_model(self, user_orm: UserORM) -> UserDomain:
         """Convert ORM model to domain model."""
-        return User(
+        # Convert related posts if they exist
+        posts = None
+        if user_orm.posts:
+            posts = [
+                PostDomain(
+                    id=post_orm.id,
+                    pagetitle=post_orm.pagetitle or "",
+                    alias=post_orm.alias or "",
+                    content=post_orm.content or "",
+                    createdon=post_orm.createdon,
+                    publishedon=post_orm.publishedon,
+                    category_id=post_orm.category_id,
+                    user_id=post_orm.user_id,
+                    user=None,  # Avoid circular references
+                    category=None,  # Avoid circular references
+                    tags=None,  # Avoid circular references
+                )
+                for post_orm in user_orm.posts
+            ]
+
+        return UserDomain(
             id=user_orm.id,
-            name=user_orm.name,
-            password=user_orm.password,
-            authenticated=user_orm.authenticated
+            name=user_orm.name or "",
+            password=user_orm.password or "",
+            authenticated=bool(user_orm.authenticated)
             if user_orm.authenticated is not None
             else False,
             createdon=user_orm.createdon,
+            posts=posts,
         )

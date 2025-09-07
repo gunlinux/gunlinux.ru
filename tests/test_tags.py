@@ -1,10 +1,14 @@
 import pytest
 import os
+import datetime
 
 from blog import create_app
-from blog import db
-from blog.post.models import Post
-from blog.tags.models import Tag
+from blog.extensions import db
+from blog.domain.post import Post as PostDomain
+from blog.domain.tag import Tag as TagDomain
+from blog.services.factory import ServiceFactory
+from blog.post.models import Post as PostORM
+from blog.tags.models import Tag as TagORM
 
 
 @pytest.fixture()
@@ -22,36 +26,49 @@ def test_client():
 
 def test_get_posts_by_tag(test_client):
     with test_client.application.app_context():
-        tag = Tag(title="test-tag", alias="test-tag")  # type: ignore
-        db.session.add(tag)
+        # Use service layer to create domain models
+        tag_service = ServiceFactory.create_tag_service()
+        post_service = ServiceFactory.create_post_service()
 
-        post1 = Post(
+        # Create a tag using domain model
+        tag_domain = TagDomain(title="test-tag", alias="test-tag")
+        tag = tag_service.create_tag(tag_domain)
+
+        # Create posts using domain models
+        post1_domain = PostDomain(
             pagetitle="Post 1",
             alias="post-1",
             content="Content 1",
-            publishedon=db.func.now(),
-        )  # type: ignore
-        post1.tags.append(tag)
+            publishedon=datetime.datetime.now(datetime.timezone.utc),
+        )
+        post1 = post_service.create_post(post1_domain)
 
-        post2 = Post(
+        post2_domain = PostDomain(
             pagetitle="Post 2",
             alias="post-2",
             content="Content 2",
-            publishedon=db.func.now(),
-        )  # type: ignore
-        post2.tags.append(tag)
+            publishedon=datetime.datetime.now(datetime.timezone.utc),
+        )
+        post2 = post_service.create_post(post2_domain)
 
-        post3 = Post(
+        post3_domain = PostDomain(
             pagetitle="Post 3",
             alias="post-3",
             content="Content 3",
-            publishedon=db.func.now(),
-        )  # type: ignore
+            publishedon=datetime.datetime.now(datetime.timezone.utc),
+        )
+        post_service.create_post(post3_domain)
 
-        db.session.add(post1)
-        db.session.add(post2)
-        db.session.add(post3)
-        db.session.commit()
+        # Manually create the tag-post relationships at the ORM level
+        # This is a workaround for the current limitation in the domain model approach
+        tag_orm = db.session.get(TagORM, tag.id)
+        post1_orm = db.session.get(PostORM, post1.id)
+        post2_orm = db.session.get(PostORM, post2.id)
+
+        if tag_orm and post1_orm and post2_orm:
+            post1_orm.tags.append(tag_orm)
+            post2_orm.tags.append(tag_orm)
+            db.session.commit()
 
     response = test_client.get("/tags/test-tag")
     assert response.status_code == 200
@@ -63,21 +80,34 @@ def test_get_posts_by_tag(test_client):
 
 def test_post_have_tag(test_client):
     with test_client.application.app_context():
-        tag1 = Tag(title="test-tag1", alias="test-tag1")  # type: ignore
-        db.session.add(tag1)
-        tag2 = Tag(title="test-tag2", alias="test-tag2")  # type: ignore
-        db.session.add(tag2)
+        # Use service layer to create domain models
+        tag_service = ServiceFactory.create_tag_service()
+        post_service = ServiceFactory.create_post_service()
 
-        post1 = Post(
+        # Create tags using domain models
+        tag1_domain = TagDomain(title="test-tag1", alias="test-tag1")
+        tag1 = tag_service.create_tag(tag1_domain)
+
+        tag2_domain = TagDomain(title="test-tag2", alias="test-tag2")
+        tag_service.create_tag(tag2_domain)
+
+        # Create a post
+        post1_domain = PostDomain(
             pagetitle="Post 1",
             alias="post-1",
             content="Content 1",
-            publishedon=db.func.now(),
-        )  # type: ignore
-        post1.tags.append(tag1)
+            publishedon=datetime.datetime.now(datetime.timezone.utc),
+        )
+        post1 = post_service.create_post(post1_domain)
 
-        db.session.add(post1)
-        db.session.commit()
+        # Manually create the tag-post relationship at the ORM level
+        # This is a workaround for the current limitation in the domain model approach
+        tag1_orm = db.session.get(TagORM, tag1.id)
+        post1_orm = db.session.get(PostORM, post1.id)
+
+        if tag1_orm and post1_orm:
+            post1_orm.tags.append(tag1_orm)
+            db.session.commit()
 
     response = test_client.get("/post-1")
     assert response.status_code == 200
