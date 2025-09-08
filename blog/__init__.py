@@ -24,7 +24,7 @@ def configure_extensions(app):
     cache.init_app(app)
     migrate.init_app(app=app, db=db)
     login_manager.init_app(app=app)
-    login_manager.login_view = "user.index"  # type: ignore
+    login_manager.login_view = "user.login"  # type: ignore
     flask_sitemap.init_app(app)
 
 
