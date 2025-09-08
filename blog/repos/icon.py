@@ -1,14 +1,15 @@
 """Repository for Icon entities."""
 
 import sqlalchemy as sa
-from typing import Any
+from typing import Any, List, Optional
 
 from blog.extensions import db
 from blog.post.models import Icon as IconORM
 from blog.domain.icon import Icon
+from blog.repos.base import BaseRepository
 
 
-class IconRepository:
+class IconRepository(BaseRepository[Icon, int]):
     """Repository for Icon entities."""
 
     def __init__(self, session: Any = None):
@@ -24,8 +25,8 @@ class IconRepository:
         stmt = sa.select(IconORM)
         return list(self.session.scalars(stmt).all())
 
-    def get_by_id(self, icon_id: int) -> Icon | None:
-        stmt = sa.select(IconORM).where(IconORM.id == icon_id)
+    def get_by_id(self, id: int) -> Optional[Icon]:
+        stmt = sa.select(IconORM).where(IconORM.id == id)
         icon_orm = self.session.scalar(stmt)
         if icon_orm:
             return self._to_domain_model(icon_orm)
@@ -38,37 +39,37 @@ class IconRepository:
             return self._to_domain_model(icon_orm)
         return None
 
-    def get_all(self) -> list[Icon]:
+    def get_all(self) -> List[Icon]:
         stmt = sa.select(IconORM)
         icons_orm = list(self.session.scalars(stmt).all())
         return [self._to_domain_model(icon_orm) for icon_orm in icons_orm]
 
-    def create(self, icon: Icon) -> Icon:
+    def create(self, entity: Icon) -> Icon:
         icon_orm = IconORM()
-        icon_orm.title = icon.title
-        icon_orm.url = icon.url
-        if icon.content is not None:
-            icon_orm.content = icon.content
+        icon_orm.title = entity.title
+        icon_orm.url = entity.url
+        if entity.content is not None:
+            icon_orm.content = entity.content
         self.session.add(icon_orm)
         self.session.flush()  # Get the ID without committing
-        icon.id = icon_orm.id
-        return icon
+        entity.id = icon_orm.id
+        return entity
 
-    def update(self, icon: Icon) -> Icon:
-        stmt = sa.select(IconORM).where(IconORM.id == icon.id)
+    def update(self, entity: Icon) -> Icon:
+        stmt = sa.select(IconORM).where(IconORM.id == entity.id)
         icon_orm = self.session.scalar(stmt)
         if not icon_orm:
-            raise ValueError(f"Icon with id {icon.id} not found")
+            raise ValueError(f"Icon with id {entity.id} not found")
 
-        icon_orm.title = icon.title
-        icon_orm.url = icon.url
-        if icon.content is not None:
-            icon_orm.content = icon.content
+        icon_orm.title = entity.title
+        icon_orm.url = entity.url
+        if entity.content is not None:
+            icon_orm.content = entity.content
         self.session.flush()
-        return icon
+        return entity
 
-    def delete(self, icon_id: int) -> bool:
-        stmt = sa.select(IconORM).where(IconORM.id == icon_id)
+    def delete(self, id: int) -> bool:
+        stmt = sa.select(IconORM).where(IconORM.id == id)
         icon_orm = self.session.scalar(stmt)
         if icon_orm:
             self.session.delete(icon_orm)

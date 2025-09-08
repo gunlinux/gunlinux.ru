@@ -1,7 +1,7 @@
 """Repository for Post entities."""
 
 import sqlalchemy as sa
-from typing import Any
+from typing import Any, List, Optional
 
 from blog.extensions import db
 from blog.post.models import Post as PostORM
@@ -10,9 +10,10 @@ from blog.domain.post import Post as PostDomain
 from blog.domain.user import User as UserDomain
 from blog.domain.category import Category as CategoryDomain
 from blog.domain.tag import Tag as TagDomain
+from blog.repos.base import BaseRepository
 
 
-class PostRepository:
+class PostRepository(BaseRepository[PostDomain, int]):
     """Repository for Post entities."""
 
     def __init__(self, session: Any = None):
@@ -33,8 +34,8 @@ class PostRepository:
             return self._to_domain_model(post_orm)
         return None
 
-    def get_by_id(self, post_id: int) -> PostDomain | None:
-        stmt = sa.select(PostORM).where(PostORM.id == post_id)
+    def get_by_id(self, id: int) -> Optional[PostDomain]:
+        stmt = sa.select(PostORM).where(PostORM.id == id)
         post_orm = self.session.scalar(stmt)
         if post_orm:
             return self._to_domain_model(post_orm)
@@ -47,7 +48,7 @@ class PostRepository:
             return self._to_domain_model(post_orm)
         return None
 
-    def get_all(self) -> list[PostDomain]:
+    def get_all(self) -> List[PostDomain]:
         stmt = sa.select(PostORM)
         posts_orm = list(self.session.scalars(stmt).all())
         return [self._to_domain_model(post_orm) for post_orm in posts_orm]
@@ -69,25 +70,25 @@ class PostRepository:
         posts_orm = list(self.session.scalars(stmt).all())
         return [self._to_domain_model(post_orm) for post_orm in posts_orm]
 
-    def create(self, post: PostDomain) -> PostDomain:
+    def create(self, entity: PostDomain) -> PostDomain:
         post_orm = PostORM()
-        post_orm.pagetitle = post.pagetitle
-        post_orm.alias = post.alias
-        post_orm.content = post.content
+        post_orm.pagetitle = entity.pagetitle
+        post_orm.alias = entity.alias
+        post_orm.content = entity.content
         # Handle datetime fields that might be None
-        if post.createdon is not None:
-            post_orm.createdon = post.createdon
-        if post.publishedon is not None:
-            post_orm.publishedon = post.publishedon
-        if post.category_id is not None:
-            post_orm.category_id = post.category_id
-        if post.user_id is not None:
-            post_orm.user_id = post.user_id
+        if entity.createdon is not None:
+            post_orm.createdon = entity.createdon
+        if entity.publishedon is not None:
+            post_orm.publishedon = entity.publishedon
+        if entity.category_id is not None:
+            post_orm.category_id = entity.category_id
+        if entity.user_id is not None:
+            post_orm.user_id = entity.user_id
 
         # Handle tags relationship if provided
-        if post.tags:
+        if entity.tags:
             # Find existing Tag ORM models based on the domain Tag models
-            tag_ids = [tag.id for tag in post.tags if tag.id is not None]
+            tag_ids = [tag.id for tag in entity.tags if tag.id is not None]
             if tag_ids:
                 stmt = sa.select(TagORM).where(TagORM.id.in_(tag_ids))
                 existing_tags = list(self.session.scalars(stmt).all())
@@ -95,32 +96,32 @@ class PostRepository:
 
         self.session.add(post_orm)
         self.session.flush()  # Get the ID without committing
-        post.id = post_orm.id
-        return post
+        entity.id = post_orm.id
+        return entity
 
-    def update(self, post: PostDomain) -> PostDomain:
-        stmt = sa.select(PostORM).where(PostORM.id == post.id)
+    def update(self, entity: PostDomain) -> PostDomain:
+        stmt = sa.select(PostORM).where(PostORM.id == entity.id)
         post_orm = self.session.scalar(stmt)
         if not post_orm:
-            raise ValueError(f"Post with id {post.id} not found")
+            raise ValueError(f"Post with id {entity.id} not found")
 
-        post_orm.pagetitle = post.pagetitle
-        post_orm.alias = post.alias
-        post_orm.content = post.content
+        post_orm.pagetitle = entity.pagetitle
+        post_orm.alias = entity.alias
+        post_orm.content = entity.content
         # Handle datetime fields that might be None
-        if post.createdon is not None:
-            post_orm.createdon = post.createdon
-        if post.publishedon is not None:
-            post_orm.publishedon = post.publishedon
-        if post.category_id is not None:
-            post_orm.category_id = post.category_id
-        if post.user_id is not None:
-            post_orm.user_id = post.user_id
+        if entity.createdon is not None:
+            post_orm.createdon = entity.createdon
+        if entity.publishedon is not None:
+            post_orm.publishedon = entity.publishedon
+        if entity.category_id is not None:
+            post_orm.category_id = entity.category_id
+        if entity.user_id is not None:
+            post_orm.user_id = entity.user_id
         self.session.flush()
-        return post
+        return entity
 
-    def delete(self, post_id: int) -> bool:
-        stmt = sa.select(PostORM).where(PostORM.id == post_id)
+    def delete(self, id: int) -> bool:
+        stmt = sa.select(PostORM).where(PostORM.id == id)
         post_orm = self.session.scalar(stmt)
         if post_orm:
             self.session.delete(post_orm)

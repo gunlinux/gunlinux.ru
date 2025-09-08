@@ -1,15 +1,16 @@
 """Repository for Category entities."""
 
 import sqlalchemy as sa
-from typing import Any
+from typing import Any, List, Optional
 
 from blog.extensions import db
 from blog.category.models import Category as CategoryORM
 from blog.domain.category import Category as CategoryDomain
 from blog.domain.post import Post as PostDomain
+from blog.repos.base import BaseRepository
 
 
-class CategoryRepository:
+class CategoryRepository(BaseRepository[CategoryDomain, int]):
     """Repository for Category entities."""
 
     def __init__(self, session: Any = None):
@@ -25,8 +26,8 @@ class CategoryRepository:
         )
         return self.session.scalar(stmt)
 
-    def get_by_id(self, category_id: int) -> CategoryDomain | None:
-        stmt = sa.select(CategoryORM).where(CategoryORM.id == category_id)
+    def get_by_id(self, id: int) -> Optional[CategoryDomain]:
+        stmt = sa.select(CategoryORM).where(CategoryORM.id == id)
         category_orm = self.session.scalar(stmt)
         if category_orm:
             return self._to_domain_model(category_orm)
@@ -39,7 +40,7 @@ class CategoryRepository:
             return self._to_domain_model(category_orm)
         return None
 
-    def get_all(self) -> list[CategoryDomain]:
+    def get_all(self) -> List[CategoryDomain]:
         stmt = sa.select(CategoryORM)
         categories_orm = list(self.session.scalars(stmt).all())
         return [self._to_domain_model(category_orm) for category_orm in categories_orm]
@@ -49,34 +50,34 @@ class CategoryRepository:
         categories_orm = list(self.session.scalars(stmt).unique().all())
         return [self._to_domain_model(category_orm) for category_orm in categories_orm]
 
-    def create(self, category: CategoryDomain) -> CategoryDomain:
+    def create(self, entity: CategoryDomain) -> CategoryDomain:
         category_orm = CategoryORM()
-        category_orm.title = category.title
-        category_orm.alias = category.alias
+        category_orm.title = entity.title
+        category_orm.alias = entity.alias
         # Handle the case where template might be None
-        if category.template is not None:
-            category_orm.template = category.template
+        if entity.template is not None:
+            category_orm.template = entity.template
         self.session.add(category_orm)
         self.session.flush()  # Get the ID without committing
-        category.id = category_orm.id
-        return category
+        entity.id = category_orm.id
+        return entity
 
-    def update(self, category: CategoryDomain) -> CategoryDomain:
-        stmt = sa.select(CategoryORM).where(CategoryORM.id == category.id)
+    def update(self, entity: CategoryDomain) -> CategoryDomain:
+        stmt = sa.select(CategoryORM).where(CategoryORM.id == entity.id)
         category_orm = self.session.scalar(stmt)
         if not category_orm:
-            raise ValueError(f"Category with id {category.id} not found")
+            raise ValueError(f"Category with id {entity.id} not found")
 
-        category_orm.title = category.title
-        category_orm.alias = category.alias
+        category_orm.title = entity.title
+        category_orm.alias = entity.alias
         # Handle the case where template might be None
-        if category.template is not None:
-            category_orm.template = category.template
+        if entity.template is not None:
+            category_orm.template = entity.template
         self.session.flush()
-        return category
+        return entity
 
-    def delete(self, category_id: int) -> bool:
-        stmt = sa.select(CategoryORM).where(CategoryORM.id == category_id)
+    def delete(self, id: int) -> bool:
+        stmt = sa.select(CategoryORM).where(CategoryORM.id == id)
         category_orm = self.session.scalar(stmt)
         if category_orm:
             self.session.delete(category_orm)

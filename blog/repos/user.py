@@ -1,22 +1,23 @@
 """Repository for User entities."""
 
 import sqlalchemy as sa
-from typing import Any
+from typing import Any, List, Optional
 
 from blog.extensions import db
 from blog.user.models import User as UserORM
 from blog.domain.user import User as UserDomain
 from blog.domain.post import Post as PostDomain
+from blog.repos.base import BaseRepository
 
 
-class UserRepository:
+class UserRepository(BaseRepository[UserDomain, int]):
     """Repository for User entities."""
 
     def __init__(self, session: Any = None):
         self.session = session or db.session
 
-    def get_by_id(self, user_id: int) -> UserDomain | None:
-        stmt = sa.select(UserORM).where(UserORM.id == user_id)
+    def get_by_id(self, id: int) -> Optional[UserDomain]:
+        stmt = sa.select(UserORM).where(UserORM.id == id)
         user_orm = self.session.scalar(stmt)
         if user_orm:
             return self._to_domain_model(user_orm)
@@ -29,7 +30,7 @@ class UserRepository:
             return self._to_domain_model(user_orm)
         return None
 
-    def get_all(self) -> list[UserDomain]:
+    def get_all(self) -> List[UserDomain]:
         stmt = sa.select(UserORM)
         users_orm = self.session.scalars(stmt).all()
         return [self._to_domain_model(user_orm) for user_orm in users_orm]
@@ -39,42 +40,42 @@ class UserRepository:
         users_orm = self.session.scalars(stmt).unique().all()
         return [self._to_domain_model(user_orm) for user_orm in users_orm]
 
-    def create(self, user: UserDomain) -> UserDomain:
+    def create(self, entity: UserDomain) -> UserDomain:
         user_orm = UserORM()
-        user_orm.name = user.name
-        user_orm.password = user.password
+        user_orm.name = entity.name
+        user_orm.password = entity.password
         # Handle the case where authenticated might be None
         user_orm.authenticated = (
-            user.authenticated if user.authenticated is not None else False
+            entity.authenticated if entity.authenticated is not None else False
         )
         # Handle datetime field that might be None
-        if user.createdon is not None:
-            user_orm.createdon = user.createdon
+        if entity.createdon is not None:
+            user_orm.createdon = entity.createdon
         self.session.add(user_orm)
         self.session.flush()  # Get the ID without committing
-        user.id = user_orm.id
-        return user
+        entity.id = user_orm.id
+        return entity
 
-    def update(self, user: UserDomain) -> UserDomain:
-        stmt = sa.select(UserORM).where(UserORM.id == user.id)
+    def update(self, entity: UserDomain) -> UserDomain:
+        stmt = sa.select(UserORM).where(UserORM.id == entity.id)
         user_orm = self.session.scalar(stmt)
         if not user_orm:
-            raise ValueError(f"User with id {user.id} not found")
+            raise ValueError(f"User with id {entity.id} not found")
 
-        user_orm.name = user.name
-        user_orm.password = user.password
+        user_orm.name = entity.name
+        user_orm.password = entity.password
         # Handle the case where authenticated might be None
         user_orm.authenticated = (
-            user.authenticated if user.authenticated is not None else False
+            entity.authenticated if entity.authenticated is not None else False
         )
         # Handle datetime field that might be None
-        if user.createdon is not None:
-            user_orm.createdon = user.createdon
+        if entity.createdon is not None:
+            user_orm.createdon = entity.createdon
         self.session.flush()
-        return user
+        return entity
 
-    def delete(self, user_id: int) -> bool:
-        stmt = sa.select(UserORM).where(UserORM.id == user_id)
+    def delete(self, id: int) -> bool:
+        stmt = sa.select(UserORM).where(UserORM.id == id)
         user_orm = self.session.scalar(stmt)
         if user_orm:
             self.session.delete(user_orm)

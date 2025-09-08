@@ -1,15 +1,16 @@
 """Repository for Tag entities."""
 
 import sqlalchemy as sa
-from typing import Any
+from typing import Any, List, Optional
 
 from blog.extensions import db
 from blog.tags.models import Tag as TagORM
 from blog.domain.tag import Tag as TagDomain
 from blog.domain.post import Post as PostDomain
+from blog.repos.base import BaseRepository
 
 
-class TagRepository:
+class TagRepository(BaseRepository[TagDomain, int]):
     """Repository for Tag entities."""
 
     def __init__(self, session: Any = None):
@@ -23,8 +24,8 @@ class TagRepository:
         )
         return self.session.scalar(stmt)
 
-    def get_by_id(self, tag_id: int) -> TagDomain | None:
-        stmt = sa.select(TagORM).where(TagORM.id == tag_id)
+    def get_by_id(self, id: int) -> Optional[TagDomain]:
+        stmt = sa.select(TagORM).where(TagORM.id == id)
         tag_orm = self.session.scalar(stmt)
         if tag_orm:
             return self._to_domain_model(tag_orm)
@@ -37,7 +38,7 @@ class TagRepository:
             return self._to_domain_model(tag_orm)
         return None
 
-    def get_all(self) -> list[TagDomain]:
+    def get_all(self) -> List[TagDomain]:
         stmt = sa.select(TagORM)
         tags_orm = list(self.session.scalars(stmt).all())
         return [self._to_domain_model(tag_orm) for tag_orm in tags_orm]
@@ -47,28 +48,28 @@ class TagRepository:
         tags_orm = list(self.session.scalars(stmt).unique().all())
         return [self._to_domain_model(tag_orm) for tag_orm in tags_orm]
 
-    def create(self, tag: TagDomain) -> TagDomain:
+    def create(self, entity: TagDomain) -> TagDomain:
         tag_orm = TagORM()
-        tag_orm.title = tag.title
-        tag_orm.alias = tag.alias
+        tag_orm.title = entity.title
+        tag_orm.alias = entity.alias
         self.session.add(tag_orm)
         self.session.flush()  # Get the ID without committing
-        tag.id = tag_orm.id
-        return tag
+        entity.id = tag_orm.id
+        return entity
 
-    def update(self, tag: TagDomain) -> TagDomain:
-        stmt = sa.select(TagORM).where(TagORM.id == tag.id)
+    def update(self, entity: TagDomain) -> TagDomain:
+        stmt = sa.select(TagORM).where(TagORM.id == entity.id)
         tag_orm = self.session.scalar(stmt)
         if not tag_orm:
-            raise ValueError(f"Tag with id {tag.id} not found")
+            raise ValueError(f"Tag with id {entity.id} not found")
 
-        tag_orm.title = tag.title
-        tag_orm.alias = tag.alias
+        tag_orm.title = entity.title
+        tag_orm.alias = entity.alias
         self.session.flush()
-        return tag
+        return entity
 
-    def delete(self, tag_id: int) -> bool:
-        stmt = sa.select(TagORM).where(TagORM.id == tag_id)
+    def delete(self, id: int) -> bool:
+        stmt = sa.select(TagORM).where(TagORM.id == id)
         tag_orm = self.session.scalar(stmt)
         if tag_orm:
             self.session.delete(tag_orm)
