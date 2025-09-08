@@ -19,14 +19,6 @@ class UserService:
     def get_user_by_id(self, user_id: int) -> User | None:
         return self.user_repository.get_by_id(user_id)
 
-    def get_user_orm_by_id(self, user_id: int):
-        """Get a user ORM model by its ID. Used for Flask-Login compatibility."""
-        return self.user_repository.get_user_orm_by_id(user_id)
-
-    def get_user_orm_by_name(self, name: str):
-        """Get a user ORM model by their name. Used for Flask-Login compatibility."""
-        return self.user_repository.get_user_orm_by_name(name)
-
     def get_user_by_name(self, name: str) -> User | None:
         return self.user_repository.get_by_name(name)
 

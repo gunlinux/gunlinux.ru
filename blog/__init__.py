@@ -31,6 +31,7 @@ def configure_extensions(app):
 def register_commands(app):
     """Register custom CLI commands."""
     from blog.commands import init_app
+
     init_app(app)
 
 
@@ -45,8 +46,8 @@ def create_app():
     app.register_blueprint(post)
     app.register_blueprint(tags)
     app.register_blueprint(user)
-    
+
     # Register CLI commands
     register_commands(app)
-    
+
     return app

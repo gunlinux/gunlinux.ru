@@ -15,24 +15,6 @@ class UserRepository:
     def __init__(self, session: Any = None):
         self.session = session or db.session
 
-    def get_user_orm_with_relationships(self, user_id: int) -> UserORM | None:
-        stmt = (
-            sa.select(UserORM)
-            .where(UserORM.id == user_id)
-            .options(sa.orm.joinedload(UserORM.posts))
-        )
-        return self.session.scalar(stmt)
-
-    def get_user_orm_by_id(self, user_id: int) -> UserORM | None:
-        """Get a user ORM model by its ID. Used for Flask-Login compatibility."""
-        stmt = sa.select(UserORM).where(UserORM.id == user_id)
-        return self.session.scalar(stmt)
-
-    def get_user_orm_by_name(self, name: str) -> UserORM | None:
-        """Get a user ORM model by their name. Used for Flask-Login compatibility."""
-        stmt = sa.select(UserORM).where(UserORM.name == name)
-        return self.session.scalar(stmt)
-
     def get_by_id(self, user_id: int) -> UserDomain | None:
         stmt = sa.select(UserORM).where(UserORM.id == user_id)
         user_orm = self.session.scalar(stmt)
