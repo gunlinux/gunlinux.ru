@@ -2,7 +2,6 @@
 
 import pytest
 import os
-import datetime
 
 from blog import create_app
 from blog.extensions import db
@@ -44,7 +43,7 @@ class TestAuthenticationAdapter:
             # Create a user first
             user_domain = UserDomain(name="testuser", password="testpassword")
             created_user = user_service.create_user(user_domain)
-            
+
             # Set the password properly
             user_orm = db.session.get(UserORM, created_user.id)
             if user_orm:
@@ -68,13 +67,15 @@ class TestAuthenticationAdapter:
             # Verify None is returned
             assert loaded_user is None
 
-    def test_authenticate_and_login_valid_credentials(self, app, auth_adapter, user_service):
+    def test_authenticate_and_login_valid_credentials(
+        self, app, auth_adapter, user_service
+    ):
         """Test authenticating with valid credentials."""
         with app.app_context():
             # Create a user first
             user_domain = UserDomain(name="testuser", password="testpassword")
             created_user = user_service.create_user(user_domain)
-            
+
             # Set the password properly
             user_orm = db.session.get(UserORM, created_user.id)
             if user_orm:
@@ -82,20 +83,24 @@ class TestAuthenticationAdapter:
                 db.session.commit()
 
             # Authenticate the user using the adapter
-            authenticated_user = auth_adapter.authenticate_and_login("testuser", "testpassword")
+            authenticated_user = auth_adapter.authenticate_and_login(
+                "testuser", "testpassword"
+            )
 
             # Verify the user was authenticated correctly
             assert authenticated_user is not None
             assert authenticated_user.id == created_user.id
             assert authenticated_user.name == "testuser"
 
-    def test_authenticate_and_login_invalid_credentials(self, app, auth_adapter, user_service):
+    def test_authenticate_and_login_invalid_credentials(
+        self, app, auth_adapter, user_service
+    ):
         """Test authenticating with invalid credentials."""
         with app.app_context():
             # Create a user first
             user_domain = UserDomain(name="testuser", password="testpassword")
             created_user = user_service.create_user(user_domain)
-            
+
             # Set the password properly
             user_orm = db.session.get(UserORM, created_user.id)
             if user_orm:
@@ -103,7 +108,9 @@ class TestAuthenticationAdapter:
                 db.session.commit()
 
             # Try to authenticate with wrong password
-            authenticated_user = auth_adapter.authenticate_and_login("testuser", "wrongpassword")
+            authenticated_user = auth_adapter.authenticate_and_login(
+                "testuser", "wrongpassword"
+            )
 
             # Verify None is returned
             assert authenticated_user is None
@@ -112,7 +119,9 @@ class TestAuthenticationAdapter:
         """Test authenticating a nonexistent user."""
         with app.app_context():
             # Try to authenticate a user that doesn't exist
-            authenticated_user = auth_adapter.authenticate_and_login("nonexistent", "password")
+            authenticated_user = auth_adapter.authenticate_and_login(
+                "nonexistent", "password"
+            )
 
             # Verify None is returned
             assert authenticated_user is None
@@ -123,7 +132,7 @@ class TestAuthenticationAdapter:
             # Create a user first
             user_domain = UserDomain(name="testuser", password="testpassword")
             created_user = user_service.create_user(user_domain)
-            
+
             # Set the password properly
             user_orm = db.session.get(UserORM, created_user.id)
             if user_orm:
