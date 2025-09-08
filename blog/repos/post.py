@@ -7,8 +7,6 @@ from blog.extensions import db
 from blog.post.models import Post as PostORM
 from blog.tags.models import Tag as TagORM
 from blog.domain.post import Post as PostDomain
-from blog.domain.user import User as UserDomain
-from blog.domain.category import Category as CategoryDomain
 from blog.domain.tag import Tag as TagDomain
 from blog.repos.base import BaseRepository
 
@@ -20,6 +18,11 @@ class PostRepository(BaseRepository[PostDomain, int]):
         self.session = session or db.session
 
     def get_post_with_relationships(self, post_id: int) -> PostDomain | None:
+        """Get a post by ID with its relationships loaded.
+
+        Note: This method loads relationships but doesn't include them in the domain model
+        since we've removed relationship fields to avoid circular dependencies.
+        """
         stmt = (
             sa.select(PostORM)
             .where(PostORM.id == post_id)
@@ -33,6 +36,26 @@ class PostRepository(BaseRepository[PostDomain, int]):
         if post_orm:
             return self._to_domain_model(post_orm)
         return None
+
+    def get_tags_for_post(self, post_id: int) -> List[TagDomain]:
+        """Get all tags associated with a specific post."""
+        stmt = sa.select(TagORM).join(TagORM.posts).where(PostORM.id == post_id)
+        tags_orm = list(self.session.scalars(stmt).all())
+        return [self._tag_to_domain_model(tag_orm) for tag_orm in tags_orm]
+
+    def get_posts_by_tag(self, tag_id: int) -> List[PostDomain]:
+        """Get all posts associated with a specific tag."""
+        stmt = sa.select(PostORM).join(PostORM.tags).where(TagORM.id == tag_id)
+        posts_orm = list(self.session.scalars(stmt).all())
+        return [self._to_domain_model(post_orm) for post_orm in posts_orm]
+
+    def _tag_to_domain_model(self, tag_orm: TagORM) -> TagDomain:
+        """Convert Tag ORM model to Tag domain model."""
+        return TagDomain(
+            id=tag_orm.id,
+            title=tag_orm.title or "",
+            alias=tag_orm.alias or "",
+        )
 
     def get_by_id(self, id: int) -> Optional[PostDomain]:
         stmt = sa.select(PostORM).where(PostORM.id == id)
@@ -85,15 +108,6 @@ class PostRepository(BaseRepository[PostDomain, int]):
         if entity.user_id is not None:
             post_orm.user_id = entity.user_id
 
-        # Handle tags relationship if provided
-        if entity.tags:
-            # Find existing Tag ORM models based on the domain Tag models
-            tag_ids = [tag.id for tag in entity.tags if tag.id is not None]
-            if tag_ids:
-                stmt = sa.select(TagORM).where(TagORM.id.in_(tag_ids))
-                existing_tags = list(self.session.scalars(stmt).all())
-                post_orm.tags = existing_tags
-
         self.session.add(post_orm)
         self.session.flush()  # Get the ID without committing
         entity.id = post_orm.id
@@ -129,44 +143,6 @@ class PostRepository(BaseRepository[PostDomain, int]):
         return False
 
     def _to_domain_model(self, post_orm: PostORM) -> PostDomain:
-        # Convert related user if it exists
-        user = None
-        if post_orm.user:
-            user = UserDomain(
-                id=post_orm.user.id,
-                name=post_orm.user.name or "",
-                password=post_orm.user.password or "",
-                authenticated=bool(post_orm.user.authenticated)
-                if post_orm.user.authenticated is not None
-                else False,
-                createdon=post_orm.user.createdon,
-                posts=None,  # Avoid circular references
-            )
-
-        # Convert related category if it exists
-        category = None
-        if post_orm.category:
-            category = CategoryDomain(
-                id=post_orm.category.id,
-                title=post_orm.category.title or "",
-                alias=post_orm.category.alias or "",
-                template=post_orm.category.template,
-                posts=None,  # Avoid circular references
-            )
-
-        # Convert related tags if they exist
-        tags = None
-        if post_orm.tags:
-            tags = [
-                TagDomain(
-                    id=tag_orm.id,
-                    title=tag_orm.title or "",
-                    alias=tag_orm.alias or "",
-                    posts=None,  # Avoid circular references
-                )
-                for tag_orm in post_orm.tags
-            ]
-
         return PostDomain(
             id=post_orm.id,
             pagetitle=post_orm.pagetitle or "",
@@ -176,7 +152,4 @@ class PostRepository(BaseRepository[PostDomain, int]):
             publishedon=post_orm.publishedon,
             category_id=post_orm.category_id,
             user_id=post_orm.user_id,
-            user=user,
-            category=category,
-            tags=tags,
         )

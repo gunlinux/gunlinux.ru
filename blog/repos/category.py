@@ -6,7 +6,6 @@ from typing import Any, List, Optional
 from blog.extensions import db
 from blog.category.models import Category as CategoryORM
 from blog.domain.category import Category as CategoryDomain
-from blog.domain.post import Post as PostDomain
 from blog.repos.base import BaseRepository
 
 
@@ -46,6 +45,11 @@ class CategoryRepository(BaseRepository[CategoryDomain, int]):
         return [self._to_domain_model(category_orm) for category_orm in categories_orm]
 
     def get_categories_with_posts(self) -> list[CategoryDomain]:
+        """Get all categories with their posts loaded.
+
+        Note: This method loads relationships but doesn't include them in the domain model
+        since we've removed relationship fields to avoid circular dependencies.
+        """
         stmt = sa.select(CategoryORM).options(sa.orm.joinedload(CategoryORM.posts))
         categories_orm = list(self.session.scalars(stmt).unique().all())
         return [self._to_domain_model(category_orm) for category_orm in categories_orm]
@@ -85,30 +89,9 @@ class CategoryRepository(BaseRepository[CategoryDomain, int]):
         return False
 
     def _to_domain_model(self, category_orm: CategoryORM) -> CategoryDomain:
-        # Convert related posts if they exist
-        posts = None
-        if category_orm.posts:
-            posts = [
-                PostDomain(
-                    id=post_orm.id,
-                    pagetitle=post_orm.pagetitle or "",
-                    alias=post_orm.alias or "",
-                    content=post_orm.content or "",
-                    createdon=post_orm.createdon,
-                    publishedon=post_orm.publishedon,
-                    category_id=post_orm.category_id,
-                    user_id=post_orm.user_id,
-                    user=None,  # Avoid circular references
-                    category=None,  # Avoid circular references
-                    tags=None,  # Avoid circular references
-                )
-                for post_orm in category_orm.posts
-            ]
-
         return CategoryDomain(
             id=category_orm.id,
             title=category_orm.title or "",
             alias=category_orm.alias or "",
             template=category_orm.template,
-            posts=posts,
         )

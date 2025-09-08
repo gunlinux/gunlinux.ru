@@ -1,6 +1,7 @@
 import logging
 from blog.repos.post import PostRepository
 from blog.domain.post import Post
+from blog.domain.tag import Tag
 
 
 logger = logging.getLogger(__name__)
@@ -32,6 +33,14 @@ class PostService:
 
     def get_page_posts(self, page_category_ids: list[int]) -> list[Post]:
         return self.post_repository.get_page_posts(page_category_ids)
+
+    def get_posts_by_tag(self, tag_id: int) -> list[Post]:
+        """Get all posts associated with a specific tag."""
+        return self.post_repository.get_posts_by_tag(tag_id)
+
+    def get_tags_for_post(self, post_id: int) -> list[Tag]:
+        """Get all tags associated with a specific post."""
+        return self.post_repository.get_tags_for_post(post_id)
 
     def create_post(self, post: Post) -> Post:
         try:

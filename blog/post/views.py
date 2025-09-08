@@ -70,14 +70,17 @@ def view(alias=None, **kwargs):
 
         abort(404)
 
+    # Get tags for the post
+    tags = post_service.get_tags_for_post(post.id) if post.id else []
+
     page_category_obj = None
     if post.category_id:
         category_service = ServiceFactory.create_category_service()
         page_category_obj = category_service.get_category_by_id(post.category_id)
 
     if page_category_obj and page_category_obj.template:
-        return render_template(page_category_obj.template, post=post, **kwargs)
-    return render_template("post.html", post=post, **kwargs)
+        return render_template("post.html", post=post, tags=tags, **kwargs)
+    return render_template("post.html", post=post, tags=tags, **kwargs)
 
 
 @flask_sitemap.register_generator

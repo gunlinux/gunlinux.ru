@@ -28,4 +28,8 @@ def view(alias=None, **kwargs):
         from flask import abort
 
         abort(404)
-    return render_template("posts.html", posts=tag.posts, tag=tag, **kwargs)
+
+    # Get posts for this tag through the post service
+    post_service = ServiceFactory.create_post_service()
+    posts = post_service.get_posts_by_tag(tag.id) if tag.id else []
+    return render_template("posts.html", posts=posts, tag=tag, **kwargs)

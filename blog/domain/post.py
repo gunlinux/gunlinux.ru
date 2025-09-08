@@ -3,12 +3,6 @@
 from dataclasses import dataclass
 import datetime
 import markdown
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from blog.domain.category import Category as CategoryDomain
-    from blog.domain.tag import Tag as TagDomain
-    from blog.domain.user import User as UserDomain
 
 
 MARKDOWN_EXTENSIONS = ["markdown.extensions.fenced_code"]
@@ -26,12 +20,6 @@ class Post:
     publishedon: datetime.datetime | None = None
     category_id: int | None = None
     user_id: int | None = None
-
-    # These would typically be loaded separately in a real implementation
-    # to avoid circular dependencies
-    user: "UserDomain | None" = None
-    category: "CategoryDomain | None" = None
-    tags: "list[TagDomain] | None" = None
 
     def __post_init__(self):
         if self.createdon is None:

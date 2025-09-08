@@ -3,14 +3,6 @@
 import datetime
 import typing
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from blog.domain.post import Post as PostDomain
-
-    Post = PostDomain
-else:
-    Post = "Post"
 
 
 @dataclass
@@ -22,7 +14,6 @@ class User:
     password: str = ""
     authenticated: bool = False
     createdon: datetime.datetime | None = None
-    posts: list[Post] | None = None
 
     def __post_init__(self):
         if self.createdon is None:

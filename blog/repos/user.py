@@ -6,7 +6,6 @@ from typing import Any, List, Optional
 from blog.extensions import db
 from blog.user.models import User as UserORM
 from blog.domain.user import User as UserDomain
-from blog.domain.post import Post as PostDomain
 from blog.repos.base import BaseRepository
 
 
@@ -36,6 +35,11 @@ class UserRepository(BaseRepository[UserDomain, int]):
         return [self._to_domain_model(user_orm) for user_orm in users_orm]
 
     def get_users_with_posts(self) -> list[UserDomain]:
+        """Get all users with their posts loaded.
+
+        Note: This method loads relationships but doesn't include them in the domain model
+        since we've removed relationship fields to avoid circular dependencies.
+        """
         stmt = sa.select(UserORM).options(sa.orm.joinedload(UserORM.posts))
         users_orm = self.session.scalars(stmt).unique().all()
         return [self._to_domain_model(user_orm) for user_orm in users_orm]
@@ -90,26 +94,6 @@ class UserRepository(BaseRepository[UserDomain, int]):
         return None
 
     def _to_domain_model(self, user_orm: UserORM) -> UserDomain:
-        # Convert related posts if they exist
-        posts = None
-        if user_orm.posts:
-            posts = [
-                PostDomain(
-                    id=post_orm.id,
-                    pagetitle=post_orm.pagetitle or "",
-                    alias=post_orm.alias or "",
-                    content=post_orm.content or "",
-                    createdon=post_orm.createdon,
-                    publishedon=post_orm.publishedon,
-                    category_id=post_orm.category_id,
-                    user_id=post_orm.user_id,
-                    user=None,  # Avoid circular references
-                    category=None,  # Avoid circular references
-                    tags=None,  # Avoid circular references
-                )
-                for post_orm in user_orm.posts
-            ]
-
         return UserDomain(
             id=user_orm.id,
             name=user_orm.name or "",
@@ -118,5 +102,4 @@ class UserRepository(BaseRepository[UserDomain, int]):
             if user_orm.authenticated is not None
             else False,
             createdon=user_orm.createdon,
-            posts=posts,
         )

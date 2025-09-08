@@ -6,7 +6,6 @@ from typing import Any, List, Optional
 from blog.extensions import db
 from blog.tags.models import Tag as TagORM
 from blog.domain.tag import Tag as TagDomain
-from blog.domain.post import Post as PostDomain
 from blog.repos.base import BaseRepository
 
 
@@ -44,8 +43,21 @@ class TagRepository(BaseRepository[TagDomain, int]):
         return [self._to_domain_model(tag_orm) for tag_orm in tags_orm]
 
     def get_tags_with_posts(self) -> list[TagDomain]:
+        """Get all tags with their posts loaded.
+
+        Note: This method loads relationships but doesn't include them in the domain model
+        since we've removed relationship fields to avoid circular dependencies.
+        """
         stmt = sa.select(TagORM).options(sa.orm.joinedload(TagORM.posts))
         tags_orm = list(self.session.scalars(stmt).unique().all())
+        return [self._to_domain_model(tag_orm) for tag_orm in tags_orm]
+
+    def get_tags_for_post(self, post_id: int) -> List[TagDomain]:
+        """Get all tags associated with a specific post."""
+        from blog.post.models import Post as PostORM
+
+        stmt = sa.select(TagORM).join(TagORM.posts).where(PostORM.id == post_id)
+        tags_orm = list(self.session.scalars(stmt).all())
         return [self._to_domain_model(tag_orm) for tag_orm in tags_orm]
 
     def create(self, entity: TagDomain) -> TagDomain:
@@ -77,29 +89,8 @@ class TagRepository(BaseRepository[TagDomain, int]):
         return False
 
     def _to_domain_model(self, tag_orm: TagORM) -> TagDomain:
-        # Convert related posts if they exist
-        posts = None
-        if tag_orm.posts:
-            posts = [
-                PostDomain(
-                    id=post_orm.id,
-                    pagetitle=post_orm.pagetitle or "",
-                    alias=post_orm.alias or "",
-                    content=post_orm.content or "",
-                    createdon=post_orm.createdon,
-                    publishedon=post_orm.publishedon,
-                    category_id=post_orm.category_id,
-                    user_id=post_orm.user_id,
-                    user=None,  # Avoid circular references
-                    category=None,  # Avoid circular references
-                    tags=None,  # Avoid circular references
-                )
-                for post_orm in tag_orm.posts
-            ]
-
         return TagDomain(
             id=tag_orm.id,
             title=tag_orm.title or "",
             alias=tag_orm.alias or "",
-            posts=posts,
         )
