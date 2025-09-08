@@ -15,14 +15,6 @@ class TagRepository(BaseRepository[TagDomain, int]):
     def __init__(self, session: Any = None):
         self.session = session or db.session
 
-    def get_tag_orm_with_relationships(self, tag_id: int) -> TagORM | None:
-        stmt = (
-            sa.select(TagORM)
-            .where(TagORM.id == tag_id)
-            .options(sa.orm.joinedload(TagORM.posts))
-        )
-        return self.session.scalar(stmt)
-
     def get_by_id(self, id: int) -> Optional[TagDomain]:
         stmt = sa.select(TagORM).where(TagORM.id == id)
         tag_orm = self.session.scalar(stmt)

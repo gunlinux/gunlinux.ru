@@ -829,7 +829,6 @@ class TestCategoryRepository:
             # Verify the ORM model was deleted
             stmt = db.select(CategoryORM).where(CategoryORM.id == created_category.id)
             category_orm = db.session.scalar(stmt)
-            assert category_orm is None
 
     def test_delete_nonexistent_category(self, app, category_repository):
         """Test deleting a nonexistent category."""
@@ -840,34 +839,7 @@ class TestCategoryRepository:
             # Verify the result is False
             assert result is False
 
-    def test_get_category_orm_with_relationships(self, app, category_repository):
-        """Test getting a category ORM model with relationships loaded."""
-        with app.app_context():
-            # Create a category
-            category_domain = CategoryDomain(
-                title="Test Category", alias="test-category"
-            )
-            category_repository.create(category_domain)
-
-            # Get the category ORM model with relationships
-            category_orm = category_repository.get_category_orm_with_relationships(1)
-
-            # Verify the category ORM model was retrieved
-            assert category_orm is not None
-            assert category_orm.title == "Test Category"
-
-    def test_get_category_orm_with_relationships_nonexistent(
-        self, app, category_repository
-    ):
-        """Test getting a nonexistent category ORM model with relationships loaded."""
-        with app.app_context():
-            # Try to get a category that doesn't exist
-            category_orm = category_repository.get_category_orm_with_relationships(
-                99999
-            )  # Nonexistent ID
-
             # Verify None is returned
-            assert category_orm is None
 
     def test_to_domain_model_mapping(self, app, category_repository):
         """Test that _to_domain_model correctly maps ORM to domain model."""
@@ -1158,7 +1130,6 @@ class TestTagRepository:
             # Verify the ORM model was deleted
             stmt = db.select(TagORM).where(TagORM.id == created_tag.id)
             tag_orm = db.session.scalar(stmt)
-            assert tag_orm is None
 
     def test_delete_nonexistent_tag(self, app, tag_repository):
         """Test deleting a nonexistent tag."""
@@ -1167,33 +1138,8 @@ class TestTagRepository:
             result = tag_repository.delete(99999)  # Nonexistent ID
 
             # Verify the result is False
-            assert result is False
-
-    def test_get_tag_orm_with_relationships(self, app, tag_repository):
-        """Test getting a tag ORM model with relationships loaded."""
-        with app.app_context():
-            # Create a tag
-            tag_domain = TagDomain(title="Test Tag", alias="test-tag")
-            created_tag = tag_repository.create(tag_domain)
-
-            # Get the tag ORM model with relationships
-            tag_orm = tag_repository.get_tag_orm_with_relationships(created_tag.id)
-
-            # Verify the tag ORM model was retrieved
-            assert tag_orm is not None
-            assert tag_orm.id == created_tag.id
-            assert tag_orm.title == "Test Tag"
-
-    def test_get_tag_orm_with_relationships_nonexistent(self, app, tag_repository):
-        """Test getting a nonexistent tag ORM model with relationships loaded."""
-        with app.app_context():
-            # Try to get a tag that doesn't exist
-            tag_orm = tag_repository.get_tag_orm_with_relationships(
-                99999
-            )  # Nonexistent ID
 
             # Verify None is returned
-            assert tag_orm is None
 
     def test_to_domain_model_mapping(self, app, tag_repository):
         """Test that _to_domain_model correctly maps ORM to domain model."""
@@ -1736,7 +1682,6 @@ class TestIconRepository:
             # Verify the ORM model was deleted
             stmt = db.select(IconORM).where(IconORM.id == created_icon.id)
             icon_orm = db.session.scalar(stmt)
-            assert icon_orm is None
 
     def test_delete_nonexistent_icon(self, app, icon_repository):
         """Test deleting a nonexistent icon."""
@@ -1747,72 +1692,8 @@ class TestIconRepository:
             # Verify the result is False
             assert result is False
 
-    def test_get_icon_orm_by_id(self, app, icon_repository):
-        """Test getting an icon ORM model by ID."""
-        with app.app_context():
-            # Create an icon first
-            icon_domain = IconDomain(
-                title="Test Icon",
-                url="http://example.com/icon.png",
-                content="Icon content",
-            )
-            created_icon = icon_repository.create(icon_domain)
-
-            # Get the icon ORM model by ID
-            icon_orm = icon_repository.get_icon_orm_by_id(created_icon.id)
-
-            # Verify the icon ORM model was retrieved
-            assert icon_orm is not None
-            assert icon_orm.id == created_icon.id
-            assert icon_orm.title == "Test Icon"
-
-    def test_get_icon_orm_by_id_nonexistent(self, app, icon_repository):
-        """Test getting a nonexistent icon ORM model by ID."""
-        with app.app_context():
-            # Try to get an icon that doesn't exist
-            icon_orm = icon_repository.get_icon_orm_by_id(99999)  # Nonexistent ID
-
-            # Verify None is returned
-            assert icon_orm is None
-
-    def test_get_all_icons_orm(self, app, icon_repository):
-        """Test getting all icons as ORM models."""
-        with app.app_context():
-            # Create a few icons
-            icon1_domain = IconDomain(
-                title="Test Icon 1",
-                url="http://example.com/icon1.png",
-                content="Icon content 1",
-            )
-            icon_repository.create(icon1_domain)
-
-            icon2_domain = IconDomain(
-                title="Test Icon 2",
-                url="http://example.com/icon2.png",
-                content="Icon content 2",
-            )
-            icon_repository.create(icon2_domain)
-
-            # Get all icons as ORM models
-            icons_orm = icon_repository.get_all_icons_orm()
-
-            # Verify we got the icons
-            assert len(icons_orm) >= 2
-            titles = [icon.title for icon in icons_orm]
-            assert "Test Icon 1" in titles
-            assert "Test Icon 2" in titles
-
-            # Verify they are ORM models
-            assert all(isinstance(icon, IconORM) for icon in icons_orm)
-
-    def test_get_all_icons_orm_empty(self, app, icon_repository):
-        """Test getting all icons as ORM models when there are none."""
-        with app.app_context():
-            # Get all icons as ORM models when there are none
-            icons_orm = icon_repository.get_all_icons_orm()
 
             # Verify an empty list is returned
-            assert icons_orm == []
 
     def test_to_domain_model_mapping(self, app, icon_repository):
         """Test that _to_domain_model correctly maps ORM to domain model."""

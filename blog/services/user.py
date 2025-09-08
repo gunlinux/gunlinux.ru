@@ -1,7 +1,11 @@
 """Service layer for User entities."""
 
+import logging
 from blog.repos.user import UserRepository
 from blog.domain.user import User
+
+
+logger = logging.getLogger(__name__)
 
 
 class UserServiceError(Exception):
@@ -50,6 +54,8 @@ class UserService:
         try:
             return self.user_repository.create(user)
         except Exception as e:
+            # Log the error with details
+            logger.error(f"Failed to create user: {str(e)}", exc_info=True)
             # Re-raise as a more specific exception for the service layer
             raise UserCreationError(f"Failed to create user: {str(e)}") from e
 
@@ -57,13 +63,17 @@ class UserService:
         try:
             return self.user_repository.update(user)
         except ValueError as e:
+            # Log the error with details
+            logger.error(f"Failed to update user: {str(e)}", exc_info=True)
             # Re-raise as a more specific exception for the service layer
             raise UserUpdateError(f"Failed to update user: {str(e)}") from e
 
     def delete_user(self, user_id: int) -> bool:
         try:
             return self.user_repository.delete(user_id)
-        except Exception:
+        except Exception as e:
+            # Log the error with details
+            logger.error(f"Failed to delete user with id {user_id}: {str(e)}", exc_info=True)
             # Return False to indicate failure
             return False
 

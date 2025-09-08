@@ -1,7 +1,11 @@
 """Service layer for Category entities."""
 
+import logging
 from blog.repos.category import CategoryRepository
 from blog.domain.category import Category
+
+
+logger = logging.getLogger(__name__)
 
 
 class CategoryServiceError(Exception):
@@ -50,6 +54,8 @@ class CategoryService:
         try:
             return self.category_repository.create(category)
         except Exception as e:
+            # Log the error with details
+            logger.error(f"Failed to create category: {str(e)}", exc_info=True)
             # Re-raise as a more specific exception for the service layer
             raise CategoryCreationError(f"Failed to create category: {str(e)}") from e
 
@@ -57,12 +63,16 @@ class CategoryService:
         try:
             return self.category_repository.update(category)
         except ValueError as e:
+            # Log the error with details
+            logger.error(f"Failed to update category: {str(e)}", exc_info=True)
             # Re-raise as a more specific exception for the service layer
             raise CategoryUpdateError(f"Failed to update category: {str(e)}") from e
 
     def delete_category(self, category_id: int) -> bool:
         try:
             return self.category_repository.delete(category_id)
-        except Exception:
+        except Exception as e:
+            # Log the error with details
+            logger.error(f"Failed to delete category with id {category_id}: {str(e)}", exc_info=True)
             # Return False to indicate failure
             return False

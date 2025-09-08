@@ -15,16 +15,6 @@ class CategoryRepository(BaseRepository[CategoryDomain, int]):
     def __init__(self, session: Any = None):
         self.session = session or db.session
 
-    def get_category_orm_with_relationships(
-        self, category_id: int
-    ) -> CategoryORM | None:
-        stmt = (
-            sa.select(CategoryORM)
-            .where(CategoryORM.id == category_id)
-            .options(sa.orm.joinedload(CategoryORM.posts))
-        )
-        return self.session.scalar(stmt)
-
     def get_by_id(self, id: int) -> Optional[CategoryDomain]:
         stmt = sa.select(CategoryORM).where(CategoryORM.id == id)
         category_orm = self.session.scalar(stmt)

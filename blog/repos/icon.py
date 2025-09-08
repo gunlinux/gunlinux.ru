@@ -15,16 +15,6 @@ class IconRepository(BaseRepository[Icon, int]):
     def __init__(self, session: Any = None):
         self.session = session or db.session
 
-    def get_icon_orm_by_id(self, icon_id: int) -> IconORM | None:
-        """Get an icon ORM model by its ID. Used for specific use cases requiring ORM models."""
-        stmt = sa.select(IconORM).where(IconORM.id == icon_id)
-        return self.session.scalar(stmt)
-
-    def get_all_icons_orm(self) -> list[IconORM]:
-        """Get all icons as ORM models. Used for specific use cases requiring ORM models."""
-        stmt = sa.select(IconORM)
-        return list(self.session.scalars(stmt).all())
-
     def get_by_id(self, id: int) -> Optional[Icon]:
         stmt = sa.select(IconORM).where(IconORM.id == id)
         icon_orm = self.session.scalar(stmt)

@@ -1,9 +1,9 @@
 """Authentication adapter for Flask-Login integration."""
 
-import sqlalchemy as sa
 from flask_login import UserMixin
 
-from blog.extensions import db, login_manager
+from blog.adapters.factory import ORMAdapterFactory
+from blog.extensions import login_manager
 from blog.services.factory import ServiceFactory
 from blog.user.models import User as UserORM
 
@@ -27,6 +27,7 @@ class AuthenticationAdapter:
 
     def __init__(self):
         self.user_service = ServiceFactory.create_user_service()
+        self.orm_adapter = ORMAdapterFactory.create_orm_adapter()
 
     def load_user(self, user_id: int) -> FlaskLoginUser | None:
         """Load user by ID for Flask-Login.
@@ -42,9 +43,8 @@ class AuthenticationAdapter:
         if not user_domain:
             return None
 
-        # Get the ORM model for Flask-Login compatibility
-        stmt = sa.select(UserORM).where(UserORM.id == user_id)
-        user_orm = db.session.scalar(stmt)
+        # Get the ORM model for Flask-Login compatibility using the ORM adapter
+        user_orm = self.orm_adapter.get_user_orm_by_id(user_id)
         if not user_orm:
             return None
 
@@ -66,9 +66,8 @@ class AuthenticationAdapter:
         if not user_domain:
             return None
 
-        # Get the ORM model for Flask-Login compatibility
-        stmt = sa.select(UserORM).where(UserORM.name == name)
-        user_orm = db.session.scalar(stmt)
+        # Get the ORM model for Flask-Login compatibility using the ORM adapter
+        user_orm = self.orm_adapter.get_user_orm_by_name(name)
         if not user_orm:
             return None
 
