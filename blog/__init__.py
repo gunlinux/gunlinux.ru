@@ -8,6 +8,7 @@ from flask import Flask
 
 from blog.admin import create_admin
 from blog.config import config
+from blog.config_validator import validate_config, ConfigValidationError
 from blog.extensions import admin_ext, cache, db, login_manager, migrate, flask_sitemap
 from blog.post.views import post
 from blog.tags.views import tags
@@ -35,11 +36,42 @@ def register_commands(app):
     init_app(app)
 
 
+def validate_application_config(app):
+    """Validate the application configuration at startup.
+
+    Args:
+        app: The Flask application instance
+
+    Raises:
+        ConfigValidationError: If configuration validation fails
+    """
+    try:
+        # Validate the configuration
+        warnings = validate_config(app.config)
+
+        # Log any warnings
+        for warning in warnings:
+            logger.warning("Configuration warning: %s", warning)
+
+        logger.info("Application configuration validated successfully")
+
+    except ConfigValidationError as e:
+        logger.error("Configuration validation failed: %s", str(e))
+        raise
+    except Exception as e:
+        logger.error("Unexpected error during configuration validation: %s", str(e))
+        raise ConfigValidationError(f"Configuration validation failed: {str(e)}") from e
+
+
 def create_app():
     app = Flask(__name__)
     env = os.environ.get("FLASK_ENV", "development")
     logger.debug("current FLASK_ENV %s", env)
     app.config.from_object(config.get(env))
+
+    # Validate configuration at startup
+    validate_application_config(app)
+
     configure_extensions(app)
     if not app.config["TESTING"]:
         create_admin(admin_ext)

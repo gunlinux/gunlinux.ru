@@ -36,7 +36,11 @@ class TestingConfig(Config):
 
 
 class ProductionConfig(Config):
-    SQLALCHEMY_DATABASE_URI: str | None = environ.get("SQLALCHEMY_DATABASE_URI", None)
+    DEBUG: bool = False
+    default_db_uri: str = f"sqlite:///{path.join(basedir, '../tmp/prod.db')}"
+    SQLALCHEMY_DATABASE_URI: str = environ.get(
+        "SQLALCHEMY_DATABASE_URI", default_db_uri
+    )
     CACHE_TYPE: str = "SimpleCache"
     CACHE_DEFAULT_TIMEOUT: int = 300
 
