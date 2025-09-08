@@ -11,11 +11,11 @@ from blog.domain.category import Category as CategoryDomain
 from blog.domain.tag import Tag as TagDomain
 from blog.domain.user import User as UserDomain
 from blog.domain.icon import Icon as IconDomain
-from blog.services.post import PostService, PostServiceError
-from blog.services.category import CategoryService
-from blog.services.tag import TagService
-from blog.services.user import UserService
-from blog.services.icon import IconService
+from blog.services.post import PostService, PostUpdateError
+from blog.services.category import CategoryService, CategoryUpdateError
+from blog.services.tag import TagService, TagUpdateError
+from blog.services.user import UserService, UserUpdateError
+from blog.services.icon import IconService, IconUpdateError
 from blog.repos.post import PostRepository
 from blog.repos.category import CategoryRepository
 from blog.repos.tag import TagRepository
@@ -182,8 +182,69 @@ class TestPostService:
         )
 
         # Verify that updating a nonexistent post raises an error
-        with pytest.raises(PostServiceError):
+        with pytest.raises(PostUpdateError):
             post_service.update_post(post_domain)
+
+    def test_create_post_with_none_fields(self, app, post_service):
+        """Test creating a post with None fields."""
+        # Create a post domain model with None fields
+        post_domain = PostDomain(
+            pagetitle="Test Post",
+            alias="test-post",
+            content="This is a test post",
+            createdon=None,  # None datetime
+            publishedon=None,  # None datetime
+            category_id=None,  # None category
+            user_id=None,  # None user
+        )
+
+        # Create the post using the service
+        created_post = post_service.create_post(post_domain)
+
+        # Verify the post was created
+        assert created_post.id is not None
+        assert created_post.pagetitle == "Test Post"
+        assert created_post.alias == "test-post"
+
+    def test_get_post_by_id_nonexistent(self, app, post_service):
+        """Test getting a nonexistent post by ID."""
+        # Try to get a post that doesn't exist
+        retrieved_post = post_service.get_post_by_id(99999)  # Nonexistent ID
+
+        # Verify None is returned
+        assert retrieved_post is None
+
+    def test_get_post_by_alias_nonexistent(self, app, post_service):
+        """Test getting a nonexistent post by alias."""
+        # Try to get a post that doesn't exist
+        retrieved_post = post_service.get_post_by_alias("nonexistent-alias")
+
+        # Verify None is returned
+        assert retrieved_post is None
+
+    def test_get_posts_by_tag_nonexistent(self, app, post_service):
+        """Test getting posts by a nonexistent tag ID."""
+        # Try to get posts for a tag that doesn't exist
+        posts = post_service.get_posts_by_tag(99999)  # Nonexistent tag ID
+
+        # Verify an empty list is returned
+        assert posts == []
+
+    def test_get_tags_for_post_nonexistent(self, app, post_service):
+        """Test getting tags for a nonexistent post ID."""
+        # Try to get tags for a post that doesn't exist
+        tags = post_service.get_tags_for_post(99999)  # Nonexistent post ID
+
+        # Verify an empty list is returned
+        assert tags == []
+
+    def test_get_page_posts_empty_list(self, app, post_service):
+        """Test getting page posts with an empty category list."""
+        # Try to get page posts with an empty category list
+        posts = post_service.get_page_posts([])
+
+        # Verify an empty list is returned
+        assert posts == []
 
     def test_delete_post(self, app, post_service):
         """Test deleting a post."""
@@ -316,6 +377,60 @@ class TestCategoryService:
             assert created_category.title == "Test Category"
             assert created_category.alias == "test-category"
 
+    def test_get_category_by_id_nonexistent(self, app, category_service):
+        """Test getting a nonexistent category by ID."""
+        with app.app_context():
+            # Try to get a category that doesn't exist
+            retrieved_category = category_service.get_category_by_id(
+                99999
+            )  # Nonexistent ID
+
+            # Verify None is returned
+            assert retrieved_category is None
+
+    def test_get_category_by_alias_nonexistent(self, app, category_service):
+        """Test getting a nonexistent category by alias."""
+        with app.app_context():
+            # Try to get a category that doesn't exist
+            retrieved_category = category_service.get_category_by_alias(
+                "nonexistent-alias"
+            )
+
+            # Verify None is returned
+            assert retrieved_category is None
+
+    def test_update_nonexistent_category_raises_error(self, app, category_service):
+        """Test that updating a nonexistent category raises an error."""
+        with app.app_context():
+            # Try to update a category that doesn't exist
+            category_domain = CategoryDomain(
+                id=99999,  # Nonexistent ID
+                title="Test Category",
+                alias="test-category",
+            )
+
+            # Verify that updating a nonexistent category raises an error
+            with pytest.raises(CategoryUpdateError):
+                category_service.update_category(category_domain)
+
+    def test_create_category_with_none_template(self, app, category_service):
+        """Test creating a category with None template."""
+        with app.app_context():
+            # Create a category domain model with None template
+            category_domain = CategoryDomain(
+                title="Test Category",
+                alias="test-category",
+                template=None,  # None template
+            )
+
+            # Create the category using the service
+            created_category = category_service.create_category(category_domain)
+
+            # Verify the category was created
+            assert created_category.id is not None
+            assert created_category.title == "Test Category"
+            assert created_category.alias == "test-category"
+
     def test_get_category_by_id(self, app, category_service):
         """Test getting a category by ID."""
         with app.app_context():
@@ -372,6 +487,38 @@ class TestTagService:
             assert created_tag.title == "Test Tag"
             assert created_tag.alias == "test-tag"
 
+    def test_get_tag_by_id_nonexistent(self, app, tag_service):
+        """Test getting a nonexistent tag by ID."""
+        with app.app_context():
+            # Try to get a tag that doesn't exist
+            retrieved_tag = tag_service.get_tag_by_id(99999)  # Nonexistent ID
+
+            # Verify None is returned
+            assert retrieved_tag is None
+
+    def test_get_tag_by_alias_nonexistent(self, app, tag_service):
+        """Test getting a nonexistent tag by alias."""
+        with app.app_context():
+            # Try to get a tag that doesn't exist
+            retrieved_tag = tag_service.get_tag_by_alias("nonexistent-alias")
+
+            # Verify None is returned
+            assert retrieved_tag is None
+
+    def test_update_nonexistent_tag_raises_error(self, app, tag_service):
+        """Test that updating a nonexistent tag raises an error."""
+        with app.app_context():
+            # Try to update a tag that doesn't exist
+            tag_domain = TagDomain(
+                id=99999,  # Nonexistent ID
+                title="Test Tag",
+                alias="test-tag",
+            )
+
+            # Verify that updating a nonexistent tag raises an error
+            with pytest.raises(TagUpdateError):
+                tag_service.update_tag(tag_domain)
+
     def test_service_returns_domain_models_not_orm_models(self, app, tag_service):
         """Test that service layer methods return domain models, not ORM models."""
         with app.app_context():
@@ -411,10 +558,12 @@ class TestUserService:
             # Create a user first
             user_domain = UserDomain(name="testuser", password="testpassword")
             created_user = user_service.create_user(user_domain)
-            # Set the password properly (this would normally be done in the repo)
+
+            # Manually hash the password for the created user at the ORM level
+            # This is needed because the repository doesn't hash passwords
             from blog.user.models import User as UserORM
 
-            user_orm = db.session.get(UserORM, created_user.id)
+            user_orm = UserORM.query.get(created_user.id)
             if user_orm:
                 user_orm.set_password("testpassword")
                 db.session.commit()
@@ -426,7 +575,93 @@ class TestUserService:
 
             # Verify the user was authenticated
             assert authenticated_user is not None
+            assert authenticated_user.id == created_user.id
             assert authenticated_user.name == "testuser"
+
+    def test_authenticate_user_wrong_password(self, app, user_service):
+        """Test authenticating a user with wrong password."""
+        with app.app_context():
+            # Create a user first
+            user_domain = UserDomain(name="testuser", password="testpassword")
+            user_service.create_user(user_domain)
+
+            # Manually hash the password for the created user at the ORM level
+            # This is needed because the repository doesn't hash passwords
+            from blog.user.models import User as UserORM
+
+            user_orm = UserORM.query.first()
+            if user_orm:
+                user_orm.set_password("testpassword")
+                db.session.commit()
+
+            # Try to authenticate with wrong password
+            authenticated_user = user_service.authenticate_user(
+                "testuser", "wrongpassword"
+            )
+
+            # Verify authentication failed
+            assert authenticated_user is None
+
+    def test_authenticate_nonexistent_user(self, app, user_service):
+        """Test authenticating a nonexistent user."""
+        with app.app_context():
+            # Try to authenticate a user that doesn't exist
+            authenticated_user = user_service.authenticate_user(
+                "nonexistent", "password"
+            )
+
+            # Verify authentication failed
+            assert authenticated_user is None
+
+    def test_get_user_by_id_nonexistent(self, app, user_service):
+        """Test getting a nonexistent user by ID."""
+        with app.app_context():
+            # Try to get a user that doesn't exist
+            retrieved_user = user_service.get_user_by_id(99999)  # Nonexistent ID
+
+            # Verify None is returned
+            assert retrieved_user is None
+
+    def test_get_user_by_name_nonexistent(self, app, user_service):
+        """Test getting a nonexistent user by name."""
+        with app.app_context():
+            # Try to get a user that doesn't exist
+            retrieved_user = user_service.get_user_by_name("nonexistent")
+
+            # Verify None is returned
+            assert retrieved_user is None
+
+    def test_update_nonexistent_user_raises_error(self, app, user_service):
+        """Test that updating a nonexistent user raises an error."""
+        with app.app_context():
+            # Try to update a user that doesn't exist
+            user_domain = UserDomain(
+                id=99999,  # Nonexistent ID
+                name="testuser",
+                password="testpassword",
+            )
+
+            # Verify that updating a nonexistent user raises an error
+            with pytest.raises(UserUpdateError):
+                user_service.update_user(user_domain)
+
+    def test_create_user_with_none_fields(self, app, user_service):
+        """Test creating a user with None fields."""
+        with app.app_context():
+            # Create a user domain model with None fields
+            user_domain = UserDomain(
+                name="testuser",
+                password="testpassword",
+                authenticated=False,
+                createdon=None,  # None datetime
+            )
+
+            # Create the user using the service
+            created_user = user_service.create_user(user_domain)
+
+            # Verify the user was created
+            assert created_user.id is not None
+            assert created_user.name == "testuser"
 
     def test_service_returns_domain_models_not_orm_models(self, app, user_service):
         """Test that service layer methods return domain models, not ORM models."""
@@ -456,6 +691,56 @@ class TestIconService:
                 title="Test Icon",
                 url="http://example.com/icon.png",
                 content="Icon content",
+            )
+
+            # Create the icon using the service
+            created_icon = icon_service.create_icon(icon_domain)
+
+            # Verify the icon was created
+            assert created_icon.id is not None
+            assert created_icon.title == "Test Icon"
+            assert created_icon.url == "http://example.com/icon.png"
+
+    def test_get_icon_by_id_nonexistent(self, app, icon_service):
+        """Test getting a nonexistent icon by ID."""
+        with app.app_context():
+            # Try to get an icon that doesn't exist
+            retrieved_icon = icon_service.get_icon_by_id(99999)  # Nonexistent ID
+
+            # Verify None is returned
+            assert retrieved_icon is None
+
+    def test_get_icon_by_title_nonexistent(self, app, icon_service):
+        """Test getting a nonexistent icon by title."""
+        with app.app_context():
+            # Try to get an icon that doesn't exist
+            retrieved_icon = icon_service.get_icon_by_title("nonexistent-title")
+
+            # Verify None is returned
+            assert retrieved_icon is None
+
+    def test_update_nonexistent_icon_raises_error(self, app, icon_service):
+        """Test that updating a nonexistent icon raises an error."""
+        with app.app_context():
+            # Try to update an icon that doesn't exist
+            icon_domain = IconDomain(
+                id=99999,  # Nonexistent ID
+                title="Test Icon",
+                url="http://example.com/icon.png",
+            )
+
+            # Verify that updating a nonexistent icon raises an error
+            with pytest.raises(IconUpdateError):
+                icon_service.update_icon(icon_domain)
+
+    def test_create_icon_with_none_content(self, app, icon_service):
+        """Test creating an icon with None content."""
+        with app.app_context():
+            # Create an icon domain model with None content
+            icon_domain = IconDomain(
+                title="Test Icon",
+                url="http://example.com/icon.png",
+                content=None,  # None content
             )
 
             # Create the icon using the service
