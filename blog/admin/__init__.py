@@ -36,10 +36,10 @@ class MyFileAdmin(fileadmin.FileAdmin):
 
 
 def create_admin(config_admin):
-    config_admin.add_view(PostView(Post, db.session, endpoint=""))
-    config_admin.add_view(UserView(Category, db.session, endpoint=""))
-    config_admin.add_view(UserView(Tag, db.session, endpoint=""))
-    config_admin.add_view(UserView(User, db.session, endpoint=""))
-    config_admin.add_view(UserView(Icon, db.session, endpoint=""))
+    config_admin.add_view(PostView(Post, db.session, endpoint="admin_post"))
+    config_admin.add_view(UserView(Category, db.session, endpoint="admin_category"))
+    config_admin.add_view(UserView(Tag, db.session, endpoint="admin_tag"))
+    config_admin.add_view(UserView(User, db.session, endpoint="admin_user"))
+    config_admin.add_view(UserView(Icon, db.session, endpoint="admin_icon"))
     path = os.path.join(os.path.dirname(__file__), "../static/upload")
     config_admin.add_view(MyFileAdmin(path, "/static/upload", name="files"))

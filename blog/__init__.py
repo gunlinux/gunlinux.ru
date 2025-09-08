@@ -1,4 +1,4 @@
-"""[summary]."""
+"""Blog application initialization."""
 
 import logging
 import os
@@ -28,6 +28,12 @@ def configure_extensions(app):
     flask_sitemap.init_app(app)
 
 
+def register_commands(app):
+    """Register custom CLI commands."""
+    from blog.commands import init_app
+    init_app(app)
+
+
 def create_app():
     app = Flask(__name__)
     env = os.environ.get("FLASK_ENV", "development")
@@ -39,4 +45,8 @@ def create_app():
     app.register_blueprint(post)
     app.register_blueprint(tags)
     app.register_blueprint(user)
+    
+    # Register CLI commands
+    register_commands(app)
+    
     return app

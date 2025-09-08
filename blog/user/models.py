@@ -28,6 +28,13 @@ class User(UserMixin, db.Model):
 
     posts: Mapped[list["Post"]] = relationship("Post", back_populates="user")
 
+    def __init__(self, **kwargs):
+        """Initialize a new User instance."""
+        super().__init__(**kwargs)
+        # Set default createdon if not provided
+        if self.createdon is None:
+            self.createdon = datetime.now()
+
     def set_password(self, password: str) -> None:
         """Set password hash."""
         self.password = generate_password_hash(password)
