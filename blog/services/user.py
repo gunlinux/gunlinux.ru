@@ -10,6 +10,24 @@ class UserServiceError(Exception):
     pass
 
 
+class UserNotFoundError(UserServiceError):
+    """Raised when a user is not found."""
+
+    pass
+
+
+class UserCreationError(UserServiceError):
+    """Raised when a user cannot be created."""
+
+    pass
+
+
+class UserUpdateError(UserServiceError):
+    """Raised when a user cannot be updated."""
+
+    pass
+
+
 class UserService:
     """Service layer for User entities."""
 
@@ -33,21 +51,20 @@ class UserService:
             return self.user_repository.create(user)
         except Exception as e:
             # Re-raise as a more specific exception for the service layer
-            raise UserServiceError(f"Failed to create user: {str(e)}") from e
+            raise UserCreationError(f"Failed to create user: {str(e)}") from e
 
     def update_user(self, user: User) -> User:
         try:
             return self.user_repository.update(user)
         except ValueError as e:
             # Re-raise as a more specific exception for the service layer
-            raise UserServiceError(f"Failed to update user: {str(e)}") from e
+            raise UserUpdateError(f"Failed to update user: {str(e)}") from e
 
     def delete_user(self, user_id: int) -> bool:
         try:
             return self.user_repository.delete(user_id)
         except Exception:
-            # Log the error and return False to indicate failure
-            # In a real application, you might want to log this
+            # Return False to indicate failure
             return False
 
     def authenticate_user(self, name: str, password: str) -> User | None:

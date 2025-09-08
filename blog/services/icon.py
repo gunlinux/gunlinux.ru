@@ -10,6 +10,24 @@ class IconServiceError(Exception):
     pass
 
 
+class IconNotFoundError(IconServiceError):
+    """Raised when an icon is not found."""
+
+    pass
+
+
+class IconCreationError(IconServiceError):
+    """Raised when an icon cannot be created."""
+
+    pass
+
+
+class IconUpdateError(IconServiceError):
+    """Raised when an icon cannot be updated."""
+
+    pass
+
+
 class IconService:
     """Service layer for Icon entities."""
 
@@ -38,19 +56,18 @@ class IconService:
             return self.icon_repository.create(icon)
         except Exception as e:
             # Re-raise as a more specific exception for the service layer
-            raise IconServiceError(f"Failed to create icon: {str(e)}") from e
+            raise IconCreationError(f"Failed to create icon: {str(e)}") from e
 
     def update_icon(self, icon: Icon) -> Icon:
         try:
             return self.icon_repository.update(icon)
         except ValueError as e:
             # Re-raise as a more specific exception for the service layer
-            raise IconServiceError(f"Failed to update icon: {str(e)}") from e
+            raise IconUpdateError(f"Failed to update icon: {str(e)}") from e
 
     def delete_icon(self, icon_id: int) -> bool:
         try:
             return self.icon_repository.delete(icon_id)
         except Exception:
-            # Log the error and return False to indicate failure
-            # In a real application, you might want to log this
+            # Return False to indicate failure
             return False

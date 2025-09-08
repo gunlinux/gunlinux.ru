@@ -13,6 +13,24 @@ class PostServiceError(Exception):
     pass
 
 
+class PostNotFoundError(PostServiceError):
+    """Raised when a post is not found."""
+
+    pass
+
+
+class PostCreationError(PostServiceError):
+    """Raised when a post cannot be created."""
+
+    pass
+
+
+class PostUpdateError(PostServiceError):
+    """Raised when a post cannot be updated."""
+
+    pass
+
+
 class PostService:
     """Service layer for Post entities."""
 
@@ -46,15 +64,19 @@ class PostService:
         try:
             return self.post_repository.create(post)
         except Exception as e:
+            # Log the error with details
+            logger.error(f"Failed to create post: {str(e)}", exc_info=True)
             # Re-raise as a more specific exception for the service layer
-            raise PostServiceError(f"Failed to create post: {str(e)}") from e
+            raise PostCreationError(f"Failed to create post: {str(e)}") from e
 
     def update_post(self, post: Post) -> Post:
         try:
             return self.post_repository.update(post)
         except ValueError as e:
+            # Log the error with details
+            logger.error(f"Failed to update post: {str(e)}", exc_info=True)
             # Re-raise as a more specific exception for the service layer
-            raise PostServiceError(f"Failed to update post: {str(e)}") from e
+            raise PostUpdateError(f"Failed to update post: {str(e)}") from e
 
     def delete_post(self, post_id: int) -> bool:
         try:
@@ -64,7 +86,5 @@ class PostService:
             logger.error(
                 f"Failed to delete post with id {post_id}: {str(e)}", exc_info=True
             )
-            # Re-raise as a more specific exception for the service layer
-            raise PostServiceError(
-                f"Failed to delete post with id {post_id}: {str(e)}"
-            ) from e
+            # Return False to indicate failure
+            return False

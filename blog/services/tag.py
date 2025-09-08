@@ -10,6 +10,24 @@ class TagServiceError(Exception):
     pass
 
 
+class TagNotFoundError(TagServiceError):
+    """Raised when a tag is not found."""
+
+    pass
+
+
+class TagCreationError(TagServiceError):
+    """Raised when a tag cannot be created."""
+
+    pass
+
+
+class TagUpdateError(TagServiceError):
+    """Raised when a tag cannot be updated."""
+
+    pass
+
+
 class TagService:
     """Service layer for Tag entities."""
 
@@ -33,19 +51,18 @@ class TagService:
             return self.tag_repository.create(tag)
         except Exception as e:
             # Re-raise as a more specific exception for the service layer
-            raise TagServiceError(f"Failed to create tag: {str(e)}") from e
+            raise TagCreationError(f"Failed to create tag: {str(e)}") from e
 
     def update_tag(self, tag: Tag) -> Tag:
         try:
             return self.tag_repository.update(tag)
         except ValueError as e:
             # Re-raise as a more specific exception for the service layer
-            raise TagServiceError(f"Failed to update tag: {str(e)}") from e
+            raise TagUpdateError(f"Failed to update tag: {str(e)}") from e
 
     def delete_tag(self, tag_id: int) -> bool:
         try:
             return self.tag_repository.delete(tag_id)
         except Exception:
-            # Log the error and return False to indicate failure
-            # In a real application, you might want to log this
+            # Return False to indicate failure
             return False

@@ -10,6 +10,24 @@ class CategoryServiceError(Exception):
     pass
 
 
+class CategoryNotFoundError(CategoryServiceError):
+    """Raised when a category is not found."""
+
+    pass
+
+
+class CategoryCreationError(CategoryServiceError):
+    """Raised when a category cannot be created."""
+
+    pass
+
+
+class CategoryUpdateError(CategoryServiceError):
+    """Raised when a category cannot be updated."""
+
+    pass
+
+
 class CategoryService:
     """Service layer for Category entities."""
 
@@ -33,19 +51,18 @@ class CategoryService:
             return self.category_repository.create(category)
         except Exception as e:
             # Re-raise as a more specific exception for the service layer
-            raise CategoryServiceError(f"Failed to create category: {str(e)}") from e
+            raise CategoryCreationError(f"Failed to create category: {str(e)}") from e
 
     def update_category(self, category: Category) -> Category:
         try:
             return self.category_repository.update(category)
         except ValueError as e:
             # Re-raise as a more specific exception for the service layer
-            raise CategoryServiceError(f"Failed to update category: {str(e)}") from e
+            raise CategoryUpdateError(f"Failed to update category: {str(e)}") from e
 
     def delete_category(self, category_id: int) -> bool:
         try:
             return self.category_repository.delete(category_id)
         except Exception:
-            # Log the error and return False to indicate failure
-            # In a real application, you might want to log this
+            # Return False to indicate failure
             return False
