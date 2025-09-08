@@ -22,15 +22,11 @@ post = Blueprint("post", __name__)
 def pages_gen(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # Use service layer for business logic and domain models
-
         page_category = current_app.config["PAGE_CATEGORY"]
 
-        # Get posts using PostService for domain models
         post_service = ServiceFactory.create_post_service()
         pages = post_service.get_page_posts(page_category)
 
-        # Get icons using IconService for domain models
         icon_service = ServiceFactory.create_icon_service()
         icons = icon_service.get_all_icons()
 
@@ -43,8 +39,6 @@ def pages_gen(f):
 @cache.cached(timeout=50)
 @pages_gen
 def index(**kwargs):
-    # Use service layer for domain models
-
     post_service = ServiceFactory.create_post_service()
     posts = post_service.get_published_posts()
     return render_template("posts.html", posts=posts, **kwargs)
@@ -54,7 +48,6 @@ def index(**kwargs):
 @cache.cached(timeout=50)
 @pages_gen
 def view(alias=None, **kwargs):
-    # Use service layer for domain models
     if alias is None:
         from flask import abort
 
@@ -63,7 +56,6 @@ def view(alias=None, **kwargs):
     post_service = ServiceFactory.create_post_service()
     post = post_service.get_post_by_alias(alias)
     if not post:
-        # Handle 404 case
         from flask import abort
 
         abort(404)
@@ -78,7 +70,6 @@ def view(alias=None, **kwargs):
 
         abort(404)
 
-    # Load category object if needed using service
     page_category_obj = None
     if post.category_id:
         category_service = ServiceFactory.create_category_service()
@@ -91,17 +82,13 @@ def view(alias=None, **kwargs):
 
 @flask_sitemap.register_generator
 def site_map_gen():
-    # Use service layer for domain models
-
     page_category = current_app.config["PAGE_CATEGORY"]
 
-    # Get pages using PostService
     post_service = ServiceFactory.create_post_service()
     pages = post_service.get_page_posts(page_category)
     for page in pages:
         yield url_for("post.view", alias=page.alias)
 
-    # Get posts using PostService
     posts = post_service.get_published_posts()
     for post in posts:
         yield url_for("post.view", alias=post.alias)
@@ -128,8 +115,6 @@ Host: gunlinux.ru
 @post.route("/rss.xml")
 @cache.cached(timeout=50)
 def rss():
-    # Use service layer for domain models
-
     post_service = ServiceFactory.create_post_service()
     list_posts = post_service.get_published_posts()
 

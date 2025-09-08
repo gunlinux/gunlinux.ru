@@ -19,7 +19,6 @@ class PostRepository:
         self.session = session or db.session
 
     def get_post_with_relationships(self, post_id: int) -> PostDomain | None:
-        """Get a post domain model with all its relationships loaded."""
         stmt = (
             sa.select(PostORM)
             .where(PostORM.id == post_id)
@@ -35,7 +34,6 @@ class PostRepository:
         return None
 
     def get_by_id(self, post_id: int) -> PostDomain | None:
-        """Get a post by its ID."""
         stmt = sa.select(PostORM).where(PostORM.id == post_id)
         post_orm = self.session.scalar(stmt)
         if post_orm:
@@ -43,7 +41,6 @@ class PostRepository:
         return None
 
     def get_by_alias(self, alias: str) -> PostDomain | None:
-        """Get a post by its alias."""
         stmt = sa.select(PostORM).where(PostORM.alias == alias)
         post_orm = self.session.scalar(stmt)
         if post_orm:
@@ -51,13 +48,11 @@ class PostRepository:
         return None
 
     def get_all(self) -> list[PostDomain]:
-        """Get all posts."""
         stmt = sa.select(PostORM)
         posts_orm = list(self.session.scalars(stmt).all())
         return [self._to_domain_model(post_orm) for post_orm in posts_orm]
 
     def get_published_posts(self) -> list[PostDomain]:
-        """Get all published posts ordered by published date."""
         stmt = (
             sa.select(PostORM)
             .where(
@@ -70,13 +65,11 @@ class PostRepository:
         return [self._to_domain_model(post_orm) for post_orm in posts_orm]
 
     def get_page_posts(self, page_category_ids: list[int]) -> list[PostDomain]:
-        """Get posts that are pages (in specific categories)."""
         stmt = sa.select(PostORM).where(PostORM.category_id.in_(page_category_ids))
         posts_orm = list(self.session.scalars(stmt).all())
         return [self._to_domain_model(post_orm) for post_orm in posts_orm]
 
     def create(self, post: PostDomain) -> PostDomain:
-        """Create a new post."""
         post_orm = PostORM()
         post_orm.pagetitle = post.pagetitle
         post_orm.alias = post.alias
@@ -106,7 +99,6 @@ class PostRepository:
         return post
 
     def update(self, post: PostDomain) -> PostDomain:
-        """Update an existing post."""
         stmt = sa.select(PostORM).where(PostORM.id == post.id)
         post_orm = self.session.scalar(stmt)
         if not post_orm:
@@ -128,7 +120,6 @@ class PostRepository:
         return post
 
     def delete(self, post_id: int) -> bool:
-        """Delete a post by its ID."""
         stmt = sa.select(PostORM).where(PostORM.id == post_id)
         post_orm = self.session.scalar(stmt)
         if post_orm:
@@ -137,7 +128,6 @@ class PostRepository:
         return False
 
     def _to_domain_model(self, post_orm: PostORM) -> PostDomain:
-        """Convert ORM model to domain model."""
         # Convert related user if it exists
         user = None
         if post_orm.user:

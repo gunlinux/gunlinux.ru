@@ -25,19 +25,15 @@ class IconService:
         return self.icon_repository.get_all_icons_orm()
 
     def get_icon_by_id(self, icon_id: int) -> Icon | None:
-        """Get an icon by its ID."""
         return self.icon_repository.get_by_id(icon_id)
 
     def get_icon_by_title(self, title: str) -> Icon | None:
-        """Get an icon by its title."""
         return self.icon_repository.get_by_title(title)
 
     def get_all_icons(self) -> list[Icon]:
-        """Get all icons."""
         return self.icon_repository.get_all()
 
     def create_icon(self, icon: Icon) -> Icon:
-        """Create a new icon."""
         try:
             return self.icon_repository.create(icon)
         except Exception as e:
@@ -45,7 +41,6 @@ class IconService:
             raise IconServiceError(f"Failed to create icon: {str(e)}") from e
 
     def update_icon(self, icon: Icon) -> Icon:
-        """Update an existing icon."""
         try:
             return self.icon_repository.update(icon)
         except ValueError as e:
@@ -53,7 +48,6 @@ class IconService:
             raise IconServiceError(f"Failed to update icon: {str(e)}") from e
 
     def delete_icon(self, icon_id: int) -> bool:
-        """Delete an icon by its ID."""
         try:
             return self.icon_repository.delete(icon_id)
         except Exception:

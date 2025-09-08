@@ -16,7 +16,6 @@ class TagRepository:
         self.session = session or db.session
 
     def get_tag_orm_with_relationships(self, tag_id: int) -> TagORM | None:
-        """Get a tag ORM model with all its relationships loaded."""
         stmt = (
             sa.select(TagORM)
             .where(TagORM.id == tag_id)
@@ -25,7 +24,6 @@ class TagRepository:
         return self.session.scalar(stmt)
 
     def get_by_id(self, tag_id: int) -> TagDomain | None:
-        """Get a tag by its ID."""
         stmt = sa.select(TagORM).where(TagORM.id == tag_id)
         tag_orm = self.session.scalar(stmt)
         if tag_orm:
@@ -33,7 +31,6 @@ class TagRepository:
         return None
 
     def get_by_alias(self, alias: str) -> TagDomain | None:
-        """Get a tag by its alias."""
         stmt = sa.select(TagORM).where(TagORM.alias == alias)
         tag_orm = self.session.scalar(stmt)
         if tag_orm:
@@ -41,19 +38,16 @@ class TagRepository:
         return None
 
     def get_all(self) -> list[TagDomain]:
-        """Get all tags."""
         stmt = sa.select(TagORM)
         tags_orm = list(self.session.scalars(stmt).all())
         return [self._to_domain_model(tag_orm) for tag_orm in tags_orm]
 
     def get_tags_with_posts(self) -> list[TagDomain]:
-        """Get all tags with their posts."""
         stmt = sa.select(TagORM).options(sa.orm.joinedload(TagORM.posts))
         tags_orm = list(self.session.scalars(stmt).unique().all())
         return [self._to_domain_model(tag_orm) for tag_orm in tags_orm]
 
     def create(self, tag: TagDomain) -> TagDomain:
-        """Create a new tag."""
         tag_orm = TagORM()
         tag_orm.title = tag.title
         tag_orm.alias = tag.alias
@@ -63,7 +57,6 @@ class TagRepository:
         return tag
 
     def update(self, tag: TagDomain) -> TagDomain:
-        """Update an existing tag."""
         stmt = sa.select(TagORM).where(TagORM.id == tag.id)
         tag_orm = self.session.scalar(stmt)
         if not tag_orm:
@@ -75,7 +68,6 @@ class TagRepository:
         return tag
 
     def delete(self, tag_id: int) -> bool:
-        """Delete a tag by its ID."""
         stmt = sa.select(TagORM).where(TagORM.id == tag_id)
         tag_orm = self.session.scalar(stmt)
         if tag_orm:
@@ -84,7 +76,6 @@ class TagRepository:
         return False
 
     def _to_domain_model(self, tag_orm: TagORM) -> TagDomain:
-        """Convert ORM model to domain model."""
         # Convert related posts if they exist
         posts = None
         if tag_orm.posts:

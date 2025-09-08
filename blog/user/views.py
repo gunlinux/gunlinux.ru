@@ -13,11 +13,10 @@ user = Blueprint("user", __name__)
 @login_manager.user_loader
 def load_user(user_id):
     """Load user by ID for Flask-Login."""
-    # Use service layer to get user (but Flask-Login needs ORM model)
+    # For Flask-Login compatibility, we need to return an ORM model
     user_service = ServiceFactory.create_user_service()
     user = user_service.get_user_by_id(int(user_id))
     if user:
-        # For Flask-Login compatibility, we need to return an ORM model
         # This is one of the few places where we directly access the service layer
         # to get an ORM model because Flask-Login requires an ORM model
         return user_service.get_user_orm_by_id(int(user_id))
@@ -34,7 +33,6 @@ def login():
         name = form.name.data
         password = form.password.data
         if name is not None and password is not None:
-            # Use service layer to authenticate user (returns domain model)
             user_service = ServiceFactory.create_user_service()
             user = user_service.authenticate_user(name, password)
 

@@ -16,7 +16,6 @@ class UserRepository:
         self.session = session or db.session
 
     def get_user_orm_with_relationships(self, user_id: int) -> UserORM | None:
-        """Get a user ORM model with all its relationships loaded."""
         stmt = (
             sa.select(UserORM)
             .where(UserORM.id == user_id)
@@ -35,7 +34,6 @@ class UserRepository:
         return self.session.scalar(stmt)
 
     def get_by_id(self, user_id: int) -> UserDomain | None:
-        """Get a user by its ID."""
         stmt = sa.select(UserORM).where(UserORM.id == user_id)
         user_orm = self.session.scalar(stmt)
         if user_orm:
@@ -43,7 +41,6 @@ class UserRepository:
         return None
 
     def get_by_name(self, name: str) -> UserDomain | None:
-        """Get a user by their name."""
         stmt = sa.select(UserORM).where(UserORM.name == name)
         user_orm = self.session.scalar(stmt)
         if user_orm:
@@ -51,19 +48,16 @@ class UserRepository:
         return None
 
     def get_all(self) -> list[UserDomain]:
-        """Get all users."""
         stmt = sa.select(UserORM)
         users_orm = self.session.scalars(stmt).all()
         return [self._to_domain_model(user_orm) for user_orm in users_orm]
 
     def get_users_with_posts(self) -> list[UserDomain]:
-        """Get all users with their posts."""
         stmt = sa.select(UserORM).options(sa.orm.joinedload(UserORM.posts))
         users_orm = self.session.scalars(stmt).unique().all()
         return [self._to_domain_model(user_orm) for user_orm in users_orm]
 
     def create(self, user: UserDomain) -> UserDomain:
-        """Create a new user."""
         user_orm = UserORM()
         user_orm.name = user.name
         user_orm.password = user.password
@@ -80,7 +74,6 @@ class UserRepository:
         return user
 
     def update(self, user: UserDomain) -> UserDomain:
-        """Update an existing user."""
         stmt = sa.select(UserORM).where(UserORM.id == user.id)
         user_orm = self.session.scalar(stmt)
         if not user_orm:
@@ -99,7 +92,6 @@ class UserRepository:
         return user
 
     def delete(self, user_id: int) -> bool:
-        """Delete a user by its ID."""
         stmt = sa.select(UserORM).where(UserORM.id == user_id)
         user_orm = self.session.scalar(stmt)
         if user_orm:
@@ -108,7 +100,6 @@ class UserRepository:
         return False
 
     def authenticate(self, name: str, password: str) -> UserDomain | None:
-        """Authenticate a user by name and password."""
         stmt = sa.select(UserORM).where(UserORM.name == name)
         user_orm = self.session.scalar(stmt)
         if user_orm and user_orm.check_password(password):
@@ -116,7 +107,6 @@ class UserRepository:
         return None
 
     def _to_domain_model(self, user_orm: UserORM) -> UserDomain:
-        """Convert ORM model to domain model."""
         # Convert related posts if they exist
         posts = None
         if user_orm.posts:

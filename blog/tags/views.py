@@ -9,7 +9,6 @@ tags = Blueprint("tags", __name__, url_prefix="/tags")
 @tags.route("/")
 @pages_gen
 def index(**kwargs):
-    # Use service layer for domain models
     tag_service = ServiceFactory.create_tag_service()
     tags = tag_service.get_all_tags()
     return render_template("tags.html", tags=tags, **kwargs)
@@ -18,7 +17,6 @@ def index(**kwargs):
 @tags.route("/<alias>")
 @pages_gen
 def view(alias=None, **kwargs):
-    # Use service layer for domain models
     if alias is None:
         from flask import abort
 

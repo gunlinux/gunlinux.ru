@@ -36,7 +36,6 @@ class Post:
     def __post_init__(self):
         if self.createdon is None:
             self.createdon = datetime.datetime.now(datetime.timezone.utc)
-        # Don't set default for publishedon - it should be None for unpublished posts
 
     @property
     def markdown(self):

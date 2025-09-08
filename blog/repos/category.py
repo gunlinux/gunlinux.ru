@@ -18,7 +18,6 @@ class CategoryRepository:
     def get_category_orm_with_relationships(
         self, category_id: int
     ) -> CategoryORM | None:
-        """Get a category ORM model with all its relationships loaded."""
         stmt = (
             sa.select(CategoryORM)
             .where(CategoryORM.id == category_id)
@@ -27,7 +26,6 @@ class CategoryRepository:
         return self.session.scalar(stmt)
 
     def get_by_id(self, category_id: int) -> CategoryDomain | None:
-        """Get a category by its ID."""
         stmt = sa.select(CategoryORM).where(CategoryORM.id == category_id)
         category_orm = self.session.scalar(stmt)
         if category_orm:
@@ -35,7 +33,6 @@ class CategoryRepository:
         return None
 
     def get_by_alias(self, alias: str) -> CategoryDomain | None:
-        """Get a category by its alias."""
         stmt = sa.select(CategoryORM).where(CategoryORM.alias == alias)
         category_orm = self.session.scalar(stmt)
         if category_orm:
@@ -43,19 +40,16 @@ class CategoryRepository:
         return None
 
     def get_all(self) -> list[CategoryDomain]:
-        """Get all categories."""
         stmt = sa.select(CategoryORM)
         categories_orm = list(self.session.scalars(stmt).all())
         return [self._to_domain_model(category_orm) for category_orm in categories_orm]
 
     def get_categories_with_posts(self) -> list[CategoryDomain]:
-        """Get all categories with their posts."""
         stmt = sa.select(CategoryORM).options(sa.orm.joinedload(CategoryORM.posts))
         categories_orm = list(self.session.scalars(stmt).unique().all())
         return [self._to_domain_model(category_orm) for category_orm in categories_orm]
 
     def create(self, category: CategoryDomain) -> CategoryDomain:
-        """Create a new category."""
         category_orm = CategoryORM()
         category_orm.title = category.title
         category_orm.alias = category.alias
@@ -68,7 +62,6 @@ class CategoryRepository:
         return category
 
     def update(self, category: CategoryDomain) -> CategoryDomain:
-        """Update an existing category."""
         stmt = sa.select(CategoryORM).where(CategoryORM.id == category.id)
         category_orm = self.session.scalar(stmt)
         if not category_orm:
@@ -83,7 +76,6 @@ class CategoryRepository:
         return category
 
     def delete(self, category_id: int) -> bool:
-        """Delete a category by its ID."""
         stmt = sa.select(CategoryORM).where(CategoryORM.id == category_id)
         category_orm = self.session.scalar(stmt)
         if category_orm:
@@ -92,7 +84,6 @@ class CategoryRepository:
         return False
 
     def _to_domain_model(self, category_orm: CategoryORM) -> CategoryDomain:
-        """Convert ORM model to domain model."""
         # Convert related posts if they exist
         posts = None
         if category_orm.posts:
