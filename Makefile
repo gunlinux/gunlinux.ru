@@ -10,6 +10,7 @@ ruff-lint:
 	uvx ruff check .
 
 ruff-lint-format-check:
+	uvx ruff format .
 	uvx ruff format --check .
 
 lint-types:
@@ -21,10 +22,7 @@ test:
 
 
 test-coverage:
-	( \
-    . venv/bin/activate;\
-		FLASK_ENV=testing FLASK_APP=blog pytest --cov=blog --cov-report xml\
-	)
+	FLASK_ENV=testing FLASK_APP=blog uv run pytest --cov=blog --cov-report xml
 
 check: lint test
 
