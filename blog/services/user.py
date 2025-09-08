@@ -1,6 +1,5 @@
 """Service layer for User entities."""
 
-from typing import List, Optional
 from blog.repos.user import UserRepository
 from blog.domain.user import User
 
@@ -17,7 +16,7 @@ class UserService:
     def __init__(self, user_repository: UserRepository):
         self.user_repository = user_repository
 
-    def get_user_by_id(self, user_id: int) -> Optional[User]:
+    def get_user_by_id(self, user_id: int) -> User | None:
         """Get a user by its ID."""
         return self.user_repository.get_by_id(user_id)
 
@@ -29,15 +28,15 @@ class UserService:
         """Get a user ORM model by their name. Used for Flask-Login compatibility."""
         return self.user_repository.get_user_orm_by_name(name)
 
-    def get_user_by_name(self, name: str) -> Optional[User]:
+    def get_user_by_name(self, name: str) -> User | None:
         """Get a user by their name."""
         return self.user_repository.get_by_name(name)
 
-    def get_all_users(self) -> List[User]:
+    def get_all_users(self) -> list[User]:
         """Get all users."""
         return self.user_repository.get_all()
 
-    def get_users_with_posts(self) -> List[User]:
+    def get_users_with_posts(self) -> list[User]:
         """Get all users with their posts."""
         return self.user_repository.get_users_with_posts()
 
@@ -66,6 +65,6 @@ class UserService:
             # In a real application, you might want to log this
             return False
 
-    def authenticate_user(self, name: str, password: str) -> Optional[User]:
+    def authenticate_user(self, name: str, password: str) -> User | None:
         """Authenticate a user by name and password."""
         return self.user_repository.authenticate(name, password)

@@ -3,10 +3,10 @@ from flask import Blueprint, render_template
 from blog.post.views import pages_gen
 from blog.services.factory import ServiceFactory
 
-tagsb = Blueprint("tagsb", __name__, url_prefix="/tags")
+tags = Blueprint("tags", __name__, url_prefix="/tags")
 
 
-@tagsb.route("/")
+@tags.route("/")
 @pages_gen
 def index(**kwargs):
     # Use service layer for domain models
@@ -15,7 +15,7 @@ def index(**kwargs):
     return render_template("tags.html", tags=tags, **kwargs)
 
 
-@tagsb.route("/<alias>")
+@tags.route("/<alias>")
 @pages_gen
 def view(alias=None, **kwargs):
     # Use service layer for domain models

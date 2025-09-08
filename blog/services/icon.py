@@ -1,6 +1,5 @@
 """Service layer for Icon entities."""
 
-from typing import List, Optional
 from blog.repos.icon import IconRepository
 from blog.domain.icon import Icon
 
@@ -21,19 +20,19 @@ class IconService:
         """Get an icon ORM model by its ID. Used for specific use cases requiring ORM models."""
         return self.icon_repository.get_icon_orm_by_id(icon_id)
 
-    def get_all_icons_orm(self) -> List:
+    def get_all_icons_orm(self) -> list:
         """Get all icons as ORM models. Used for specific use cases requiring ORM models."""
         return self.icon_repository.get_all_icons_orm()
 
-    def get_icon_by_id(self, icon_id: int) -> Optional[Icon]:
+    def get_icon_by_id(self, icon_id: int) -> Icon | None:
         """Get an icon by its ID."""
         return self.icon_repository.get_by_id(icon_id)
 
-    def get_icon_by_title(self, title: str) -> Optional[Icon]:
+    def get_icon_by_title(self, title: str) -> Icon | None:
         """Get an icon by its title."""
         return self.icon_repository.get_by_title(title)
 
-    def get_all_icons(self) -> List[Icon]:
+    def get_all_icons(self) -> list[Icon]:
         """Get all icons."""
         return self.icon_repository.get_all()
 

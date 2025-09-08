@@ -5,7 +5,7 @@
         <h3 class="page__title">Tags</h3>
         {% for tag in tags %}
             <div class="minipost">
-                <a class="minipost__title" href="{{url_for('tagsb.view',alias=tag.alias)}}">
+                <a class="minipost__title" href="{{url_for('tags.view',alias=tag.alias)}}">
                     {{tag.title}}
                 </a>
             </div>

@@ -16,7 +16,7 @@ from blog.extensions import flask_sitemap
 from blog import cache
 from blog.services.factory import ServiceFactory
 
-post = Blueprint("postb", __name__)
+post = Blueprint("post", __name__)
 
 
 def pages_gen(f):
@@ -30,9 +30,9 @@ def pages_gen(f):
         post_service = ServiceFactory.create_post_service()
         pages = post_service.get_page_posts(page_category)
 
-        # Get icons using IconService for ORM models (needed for specific use cases)
+        # Get icons using IconService for domain models
         icon_service = ServiceFactory.create_icon_service()
-        icons = icon_service.get_all_icons_orm()
+        icons = icon_service.get_all_icons()
 
         return f(pages=pages, icons=icons, *args, **kwargs)
 
@@ -99,12 +99,12 @@ def site_map_gen():
     post_service = ServiceFactory.create_post_service()
     pages = post_service.get_page_posts(page_category)
     for page in pages:
-        yield url_for("postb.view", alias=page.alias)
+        yield url_for("post.view", alias=page.alias)
 
     # Get posts using PostService
     posts = post_service.get_published_posts()
     for post in posts:
-        yield url_for("postb.view", alias=post.alias)
+        yield url_for("post.view", alias=post.alias)
 
 
 @post.route("/md/", methods=["POST", "GET"])

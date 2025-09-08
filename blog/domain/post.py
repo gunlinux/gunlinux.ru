@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 import datetime
 import markdown
-from typing import TYPE_CHECKING, Optional, List
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from blog.domain.category import Category as CategoryDomain
@@ -18,20 +18,20 @@ MARKDOWN_EXTENSIONS = ["markdown.extensions.fenced_code"]
 class Post:
     """Domain model for blog post."""
 
-    id: Optional[int] = None
+    id: int | None = None
     pagetitle: str = ""
     alias: str = ""
     content: str = ""
-    createdon: Optional[datetime.datetime] = None
-    publishedon: Optional[datetime.datetime] = None
-    category_id: Optional[int] = None
-    user_id: Optional[int] = None
+    createdon: datetime.datetime | None = None
+    publishedon: datetime.datetime | None = None
+    category_id: int | None = None
+    user_id: int | None = None
 
     # These would typically be loaded separately in a real implementation
     # to avoid circular dependencies
-    user: "Optional[UserDomain]" = None
-    category: "Optional[CategoryDomain]" = None
-    tags: "Optional[List[TagDomain]]" = None
+    user: "UserDomain | None" = None
+    category: "CategoryDomain | None" = None
+    tags: "list[TagDomain] | None" = None
 
     def __post_init__(self):
         if self.createdon is None:

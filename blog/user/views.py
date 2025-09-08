@@ -7,7 +7,7 @@ from blog.user.forms import LoginForm
 from blog.services.factory import ServiceFactory
 
 
-user_blueprint = Blueprint("userb", __name__)
+user = Blueprint("user", __name__)
 
 
 @login_manager.user_loader
@@ -24,7 +24,7 @@ def load_user(user_id):
     return None
 
 
-@user_blueprint.route("/login", methods=["GET", "POST"])
+@user.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
         return redirect("/")
@@ -47,11 +47,11 @@ def login():
                     login_user(user_orm)
                     return redirect(url_for("admin.index"))
         flash("invalid user o password")
-        return redirect(url_for("userb.login"))
+        return redirect(url_for("user.login"))
     return render_template("login.html", form=form)
 
 
-@user_blueprint.route("/logout")
+@user.route("/logout")
 def logout():
     flask_login.logout_user()
-    return redirect(url_for("postb.index"))
+    return redirect(url_for("post.index"))

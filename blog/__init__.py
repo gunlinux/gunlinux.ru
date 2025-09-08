@@ -10,8 +10,8 @@ from blog.admin import create_admin
 from blog.config import config
 from blog.extensions import admin_ext, cache, db, login_manager, migrate, flask_sitemap
 from blog.post.views import post
-from blog.tags.views import tagsb
-from blog.user.views import user_blueprint
+from blog.tags.views import tags
+from blog.user.views import user
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ def configure_extensions(app):
     cache.init_app(app)
     migrate.init_app(app=app, db=db)
     login_manager.init_app(app=app)
-    login_manager.login_view = "userb.index"  # type: ignore
+    login_manager.login_view = "user.index"  # type: ignore
     flask_sitemap.init_app(app)
 
 
@@ -37,6 +37,6 @@ def create_app():
     if not app.config["TESTING"]:
         create_admin(admin_ext)
     app.register_blueprint(post)
-    app.register_blueprint(tagsb)
-    app.register_blueprint(user_blueprint)
+    app.register_blueprint(tags)
+    app.register_blueprint(user)
     return app

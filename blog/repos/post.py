@@ -5,6 +5,7 @@ from typing import Any
 
 from blog.extensions import db
 from blog.post.models import Post as PostORM
+from blog.tags.models import Tag as TagORM
 from blog.domain.post import Post as PostDomain
 from blog.domain.user import User as UserDomain
 from blog.domain.category import Category as CategoryDomain
@@ -17,8 +18,8 @@ class PostRepository:
     def __init__(self, session: Any = None):
         self.session = session or db.session
 
-    def get_post_orm_with_relationships(self, post_id: int) -> PostORM | None:
-        """Get a post ORM model with all its relationships loaded."""
+    def get_post_with_relationships(self, post_id: int) -> PostDomain | None:
+        """Get a post domain model with all its relationships loaded."""
         stmt = (
             sa.select(PostORM)
             .where(PostORM.id == post_id)
@@ -28,7 +29,10 @@ class PostRepository:
                 sa.orm.joinedload(PostORM.tags),
             )
         )
-        return self.session.scalar(stmt)
+        post_orm = self.session.scalar(stmt)
+        if post_orm:
+            return self._to_domain_model(post_orm)
+        return None
 
     def get_by_id(self, post_id: int) -> PostDomain | None:
         """Get a post by its ID."""
@@ -89,10 +93,12 @@ class PostRepository:
 
         # Handle tags relationship if provided
         if post.tags:
-            # For now, we'll just set the tags field to an empty list
-            # In a real implementation, we would need to handle the many-to-many relationship
-            # This is a limitation of the current domain model design
-            pass
+            # Find existing Tag ORM models based on the domain Tag models
+            tag_ids = [tag.id for tag in post.tags if tag.id is not None]
+            if tag_ids:
+                stmt = sa.select(TagORM).where(TagORM.id.in_(tag_ids))
+                existing_tags = list(self.session.scalars(stmt).all())
+                post_orm.tags = existing_tags
 
         self.session.add(post_orm)
         self.session.flush()  # Get the ID without committing

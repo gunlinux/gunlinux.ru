@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 import typing
-from typing import TYPE_CHECKING, Optional, List
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from blog.domain.post import Post as PostDomain
@@ -12,12 +12,12 @@ if TYPE_CHECKING:
 class Category:
     """Domain model for blog category."""
 
-    id: Optional[int] = None
+    id: int | None = None
     title: str = ""
     alias: str = ""
-    template: Optional[str] = None
+    template: str | None = None
 
-    posts: "Optional[List[PostDomain]]" = None
+    posts: "list[PostDomain] | None" = None
 
     @typing.override
     def __str__(self):

@@ -1,6 +1,5 @@
 """Service layer for Tag entities."""
 
-from typing import List, Optional
 from blog.repos.tag import TagRepository
 from blog.domain.tag import Tag
 
@@ -17,19 +16,19 @@ class TagService:
     def __init__(self, tag_repository: TagRepository):
         self.tag_repository = tag_repository
 
-    def get_tag_by_id(self, tag_id: int) -> Optional[Tag]:
+    def get_tag_by_id(self, tag_id: int) -> Tag | None:
         """Get a tag by its ID."""
         return self.tag_repository.get_by_id(tag_id)
 
-    def get_tag_by_alias(self, alias: str) -> Optional[Tag]:
+    def get_tag_by_alias(self, alias: str) -> Tag | None:
         """Get a tag by its alias."""
         return self.tag_repository.get_by_alias(alias)
 
-    def get_all_tags(self) -> List[Tag]:
+    def get_all_tags(self) -> list[Tag]:
         """Get all tags."""
         return self.tag_repository.get_all()
 
-    def get_tags_with_posts(self) -> List[Tag]:
+    def get_tags_with_posts(self) -> list[Tag]:
         """Get all tags with their posts."""
         return self.tag_repository.get_tags_with_posts()
 

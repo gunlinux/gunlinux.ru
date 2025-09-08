@@ -33,9 +33,9 @@
         <a href="/" class="header__logo" title="На главную">@gunlinux</a>
         <div class="header__nav">
             <nav class="nav">
-                <a href="{{url_for('tagsb.index')}}" class="nav__link">tags</a>
+                <a href="{{url_for('tags.index')}}" class="nav__link">tags</a>
                 {% for page in pages %}
-                    <a href="{{url_for('postb.view',alias=page.alias)}}" class="nav__link">{{page.pagetitle}}</a>
+                    <a href="{{url_for('post.view',alias=page.alias)}}" class="nav__link">{{page.pagetitle}}</a>
                 {% endfor %}
             </nav>
         </div>

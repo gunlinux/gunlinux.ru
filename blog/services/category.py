@@ -1,6 +1,5 @@
 """Service layer for Category entities."""
 
-from typing import List, Optional
 from blog.repos.category import CategoryRepository
 from blog.domain.category import Category
 
@@ -17,19 +16,19 @@ class CategoryService:
     def __init__(self, category_repository: CategoryRepository):
         self.category_repository = category_repository
 
-    def get_category_by_id(self, category_id: int) -> Optional[Category]:
+    def get_category_by_id(self, category_id: int) -> Category | None:
         """Get a category by its ID."""
         return self.category_repository.get_by_id(category_id)
 
-    def get_category_by_alias(self, alias: str) -> Optional[Category]:
+    def get_category_by_alias(self, alias: str) -> Category | None:
         """Get a category by its alias."""
         return self.category_repository.get_by_alias(alias)
 
-    def get_all_categories(self) -> List[Category]:
+    def get_all_categories(self) -> list[Category]:
         """Get all categories."""
         return self.category_repository.get_all()
 
-    def get_categories_with_posts(self) -> List[Category]:
+    def get_categories_with_posts(self) -> list[Category]:
         """Get all categories with their posts."""
         return self.category_repository.get_categories_with_posts()
 
