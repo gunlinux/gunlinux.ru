@@ -11,6 +11,7 @@ from blog.services.category import CategoryService
 from blog.services.icon import IconService
 from blog.services.tag import TagService
 from blog.services.user import UserService
+from blog.services.content_formatter import ContentFormatter
 
 
 class ServiceFactory:
@@ -45,3 +46,8 @@ class ServiceFactory:
         """Create a UserService instance with its dependencies."""
         user_repository = UserRepository(db.session)
         return UserService(user_repository)
+
+    @staticmethod
+    def create_formatter_service():
+        """Create a UserService instance with its dependencies."""
+        return ContentFormatter()
