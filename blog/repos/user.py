@@ -1,7 +1,7 @@
 """Repository for User entities."""
 
 import sqlalchemy as sa
-from typing import Any, List, Optional
+from typing import Any, override
 
 from blog.extensions import db
 from blog.user.models import User as UserORM
@@ -12,10 +12,11 @@ from blog.repos.base import BaseRepository
 class UserRepository(BaseRepository[UserDomain, int]):
     """Repository for User entities."""
 
-    def __init__(self, session: Any = None):
+    def __init__(self, session: Any = None):  # pyright: ignore[reportExplicitAny]
         self.session = session or db.session
 
-    def get_by_id(self, id: int) -> Optional[UserDomain]:
+    @override
+    def get_by_id(self, id: int) -> UserDomain | None:
         stmt = sa.select(UserORM).where(UserORM.id == id)
         user_orm = self.session.scalar(stmt)
         if user_orm:
@@ -29,7 +30,8 @@ class UserRepository(BaseRepository[UserDomain, int]):
             return self._to_domain_model(user_orm)
         return None
 
-    def get_all(self) -> List[UserDomain]:
+    @override
+    def get_all(self) -> list[UserDomain]:
         stmt = sa.select(UserORM)
         users_orm = self.session.scalars(stmt).all()
         return [self._to_domain_model(user_orm) for user_orm in users_orm]
@@ -44,14 +46,12 @@ class UserRepository(BaseRepository[UserDomain, int]):
         users_orm = self.session.scalars(stmt).unique().all()
         return [self._to_domain_model(user_orm) for user_orm in users_orm]
 
+    @override
     def create(self, entity: UserDomain) -> UserDomain:
         user_orm = UserORM()
         user_orm.name = entity.name
         user_orm.password = entity.password
-        # Handle the case where authenticated might be None
-        user_orm.authenticated = (
-            entity.authenticated if entity.authenticated is not None else False
-        )
+        user_orm.authenticated = entity.authenticated
         # Handle datetime field that might be None
         if entity.createdon is not None:
             user_orm.createdon = entity.createdon
@@ -60,6 +60,7 @@ class UserRepository(BaseRepository[UserDomain, int]):
         entity.id = user_orm.id
         return entity
 
+    @override
     def update(self, entity: UserDomain) -> UserDomain:
         stmt = sa.select(UserORM).where(UserORM.id == entity.id)
         user_orm = self.session.scalar(stmt)
@@ -68,16 +69,14 @@ class UserRepository(BaseRepository[UserDomain, int]):
 
         user_orm.name = entity.name
         user_orm.password = entity.password
-        # Handle the case where authenticated might be None
-        user_orm.authenticated = (
-            entity.authenticated if entity.authenticated is not None else False
-        )
+        user_orm.authenticated = entity.authenticated
         # Handle datetime field that might be None
         if entity.createdon is not None:
             user_orm.createdon = entity.createdon
         self.session.flush()
         return entity
 
+    @override
     def delete(self, id: int) -> bool:
         stmt = sa.select(UserORM).where(UserORM.id == id)
         user_orm = self.session.scalar(stmt)

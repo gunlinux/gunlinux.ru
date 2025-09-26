@@ -6,10 +6,11 @@ is separated from domain models.
 """
 
 from sqlalchemy import Table, Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy.sql.schema import MetaData
 
 
 # Table definitions (Infrastructure layer)
-def get_users_table(metadata):
+def get_users_table(metadata: "MetaData") -> Table:
     return Table(
         "users",
         metadata,
@@ -22,7 +23,7 @@ def get_users_table(metadata):
     )
 
 
-def get_posts_table(metadata):
+def get_posts_table(metadata: MetaData) -> Table:
     return Table(
         "posts",
         metadata,
@@ -38,7 +39,7 @@ def get_posts_table(metadata):
     )
 
 
-def get_categories_table(metadata):
+def get_categories_table(metadata: MetaData) -> Table:
     return Table(
         "categories",
         metadata,
@@ -50,7 +51,7 @@ def get_categories_table(metadata):
     )
 
 
-def get_tags_table(metadata):
+def get_tags_table(metadata: MetaData) -> Table:
     return Table(
         "tags",
         metadata,
@@ -61,7 +62,7 @@ def get_tags_table(metadata):
     )
 
 
-def get_posts_tags_table(metadata):
+def get_posts_tags_table(metadata: MetaData) -> Table:
     return Table(
         "posts_tags",
         metadata,

@@ -1,5 +1,5 @@
 # blog/category/models.py
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from sqlalchemy.orm import Mapped, relationship
 
@@ -23,5 +23,6 @@ class Category(db.Model):
 
     posts: Mapped[list["Post"]] = relationship("Post", back_populates="category")
 
+    @override
     def __str__(self):
         return f"{self.title}"

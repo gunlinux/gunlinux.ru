@@ -18,25 +18,25 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 
-def configure_extensions(app):
+def configure_extensions(app: Flask) -> None:
     """Configures the extensions."""
     db.init_app(app)
     admin_ext.init_app(app)
     cache.init_app(app)
     migrate.init_app(app=app, db=db)
     login_manager.init_app(app=app)
-    login_manager.login_view = "user.login"  # type: ignore
+    login_manager.login_view = "user.login"  # pyright: ignore[reportAttributeAccessIssue]
     flask_sitemap.init_app(app)
 
 
-def register_commands(app):
+def register_commands(app: Flask) -> None:
     """Register custom CLI commands."""
     from blog.commands import init_app
 
     init_app(app)
 
 
-def validate_application_config(app):
+def validate_application_config(app: Flask) -> None:
     """Validate the application configuration at startup.
 
     Args:
@@ -63,7 +63,7 @@ def validate_application_config(app):
         raise ConfigValidationError(f"Configuration validation failed: {str(e)}") from e
 
 
-def create_app():
+def create_app() -> Flask:
     app = Flask(__name__)
     env = os.environ.get("FLASK_ENV", "development")
     logger.debug("current FLASK_ENV %s", env)

@@ -73,7 +73,9 @@ class UserService:
             return self.user_repository.delete(user_id)
         except Exception as e:
             # Log the error with details
-            logger.error(f"Failed to delete user with id {user_id}: {str(e)}", exc_info=True)
+            logger.error(
+                f"Failed to delete user with id {user_id}: {str(e)}", exc_info=True
+            )
             # Return False to indicate failure
             return False
 

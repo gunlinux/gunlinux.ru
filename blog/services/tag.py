@@ -73,6 +73,8 @@ class TagService:
             return self.tag_repository.delete(tag_id)
         except Exception as e:
             # Log the error with details
-            logger.error(f"Failed to delete tag with id {tag_id}: {str(e)}", exc_info=True)
+            logger.error(
+                f"Failed to delete tag with id {tag_id}: {str(e)}", exc_info=True
+            )
             # Return False to indicate failure
             return False

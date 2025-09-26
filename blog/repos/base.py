@@ -1,7 +1,7 @@
 """Base repository interface for the application."""
 
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic, List, Optional
+from typing import TypeVar, Generic
 
 T = TypeVar("T")  # Domain model type
 ID = TypeVar("ID")  # ID type
@@ -11,12 +11,12 @@ class BaseRepository(ABC, Generic[T, ID]):
     """Abstract base class for all repositories."""
 
     @abstractmethod
-    def get_by_id(self, id: ID) -> Optional[T]:
+    def get_by_id(self, id: ID) -> T | None:
         """Get an entity by its ID."""
         pass
 
     @abstractmethod
-    def get_all(self) -> List[T]:
+    def get_all(self) -> list[T]:
         """Get all entities."""
         pass
 

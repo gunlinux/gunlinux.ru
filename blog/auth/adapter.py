@@ -98,7 +98,7 @@ auth_adapter = AuthenticationAdapter()
 
 
 @login_manager.user_loader
-def load_user(user_id):
+def load_user(user_id: str) -> FlaskLoginUser | None:
     """Load user by ID for Flask-Login.
 
     This function uses the authentication adapter to handle the Flask-Login

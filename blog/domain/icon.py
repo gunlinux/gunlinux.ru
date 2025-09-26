@@ -1,5 +1,6 @@
 """Domain models for the Icon entity."""
 
+from typing import override
 from dataclasses import dataclass
 
 
@@ -12,5 +13,6 @@ class Icon:
     url: str = ""
     content: str | None = None
 
+    @override
     def __str__(self):
         return f"Icon(id={self.id}, title={self.title})"

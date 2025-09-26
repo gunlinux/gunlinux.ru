@@ -1,7 +1,6 @@
-# blog/posts/models.py
 import typing
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import markdown
 from sqlalchemy.orm import Mapped, relationship
@@ -51,12 +50,13 @@ class Post(db.Model):
 class Icon(db.Model):
     """orm model for icons."""
 
-    __tablename__ = "icons"  # pyright: ignore[reportUnannotatedClassAttribute]
+    __tablename__ = "icons"
 
     id: Mapped[int] = db.Column(db.Integer, primary_key=True)
     title: Mapped[str] = db.Column(db.String(255), nullable=False, unique=True)
     url: Mapped[str] = db.Column(db.String(255), nullable=False, unique=True)
     content: Mapped[str | None] = db.Column(db.Text)
 
+    @override
     def __str__(self):
         return f"{self.id} {self.title}"

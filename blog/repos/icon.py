@@ -1,7 +1,7 @@
 """Repository for Icon entities."""
 
 import sqlalchemy as sa
-from typing import Any, List, Optional
+from typing import Any, override
 
 from blog.extensions import db
 from blog.post.models import Icon as IconORM
@@ -12,10 +12,11 @@ from blog.repos.base import BaseRepository
 class IconRepository(BaseRepository[Icon, int]):
     """Repository for Icon entities."""
 
-    def __init__(self, session: Any = None):
+    def __init__(self, session: Any = None):  # pyright: ignore[reportExplicitAny]
         self.session = session or db.session
 
-    def get_by_id(self, id: int) -> Optional[Icon]:
+    @override
+    def get_by_id(self, id: int) -> Icon | None:
         stmt = sa.select(IconORM).where(IconORM.id == id)
         icon_orm = self.session.scalar(stmt)
         if icon_orm:
@@ -29,11 +30,13 @@ class IconRepository(BaseRepository[Icon, int]):
             return self._to_domain_model(icon_orm)
         return None
 
-    def get_all(self) -> List[Icon]:
+    @override
+    def get_all(self) -> list[Icon]:
         stmt = sa.select(IconORM)
         icons_orm = list(self.session.scalars(stmt).all())
         return [self._to_domain_model(icon_orm) for icon_orm in icons_orm]
 
+    @override
     def create(self, entity: Icon) -> Icon:
         icon_orm = IconORM()
         icon_orm.title = entity.title
@@ -45,6 +48,7 @@ class IconRepository(BaseRepository[Icon, int]):
         entity.id = icon_orm.id
         return entity
 
+    @override
     def update(self, entity: Icon) -> Icon:
         stmt = sa.select(IconORM).where(IconORM.id == entity.id)
         icon_orm = self.session.scalar(stmt)
@@ -58,6 +62,7 @@ class IconRepository(BaseRepository[Icon, int]):
         self.session.flush()
         return entity
 
+    @override
     def delete(self, id: int) -> bool:
         stmt = sa.select(IconORM).where(IconORM.id == id)
         icon_orm = self.session.scalar(stmt)

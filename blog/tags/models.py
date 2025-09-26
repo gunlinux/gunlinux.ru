@@ -1,5 +1,5 @@
 # blog/tags/models.py
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from sqlalchemy.orm import Mapped, relationship
 
@@ -24,5 +24,6 @@ class Tag(db.Model):
         "Post", secondary=get_posts_tags_table(db.metadata), back_populates="tags"
     )
 
+    @override
     def __str__(self):
         return f"{self.title}"

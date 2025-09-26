@@ -829,6 +829,7 @@ class TestCategoryRepository:
             # Verify the ORM model was deleted
             stmt = db.select(CategoryORM).where(CategoryORM.id == created_category.id)
             category_orm = db.session.scalar(stmt)
+            assert category_orm is None
 
     def test_delete_nonexistent_category(self, app, category_repository):
         """Test deleting a nonexistent category."""
@@ -1130,16 +1131,14 @@ class TestTagRepository:
             # Verify the ORM model was deleted
             stmt = db.select(TagORM).where(TagORM.id == created_tag.id)
             tag_orm = db.session.scalar(stmt)
+            assert tag_orm is None
 
     def test_delete_nonexistent_tag(self, app, tag_repository):
         """Test deleting a nonexistent tag."""
         with app.app_context():
             # Try to delete a tag that doesn't exist
             result = tag_repository.delete(99999)  # Nonexistent ID
-
-            # Verify the result is False
-
-            # Verify None is returned
+            assert not result
 
     def test_to_domain_model_mapping(self, app, tag_repository):
         """Test that _to_domain_model correctly maps ORM to domain model."""
@@ -1682,6 +1681,7 @@ class TestIconRepository:
             # Verify the ORM model was deleted
             stmt = db.select(IconORM).where(IconORM.id == created_icon.id)
             icon_orm = db.session.scalar(stmt)
+            assert icon_orm is None
 
     def test_delete_nonexistent_icon(self, app, icon_repository):
         """Test deleting a nonexistent icon."""
@@ -1691,7 +1691,6 @@ class TestIconRepository:
 
             # Verify the result is False
             assert result is False
-
 
             # Verify an empty list is returned
 

@@ -1,7 +1,7 @@
 """Repository for Post entities."""
 
 import sqlalchemy as sa
-from typing import Any, List, Optional
+from typing import Any, override
 
 from blog.extensions import db
 from blog.post.models import Post as PostORM
@@ -14,7 +14,7 @@ from blog.repos.base import BaseRepository
 class PostRepository(BaseRepository[PostDomain, int]):
     """Repository for Post entities."""
 
-    def __init__(self, session: Any = None):
+    def __init__(self, session: Any = None):  # pyright: ignore[reportExplicitAny]
         self.session = session or db.session
 
     def get_post_with_relationships(self, post_id: int) -> PostDomain | None:
@@ -37,13 +37,13 @@ class PostRepository(BaseRepository[PostDomain, int]):
             return self._to_domain_model(post_orm)
         return None
 
-    def get_tags_for_post(self, post_id: int) -> List[TagDomain]:
+    def get_tags_for_post(self, post_id: int) -> list[TagDomain]:
         """Get all tags associated with a specific post."""
         stmt = sa.select(TagORM).join(TagORM.posts).where(PostORM.id == post_id)
         tags_orm = list(self.session.scalars(stmt).all())
         return [self._tag_to_domain_model(tag_orm) for tag_orm in tags_orm]
 
-    def get_posts_by_tag(self, tag_id: int) -> List[PostDomain]:
+    def get_posts_by_tag(self, tag_id: int) -> list[PostDomain]:
         """Get all posts associated with a specific tag."""
         stmt = sa.select(PostORM).join(PostORM.tags).where(TagORM.id == tag_id)
         posts_orm = list(self.session.scalars(stmt).all())
@@ -57,7 +57,8 @@ class PostRepository(BaseRepository[PostDomain, int]):
             alias=tag_orm.alias or "",
         )
 
-    def get_by_id(self, id: int) -> Optional[PostDomain]:
+    @override
+    def get_by_id(self, id: int) -> PostDomain | None:
         stmt = sa.select(PostORM).where(PostORM.id == id)
         post_orm = self.session.scalar(stmt)
         if post_orm:
@@ -71,7 +72,8 @@ class PostRepository(BaseRepository[PostDomain, int]):
             return self._to_domain_model(post_orm)
         return None
 
-    def get_all(self) -> List[PostDomain]:
+    @override
+    def get_all(self) -> list[PostDomain]:
         stmt = sa.select(PostORM)
         posts_orm = list(self.session.scalars(stmt).all())
         return [self._to_domain_model(post_orm) for post_orm in posts_orm]
@@ -93,6 +95,7 @@ class PostRepository(BaseRepository[PostDomain, int]):
         posts_orm = list(self.session.scalars(stmt).all())
         return [self._to_domain_model(post_orm) for post_orm in posts_orm]
 
+    @override
     def create(self, entity: PostDomain) -> PostDomain:
         post_orm = PostORM()
         post_orm.pagetitle = entity.pagetitle
@@ -113,6 +116,7 @@ class PostRepository(BaseRepository[PostDomain, int]):
         entity.id = post_orm.id
         return entity
 
+    @override
     def update(self, entity: PostDomain) -> PostDomain:
         stmt = sa.select(PostORM).where(PostORM.id == entity.id)
         post_orm = self.session.scalar(stmt)
@@ -134,6 +138,7 @@ class PostRepository(BaseRepository[PostDomain, int]):
         self.session.flush()
         return entity
 
+    @override
     def delete(self, id: int) -> bool:
         stmt = sa.select(PostORM).where(PostORM.id == id)
         post_orm = self.session.scalar(stmt)

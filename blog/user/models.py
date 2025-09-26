@@ -1,7 +1,7 @@
 """SqlAlchemy models."""
 
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from flask_login import UserMixin
 from sqlalchemy.orm import Mapped, relationship
@@ -28,7 +28,7 @@ class User(UserMixin, db.Model):
 
     posts: Mapped[list["Post"]] = relationship("Post", back_populates="user")
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: str) -> None:
         """Initialize a new User instance."""
         super().__init__(**kwargs)
         # Set default createdon if not provided
@@ -43,6 +43,7 @@ class User(UserMixin, db.Model):
         """Check password hash."""
         return check_password_hash(self.password or "", password)
 
+    @override
     def __str__(self) -> str:
         """String representation."""
         return f"{self.name}"

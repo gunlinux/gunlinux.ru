@@ -14,12 +14,14 @@ ruff-lint-format-check:
 	uvx ruff format --check .
 
 lint-types:
-	uv run pyright .
+	uv run basedpyright .
 
 
 test:
 	FLASK_ENV=testing FLASK_APP=blog uv run pytest
 
+test-dev:
+	FLASK_ENV=testing FLASK_APP=blog uv run pytest -vv -s
 
 test-coverage:
 	FLASK_ENV=testing FLASK_APP=blog uv run pytest --cov=blog --cov-report xml

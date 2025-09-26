@@ -1,5 +1,7 @@
 import os
 
+from typing import TYPE_CHECKING, override
+
 from flask_admin.contrib import fileadmin, sqla
 from flask_login import current_user
 
@@ -9,6 +11,9 @@ from blog.post.models import Post, Icon
 from blog.tags.models import Tag
 from blog.user.models import User
 
+if TYPE_CHECKING:
+    from flask_admin import Admin
+
 
 class UserView(sqla.ModelView):
     column_exclude_list = ["content", "alias"]
@@ -17,6 +22,7 @@ class UserView(sqla.ModelView):
 
     column_default_sort = ("id", True)
 
+    @override
     def is_accessible(self):
         return current_user.is_authenticated
 
@@ -31,11 +37,12 @@ class PostView(UserView):
 
 
 class MyFileAdmin(fileadmin.FileAdmin):
+    @override
     def is_accessible(self):
         return current_user.is_authenticated
 
 
-def create_admin(config_admin):
+def create_admin(config_admin: "Admin") -> None:
     config_admin.add_view(PostView(Post, db.session, endpoint="admin_post"))
     config_admin.add_view(UserView(Category, db.session, endpoint="admin_category"))
     config_admin.add_view(UserView(Tag, db.session, endpoint="admin_tag"))

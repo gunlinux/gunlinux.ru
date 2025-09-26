@@ -1,7 +1,7 @@
 """Repository for Category entities."""
 
 import sqlalchemy as sa
-from typing import Any, List, Optional
+from typing import Any, override
 
 from blog.extensions import db
 from blog.category.models import Category as CategoryORM
@@ -12,10 +12,11 @@ from blog.repos.base import BaseRepository
 class CategoryRepository(BaseRepository[CategoryDomain, int]):
     """Repository for Category entities."""
 
-    def __init__(self, session: Any = None):
+    def __init__(self, session: Any = None):  # pyright: ignore[reportExplicitAny]
         self.session = session or db.session
 
-    def get_by_id(self, id: int) -> Optional[CategoryDomain]:
+    @override
+    def get_by_id(self, id: int) -> CategoryDomain | None:
         stmt = sa.select(CategoryORM).where(CategoryORM.id == id)
         category_orm = self.session.scalar(stmt)
         if category_orm:
@@ -29,7 +30,8 @@ class CategoryRepository(BaseRepository[CategoryDomain, int]):
             return self._to_domain_model(category_orm)
         return None
 
-    def get_all(self) -> List[CategoryDomain]:
+    @override
+    def get_all(self) -> list[CategoryDomain]:
         stmt = sa.select(CategoryORM)
         categories_orm = list(self.session.scalars(stmt).all())
         return [self._to_domain_model(category_orm) for category_orm in categories_orm]
@@ -44,6 +46,7 @@ class CategoryRepository(BaseRepository[CategoryDomain, int]):
         categories_orm = list(self.session.scalars(stmt).unique().all())
         return [self._to_domain_model(category_orm) for category_orm in categories_orm]
 
+    @override
     def create(self, entity: CategoryDomain) -> CategoryDomain:
         category_orm = CategoryORM()
         category_orm.title = entity.title
@@ -56,6 +59,7 @@ class CategoryRepository(BaseRepository[CategoryDomain, int]):
         entity.id = category_orm.id
         return entity
 
+    @override
     def update(self, entity: CategoryDomain) -> CategoryDomain:
         stmt = sa.select(CategoryORM).where(CategoryORM.id == entity.id)
         category_orm = self.session.scalar(stmt)
@@ -70,6 +74,7 @@ class CategoryRepository(BaseRepository[CategoryDomain, int]):
         self.session.flush()
         return entity
 
+    @override
     def delete(self, id: int) -> bool:
         stmt = sa.select(CategoryORM).where(CategoryORM.id == id)
         category_orm = self.session.scalar(stmt)

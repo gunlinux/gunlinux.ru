@@ -1,7 +1,7 @@
 """Repository for Tag entities."""
 
 import sqlalchemy as sa
-from typing import Any, List, Optional
+from typing import Any, override
 
 from blog.extensions import db
 from blog.tags.models import Tag as TagORM
@@ -12,10 +12,11 @@ from blog.repos.base import BaseRepository
 class TagRepository(BaseRepository[TagDomain, int]):
     """Repository for Tag entities."""
 
-    def __init__(self, session: Any = None):
+    def __init__(self, session: Any = None):  # pyright: ignore[reportExplicitAny]
         self.session = session or db.session
 
-    def get_by_id(self, id: int) -> Optional[TagDomain]:
+    @override
+    def get_by_id(self, id: int) -> TagDomain | None:
         stmt = sa.select(TagORM).where(TagORM.id == id)
         tag_orm = self.session.scalar(stmt)
         if tag_orm:
@@ -29,7 +30,8 @@ class TagRepository(BaseRepository[TagDomain, int]):
             return self._to_domain_model(tag_orm)
         return None
 
-    def get_all(self) -> List[TagDomain]:
+    @override
+    def get_all(self) -> list[TagDomain]:
         stmt = sa.select(TagORM)
         tags_orm = list(self.session.scalars(stmt).all())
         return [self._to_domain_model(tag_orm) for tag_orm in tags_orm]
@@ -44,7 +46,7 @@ class TagRepository(BaseRepository[TagDomain, int]):
         tags_orm = list(self.session.scalars(stmt).unique().all())
         return [self._to_domain_model(tag_orm) for tag_orm in tags_orm]
 
-    def get_tags_for_post(self, post_id: int) -> List[TagDomain]:
+    def get_tags_for_post(self, post_id: int) -> list[TagDomain]:
         """Get all tags associated with a specific post."""
         from blog.post.models import Post as PostORM
 
@@ -52,6 +54,7 @@ class TagRepository(BaseRepository[TagDomain, int]):
         tags_orm = list(self.session.scalars(stmt).all())
         return [self._to_domain_model(tag_orm) for tag_orm in tags_orm]
 
+    @override
     def create(self, entity: TagDomain) -> TagDomain:
         tag_orm = TagORM()
         tag_orm.title = entity.title
@@ -61,6 +64,7 @@ class TagRepository(BaseRepository[TagDomain, int]):
         entity.id = tag_orm.id
         return entity
 
+    @override
     def update(self, entity: TagDomain) -> TagDomain:
         stmt = sa.select(TagORM).where(TagORM.id == entity.id)
         tag_orm = self.session.scalar(stmt)
@@ -72,6 +76,7 @@ class TagRepository(BaseRepository[TagDomain, int]):
         self.session.flush()
         return entity
 
+    @override
     def delete(self, id: int) -> bool:
         stmt = sa.select(TagORM).where(TagORM.id == id)
         tag_orm = self.session.scalar(stmt)

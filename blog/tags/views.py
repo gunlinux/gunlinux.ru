@@ -1,14 +1,19 @@
-from flask import Blueprint, render_template
+from typing import TYPE_CHECKING, ParamSpecKwargs
+
+from flask import Blueprint, render_template, Response
 
 from blog.post.views import pages_gen
 from blog.services.factory import ServiceFactory
+
+if TYPE_CHECKING:
+    from flask import Response
 
 tags = Blueprint("tags", __name__, url_prefix="/tags")
 
 
 @tags.route("/")
 @pages_gen
-def index(**kwargs):
+def index(**kwargs: ParamSpecKwargs) -> Response | str:
     tag_service = ServiceFactory.create_tag_service()
     tags = tag_service.get_all_tags()
     return render_template("tags.html", tags=tags, **kwargs)
@@ -16,7 +21,7 @@ def index(**kwargs):
 
 @tags.route("/<alias>")
 @pages_gen
-def view(alias=None, **kwargs):
+def view(alias: str | None = None, **kwargs: ParamSpecKwargs) -> Response | str:
     if alias is None:
         from flask import abort
 

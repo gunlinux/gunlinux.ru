@@ -73,6 +73,9 @@ class CategoryService:
             return self.category_repository.delete(category_id)
         except Exception as e:
             # Log the error with details
-            logger.error(f"Failed to delete category with id {category_id}: {str(e)}", exc_info=True)
+            logger.error(
+                f"Failed to delete category with id {category_id}: {str(e)}",
+                exc_info=True,
+            )
             # Return False to indicate failure
             return False
