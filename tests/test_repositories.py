@@ -383,10 +383,8 @@ class TestPostRepository:
         """Test deleting a nonexistent post."""
         with app.app_context():
             # Try to delete a post that doesn't exist
-            result = post_repository.delete(99999)  # Nonexistent ID
-
-            # Verify the result is False
-            assert result is False
+            with pytest.raises(ValueError):
+                post_repository.delete(99999)  # Nonexistent ID
 
     def test_get_post_with_relationships(self, app, post_repository):
         """Test getting a post with relationships loaded."""

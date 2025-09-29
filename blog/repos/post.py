@@ -145,7 +145,7 @@ class PostRepository(BaseRepository[PostDomain, int]):
         if post_orm:
             self.session.delete(post_orm)
             return True
-        return False
+        raise ValueError(f"Post not found {id}")
 
     def _to_domain_model(self, post_orm: PostORM) -> PostDomain:
         return PostDomain(

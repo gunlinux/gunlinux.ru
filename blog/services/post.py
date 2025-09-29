@@ -86,5 +86,4 @@ class PostService:
             logger.error(
                 f"Failed to delete post with id {post_id}: {str(e)}", exc_info=True
             )
-            # Return False to indicate failure
-            return False
+            raise PostNotFoundError(f"Failed to delete post with id: {str(e)}") from e

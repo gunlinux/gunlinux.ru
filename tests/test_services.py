@@ -11,7 +11,7 @@ from blog.domain.category import Category as CategoryDomain
 from blog.domain.tag import Tag as TagDomain
 from blog.domain.user import User as UserDomain
 from blog.domain.icon import Icon as IconDomain
-from blog.services.post import PostService, PostUpdateError
+from blog.services.post import PostService, PostUpdateError, PostNotFoundError
 from blog.services.category import CategoryService, CategoryUpdateError
 from blog.services.tag import TagService, TagUpdateError
 from blog.services.user import UserService, UserUpdateError
@@ -268,13 +268,14 @@ class TestPostService:
         retrieved_post = post_service.get_post_by_id(created_post.id)
         assert retrieved_post is None
 
+        with pytest.raises(PostNotFoundError):
+            post_service.delete_post(created_post.id)
+
     def test_delete_nonexistent_post(self, app, post_service):
         """Test deleting a nonexistent post."""
         # Try to delete a post that doesn't exist
-        result = post_service.delete_post(99999)  # Nonexistent ID
-
-        # Verify the result is False
-        assert result is False
+        with pytest.raises(PostNotFoundError):
+            post_service.delete_post(99999)  # Nonexistent ID
 
     def test_get_post_by_alias(self, app, post_service):
         """Test getting a post by alias."""
