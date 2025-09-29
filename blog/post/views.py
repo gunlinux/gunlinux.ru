@@ -1,5 +1,5 @@
 import datetime
-from typing import cast, TYPE_CHECKING, ParamSpec, TypeVar
+from typing import cast, ParamSpec, TypeVar
 from functools import wraps
 
 from collections.abc import Callable
@@ -16,8 +16,6 @@ from flask import (
 )
 
 
-if TYPE_CHECKING:
-    from flask import Response
 from blog.extensions import flask_sitemap, cache
 from blog.services.factory import ServiceFactory
 
