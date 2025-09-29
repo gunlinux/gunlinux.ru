@@ -1,4 +1,3 @@
-import typing
 from datetime import datetime
 from typing import TYPE_CHECKING, override
 
@@ -42,7 +41,7 @@ class Post(db.Model):
     def markdown(self):
         return markdown.markdown(self.content or "", extensions=MARKDOWN_EXTENSIONS)
 
-    @typing.override
+    @override
     def __str__(self):
         return f"{self.pagetitle}"
 

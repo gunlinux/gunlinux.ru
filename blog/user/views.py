@@ -1,6 +1,5 @@
-import typing
 import flask_login
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from flask import Blueprint, flash, redirect, render_template, url_for, Response
 from flask_login import current_user, login_user  # pyright: ignore[reportUnknownVariableType]
@@ -26,7 +25,7 @@ def load_user(user_id: str):
 @user.route("/login", methods=["GET", "POST"])
 def login() -> Response | str:
     if current_user.is_authenticated:
-        return typing.cast("Response", redirect("/"))
+        return cast("Response", redirect("/"))
     form = LoginForm()
     if form.validate_on_submit():
         # Check that form data is not None before using it
@@ -37,13 +36,13 @@ def login() -> Response | str:
             user_orm = auth_adapter.authenticate_and_login(name, password)
             if user_orm:
                 login_user(user_orm)
-                return typing.cast("Response", redirect(url_for("admin.index")))
+                return cast("Response", redirect(url_for("admin.index")))
         flash("invalid user o password")
-        return typing.cast("Response", redirect(url_for("user.login")))
+        return cast("Response", redirect(url_for("user.login")))
     return render_template("login.html", form=form)
 
 
 @user.route("/logout")
 def logout() -> Response:
     flask_login.logout_user()
-    return typing.cast("Response", redirect(url_for("post.index")))
+    return cast("Response", redirect(url_for("post.index")))

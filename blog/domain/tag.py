@@ -1,7 +1,7 @@
 """Domain models for the Tag entity."""
 
 from dataclasses import dataclass
-import typing
+from typing import override
 
 
 @dataclass
@@ -12,6 +12,6 @@ class Tag:
     title: str = ""
     alias: str = ""
 
-    @typing.override
+    @override
     def __str__(self):
         return f"{self.title}"

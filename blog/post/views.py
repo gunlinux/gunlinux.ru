@@ -1,5 +1,5 @@
 import datetime
-import typing
+from typing import cast, TYPE_CHECKING, ParamSpec, TypeVar
 from functools import wraps
 
 from collections.abc import Callable
@@ -16,7 +16,7 @@ from flask import (
 )
 
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from flask import Response
 from blog.extensions import flask_sitemap, cache
 from blog.services.factory import ServiceFactory
@@ -24,13 +24,8 @@ from blog.services.factory import ServiceFactory
 post = Blueprint("post", __name__)
 
 
-P = typing.ParamSpec("P")
-R = typing.TypeVar("R")
-
-"""
-def with_lock(f: Callable[Concatenate[Lock, P], R]) -> Callable[P, R]:
-    def inner(*args: P.args, **kwargs: P.kwargs) -> R:
-"""
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
 def pages_gen(
@@ -38,7 +33,7 @@ def pages_gen(
 ) -> Callable[P, R]:
     @wraps(f)
     def decorated_function(*args: P.args, **kwargs: P.kwargs) -> R:
-        page_category = typing.cast("list[int]", current_app.config["PAGE_CATEGORY"])
+        page_category = cast("list[int]", current_app.config["PAGE_CATEGORY"])
 
         post_service = ServiceFactory.create_post_service()
         pages = post_service.get_page_posts(page_category)
@@ -55,7 +50,7 @@ def pages_gen(
 @post.route("/")
 @cache.cached(timeout=50)  # pyright: ignore[reportUntypedFunctionDecorator]
 @pages_gen
-def index(**kwargs: typing.Any) -> Response | str:
+def index(**kwargs: str) -> Response | str:
     post_service = ServiceFactory.create_post_service()
     posts = post_service.get_published_posts()
     return render_template("posts.html", posts=posts, **kwargs)
@@ -64,7 +59,7 @@ def index(**kwargs: typing.Any) -> Response | str:
 @post.route("/<alias>")
 @cache.cached(timeout=50)  # pyright: ignore[reportUntypedFunctionDecorator]
 @pages_gen
-def view(alias: str | None = None, **kwargs: typing.Any) -> Response | str:
+def view(alias: str | None = None, **kwargs: str) -> Response | str:
     if alias is None:
         from flask import abort
 
@@ -78,7 +73,7 @@ def view(alias: str | None = None, **kwargs: typing.Any) -> Response | str:
         abort(404)
 
     # For page categories, we need to check if it's a page or a regular post
-    page_categories = typing.cast("list[int]", current_app.config["PAGE_CATEGORY"])
+    page_categories = cast("list[int]", current_app.config["PAGE_CATEGORY"])
     is_page = post.category_id is not None and post.category_id in page_categories
     is_published = post.publishedon is not None
 
@@ -102,7 +97,7 @@ def view(alias: str | None = None, **kwargs: typing.Any) -> Response | str:
 
 @flask_sitemap.register_generator
 def site_map_gen():
-    page_category = typing.cast("list[int]", current_app.config["PAGE_CATEGORY"])
+    page_category = cast("list[int]", current_app.config["PAGE_CATEGORY"])
 
     post_service = ServiceFactory.create_post_service()
     pages = post_service.get_page_posts(page_category)

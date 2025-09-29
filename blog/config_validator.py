@@ -2,8 +2,7 @@
 
 import logging
 import os
-from typing import Any
-import typing
+from typing import Any, cast
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +66,7 @@ def validate_config(config: dict[str, Any]) -> list[str]:  # pyright: ignore[rep
     if page_category is not None:
         if not isinstance(page_category, list):
             raise ConfigValidationError("PAGE_CATEGORY must be a list of integers")
-        for item in typing.cast("list[Any]", page_category):  # pyright: ignore[reportExplicitAny]
+        for item in cast("list[Any]", page_category):  # pyright: ignore[reportExplicitAny]
             if not isinstance(item, int):
                 raise ConfigValidationError("PAGE_CATEGORY must contain only integers")
 

@@ -1,7 +1,7 @@
 """Domain models for the User entity."""
 
+from typing import override
 import datetime
-import typing
 from dataclasses import dataclass
 
 
@@ -19,6 +19,6 @@ class User:
         if self.createdon is None:
             self.createdon = datetime.datetime.now(datetime.timezone.utc)
 
-    @typing.override
+    @override
     def __str__(self):
         return f"{self.name}"

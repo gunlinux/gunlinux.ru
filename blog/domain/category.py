@@ -1,7 +1,7 @@
 """Domain models for the Category entity."""
 
 from dataclasses import dataclass
-import typing
+from typing import override
 
 
 @dataclass
@@ -13,6 +13,6 @@ class Category:
     alias: str = ""
     template: str | None = None
 
-    @typing.override
+    @override
     def __str__(self):
         return f"Category(id={self.id}, title={self.title}, template={self.template})"
