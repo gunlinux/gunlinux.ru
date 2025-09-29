@@ -8,7 +8,7 @@ authors = [
 ]
 requires-python = ">=3.10"
 dependencies = [
-    "flask-admin>=1.6.1",
+    "Flask-Admin>=1.6.1",
     "flask-caching>=2.3.1",
     "flask-login>=0.6.3",
     "flask-migrate>=4.1.0",
@@ -20,7 +20,7 @@ dependencies = [
     "markdown>=3.7",
     "psycopg2-binary>=2.9.10",
     "python-dotenv>=1.0.1",
-    "wtforms>=3.2.1",
+    "wtforms<3.0",
 ]
 
 [project.scripts]
