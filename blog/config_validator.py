@@ -26,10 +26,11 @@ def validate_config(config: dict[str, Any]) -> list[str]:  # pyright: ignore[rep
         ConfigValidationError: If critical configuration is missing or invalid
     """
     warnings: list[str] = []
+    env = os.environ.get("FLASK_ENV", "development")
 
     # Validate SECRET_KEY
     secret_key = config.get("SECRET_KEY")
-    if not secret_key:
+    if not secret_key and env not in ("development", "testing"):
         raise ConfigValidationError(
             "SECRET_KEY is required but not set. "
             + "Set the SECRET_KEY environment variable."
@@ -83,7 +84,6 @@ def validate_config(config: dict[str, Any]) -> list[str]:  # pyright: ignore[rep
             raise ConfigValidationError(f"PORT must be a valid integer, got '{port}'")
 
     # Validate CACHE settings for production
-    env = os.environ.get("FLASK_ENV", "development")
     if env == "production":
         cache_type = config.get("CACHE_TYPE", "NullCache")
         if cache_type == "NullCache":

@@ -37,6 +37,8 @@ def test_validate_config_default_secret_key_warning():
 
 def test_validate_config_missing_secret_key():
     """Test that validate_config raises an error for missing SECRET_KEY."""
+
+    os.environ["FLASK_ENV"] = "production"
     config = {
         "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
     }
