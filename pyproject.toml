@@ -54,6 +54,12 @@ branch = true
 [tool.pytest.ini_options]
 norecursedirs = "__pycache__"
 addopts = "--strict-markers --cov=blog --cov-report xml"
+filterwarnings = [
+    "ignore::UserWarning:.*pkg_resources.*",
+    "ignore::DeprecationWarning:.*pkg_resources.*",
+    "ignore::UserWarning:.*flask_admin.*",
+    "ignore::DeprecationWarning:.*flask_admin.*",
+]
 
 [dependency-groups]
 dev = [
