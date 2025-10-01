@@ -1385,7 +1385,7 @@ class TestUserRepository:
 
             # Manually hash the password for the created user at the ORM level
             # This is needed because the repository doesn't hash passwords
-            user_orm = UserORM.query.get(created_user.id)
+            user_orm = db.session.get(UserORM, created_user.id)
             if user_orm:
                 user_orm.set_password("testpassword")
                 db.session.commit()

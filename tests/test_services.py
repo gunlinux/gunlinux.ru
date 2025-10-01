@@ -564,7 +564,7 @@ class TestUserService:
             # This is needed because the repository doesn't hash passwords
             from blog.user.models import User as UserORM
 
-            user_orm = UserORM.query.get(created_user.id)
+            user_orm = db.session.get(UserORM, created_user.id)
             if user_orm:
                 user_orm.set_password("testpassword")
                 db.session.commit()
