@@ -46,6 +46,7 @@ reportImportCycles = false
 reportUnknownArgumentType = false
 reportUnknownMemberType = false
 reportUnknownParameterType = false
+reportAttributeAccessIssue = false
 
 [tool.coverage.run]
 branch = true

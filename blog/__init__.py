@@ -25,7 +25,7 @@ def configure_extensions(app: Flask) -> None:
     cache.init_app(app)
     migrate.init_app(app=app, db=db)
     login_manager.init_app(app=app)
-    login_manager.login_view = "user.login"  # pyright: ignore[reportAttributeAccessIssue]
+    login_manager.login_view = "user.login"
     flask_sitemap.init_app(app)
 
 
