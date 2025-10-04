@@ -5,13 +5,13 @@
         {% if tag %}
             <h3 class="page__title">Посты c тэгом: {{tag.title}}</h3>
         {% endif %}
-    {% for group in posts|groupby('publishedon.year')|sort(reverse=True)  %}
+    {% for group in posts|selectattr('publishedon')|groupby('publishedon.year')|sort(reverse=True)  %}
         <div class="postGroup">
             <h3 class="postGroup__title">{{group.grouper}}</h3>
             <div class="postGroup__content">
                 {% for post in group.list %}
                 <div class="minipost">
-                    <a class="minipost__title" href="{{url_for('postb.view',alias=post.alias)}}">
+                    <a class="minipost__title" href="{{url_for('post.view',alias=post.alias)}}">
                         {{post.pagetitle}}
                     </a>
                     <span class="minipost__date">

@@ -1,4 +1,4 @@
-FROM python:3.10-alpine AS test-image
+FROM python:3.12-alpine AS test-image
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -7,12 +7,12 @@ ENV SQLALCHEMY_DATABASE_URI="sqlite:////app/tmp/dev.db"
 
 WORKDIR /app
 
-RUN apk update && apk add --no-cache nodejs npm make uv
+RUN apk update && apk add --no-cache make uv
 
 COPY . .
 RUN uv sync && make check && make test
 
-FROM python:3.10-alpine
+FROM python:3.12-alpine
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -31,9 +31,6 @@ RUN adduser \
     --shell "/sbin/nologin" \
     --uid "${UID}" \
     appuser
-#   --no-create-home \
-#   appuser
-
 
 # Copy the source code into the container.
 COPY . .
@@ -43,9 +40,6 @@ EXPOSE 5000
 
 ENV PATH=/app/venv/bin:$PATH
 
-#USER appuser
-
 # Run the application.
 ENTRYPOINT [ "./entrypoint.sh" ]
-#CMD [ "uv", "run gunicorn -c gunicorn.py "]
 
