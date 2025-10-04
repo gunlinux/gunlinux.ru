@@ -63,7 +63,7 @@ def validate_application_config(app: Flask) -> None:
         raise ConfigValidationError(f"Configuration validation failed: {str(e)}") from e
 
 
-def create_app() -> Flask:
+def create_app(init_admin: bool = False) -> Flask:
     app = Flask(__name__)
     env = os.environ.get("FLASK_ENV", "development")
     logger.debug("current FLASK_ENV %s", env)
@@ -73,7 +73,8 @@ def create_app() -> Flask:
     validate_application_config(app)
 
     configure_extensions(app)
-    if not app.config["TESTING"]:
+    if init_admin or env != "testing":
+        print("init admin")
         create_admin(admin_ext)
     app.register_blueprint(post)
     app.register_blueprint(tags)
