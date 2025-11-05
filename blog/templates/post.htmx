@@ -1,0 +1,28 @@
+    <article class="page__content post">
+        <a href="{{url_for('post.view',alias=post.alias)}}"><h1 class="post__title">{{post.pagetitle}}</h1></a>
+        {% if post.category_id != config['PAGE_CATEGORY'] %}
+          <div class="post__date">
+            {% if post.publishedon %}
+              {{post.publishedon.strftime("%B %d, %Y")}}
+            {% endif %}
+          </div>
+        {% endif %}
+
+        {% if post.category_id != config['PAGE_CATEGORY'] %}
+            <div class="post__tags tags">
+                {% if tags %}
+                    {% for tag in tags %}
+                        <a 
+                          hx-get="{{url_for('tags.view',alias=tag.alias, hx=True)}}"
+                          hx-trigger="click"
+                          hx-target=".page__content"
+                          class="tags__item" href="{{url_for('tags.view', alias=tag.alias)}}">{{tag}}</a>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        {% endif %}
+        <div class="post__body">
+            {{ post.markdown|safe }}
+       </div>
+    </article>
+

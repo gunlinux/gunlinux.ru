@@ -1,0 +1,10 @@
+{% for tag in tags %}
+    <div class="minipost">
+        <a class="minipost__title" 
+            hx-get="{{url_for('tags.view',alias=tag.alias, hx=True)}}"
+            hx-trigger="click"
+            hx-target=".page__content"
+            class="tags__item" href="{{url_for('tags.view', alias=tag.alias)}}">{{tag.title}}</a>
+    </div>
+{% endfor %}
+

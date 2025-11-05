@@ -1,11 +1,16 @@
-    {% for group in posts|selectattr('publishedon')|groupby('publishedon.year')|sort(reverse=True)  %}
-        <div class="postGroup">
+  {% if tag %}
+    Посты с тэгом: {{tag.title}}
+
+  {% endif %}
+
+  {% for group in posts|selectattr('publishedon')|groupby('publishedon.year')|sort(reverse=True)  %}
+        <div class="postGroup" hx-boost="true">
             <h3 class="postGroup__title">{{group.grouper}}</h3>
             <div class="postGroup__content">
                 {% for post in group.list %}
                 <div class="minipost">
                     <a class="minipost__title" href="{{url_for('post.view',alias=post.alias)}}"
-    hx-swap="posts" hx-get="{{url_for('post.view',alias=post.alias, hx=True)}}"
+    hx-swap="posts" hx-get="{{url_for('post.view_hx',alias=post.alias)}}"
     hx-trigger="click"
     hx-target=".page__content"
     hx-push-url="true"

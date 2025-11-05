@@ -1,0 +1,8 @@
+{% for page in pages %}
+  <a href="{{url_for('post.view',alias=page.alias)}}" class="nav__link"
+    hx-swap="posts"
+    hx-get="{{url_for('post.view',alias=page.alias, hx=True)}}"
+    hx-trigger="click"
+    hx-target=".page__content"
+  >{{page.pagetitle}}</a>
+{% endfor %}

@@ -1,8 +1,6 @@
 import datetime
 from typing import cast, ParamSpec, TypeVar
-from functools import wraps
 
-from collections.abc import Callable
 import markdown
 from flask import (
     Blueprint,
@@ -13,6 +11,7 @@ from flask import (
     render_template,
     request,
     url_for,
+    abort,
 )
 
 
@@ -26,48 +25,47 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
-def pages_gen(
-    f: Callable[P, R],
-) -> Callable[P, R]:
-    @wraps(f)
-    def decorated_function(*args: P.args, **kwargs: P.kwargs) -> R:
-        page_category = cast("list[int]", current_app.config["PAGE_CATEGORY"])
-
-        post_service = ServiceFactory.create_post_service()
-        pages = post_service.get_page_posts(page_category)
-
-        icon_service = ServiceFactory.create_icon_service()
-        icons = icon_service.get_all_icons()
-        kwargs["icons"] = icons
-        kwargs["pages"] = pages
-        return f(*args, **kwargs)
-
-    return decorated_function
-
-
 @post.route("/")
 @cache.cached(timeout=50)  # pyright: ignore[reportUntypedFunctionDecorator]
-@pages_gen
 def index(**kwargs: str) -> Response | str:
+    return render_template("index.html", **kwargs)
+
+
+@post.route("/posts")
+@cache.cached(timeout=50)  # pyright: ignore[reportUntypedFunctionDecorator]
+def posts(**kwargs: str) -> Response | str:
     post_service = ServiceFactory.create_post_service()
     posts = post_service.get_published_posts()
     return render_template("posts.html", posts=posts, **kwargs)
 
 
+@post.route("/hx/pages")
+@cache.cached(timeout=50)  # pyright: ignore[reportUntypedFunctionDecorator]
+def pages_hx() -> Response | str:
+    page_category = cast("list[int]", current_app.config["PAGE_CATEGORY"])
+    post_service = ServiceFactory.create_post_service()
+    pages = post_service.get_page_posts(page_category)
+    return render_template("pages.htmx", pages=pages)
+
+
+@post.route("/hx/icons")
+@cache.cached(timeout=50)  # pyright: ignore[reportUntypedFunctionDecorator]
+def icons_hx() -> Response | str:
+    icon_service = ServiceFactory.create_icon_service()
+    icons = icon_service.get_all_icons()
+    return render_template("icons/icons.htmx", icons=icons)
+
+
 @post.route("/<alias>")
 @cache.cached(timeout=50)  # pyright: ignore[reportUntypedFunctionDecorator]
-@pages_gen
 def view(alias: str | None = None, **kwargs: str) -> Response | str:
+    template = "post.htmx" if request.args.get("hx") else "post.html"
     if alias is None:
-        from flask import abort
-
         abort(404)
 
     post_service = ServiceFactory.create_post_service()
     post = post_service.get_post_by_alias(alias)
     if not post:
-        from flask import abort
-
         abort(404)
 
     # For page categories, we need to check if it's a page or a regular post
@@ -76,8 +74,6 @@ def view(alias: str | None = None, **kwargs: str) -> Response | str:
     is_published = post.publishedon is not None
 
     if not (is_published or is_page):
-        from flask import abort
-
         abort(404)
 
     # Get tags for the post
@@ -89,8 +85,8 @@ def view(alias: str | None = None, **kwargs: str) -> Response | str:
         page_category_obj = category_service.get_category_by_id(post.category_id)
 
     if page_category_obj and page_category_obj.template:
-        return render_template("post.html", post=post, tags=tags, **kwargs)
-    return render_template("post.html", post=post, tags=tags, **kwargs)
+        return render_template(template, post=post, tags=tags, **kwargs)
+    return render_template(template, post=post, tags=tags, **kwargs)
 
 
 @flask_sitemap.register_generator
