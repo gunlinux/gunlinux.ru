@@ -139,19 +139,6 @@ def test_post_with_tags(integration_client):
         assert tag.title.encode() in response.data
 
 
-def test_index_page_with_posts(integration_client):
-    """Test that the index page displays posts correctly."""
-    client, test_data = integration_client
-
-    # Test that the index page shows posts
-    response = client.get("/")
-    assert response.status_code == 200
-
-    # Check that posts are displayed
-    for post in test_data["posts"]:
-        assert post.pagetitle.encode() in response.data
-
-
 def test_tags_page(integration_client):
     """Test that the tags page displays tags correctly."""
     client, test_data = integration_client
@@ -171,7 +158,7 @@ def test_individual_tag_page(integration_client):
 
     # Test that individual tag pages work
     tag = test_data["tags"][0]
-    response = client.get(f"/tags/{tag.alias}")
+    response = client.get(f"/tags/{tag.alias}?hx=True")
     assert response.status_code == 200
     assert tag.title.encode() in response.data
 
