@@ -31,6 +31,7 @@ def post_helper(prefix="post", page=False):
     post.content = f"{prefix}_content"
     # All posts should be published for tests
     post.publishedon = db.func.now()
+    post.category_id = None
     if page:
         post.category_id = 1
     return post
@@ -63,8 +64,9 @@ def test_post_index(test_client):
         post = post_helper()
         db.session.add(post)
         db.session.commit()
-    rv = test_client.get("/")
+    rv = test_client.get("/posts")
     assert rv.status == "200 OK"
+    print(rv.data)
     assert b"post_title" in rv.data
 
 
@@ -73,8 +75,9 @@ def test_page_index(test_client):
         testpage = post_helper(prefix="page", page=True)
         db.session.add(testpage)
         db.session.commit()
-    rv = test_client.get("/")
+    rv = test_client.get("/hx/pages")
     assert rv.status == "200 OK"
+    print(rv.data)
 
     with test_client.application.app_context():
         post_query = sa.select(Post).where(

@@ -88,10 +88,9 @@ def test_index_view(test_client):
     post = create_test_post()
 
     # Request the index page
-    response = test_client.get("/")
+    response = test_client.get("/posts")
     assert response.status_code == 200
     assert post.pagetitle.encode() in response.data
-
 
 def test_tag_index_view(test_client):
     """Test that tag index view works with domain models."""

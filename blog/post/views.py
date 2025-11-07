@@ -35,7 +35,7 @@ def index(**kwargs: str) -> Response | str:
 @cache.cached(timeout=50)  # pyright: ignore[reportUntypedFunctionDecorator]
 def posts(**kwargs: str) -> Response | str:
     post_service = ServiceFactory.create_post_service()
-    posts = post_service.get_published_posts()
+    posts = post_service.get_all_published_content()
     return render_template("posts.html", posts=posts, **kwargs)
 
 

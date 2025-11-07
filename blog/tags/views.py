@@ -20,7 +20,7 @@ def index() -> Response | str:
 
 @tags.route("/<alias>")
 def view(alias: str | None = None) -> Response | str:
-    template = "index.html" if request.args.get("hx") else "post.htmx"
+    template = "posts.htmx" if request.args.get("hx") else "tag.html"
     if alias is None:
         abort(404)
 

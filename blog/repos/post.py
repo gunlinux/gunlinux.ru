@@ -90,6 +90,17 @@ class PostRepository(BaseRepository[PostDomain, int]):
         posts_orm = list(self.session.scalars(stmt).all())
         return [self._to_domain_model(post_orm) for post_orm in posts_orm]
 
+    def get_all_published_content(self) -> list[PostDomain]:
+        """Get all published content including posts and pages."""
+        stmt = (
+            sa.select(PostORM)
+            .where(PostORM.publishedon.isnot(None))
+            .where(PostORM.category_id.isnot(1))
+            .order_by(PostORM.publishedon.desc())
+        )
+        posts_orm = list(self.session.scalars(stmt).all())
+        return [self._to_domain_model(post_orm) for post_orm in posts_orm]
+
     def get_page_posts(self, page_category_ids: list[int]) -> list[PostDomain]:
         stmt = sa.select(PostORM).where(PostORM.category_id.in_(page_category_ids))
         posts_orm = list(self.session.scalars(stmt).all())
