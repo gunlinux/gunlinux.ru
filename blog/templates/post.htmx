@@ -13,7 +13,7 @@
                 {% if tags %}
                     {% for tag in tags %}
                         <a 
-                          hx-get="{{url_for('tags.view',alias=tag.alias, hx=True)}}"
+                          hx-get="{{url_for('tags.view',alias=tag.alias)}}"
                           hx-trigger="click"
                           hx-target=".page__content"
                           class="tags__item" href="{{url_for('tags.view', alias=tag.alias)}}">{{tag}}</a>

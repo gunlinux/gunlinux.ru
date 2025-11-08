@@ -12,7 +12,7 @@ tags = Blueprint("tags", __name__, url_prefix="/tags")
 
 @tags.route("/")
 def index() -> Response | str:
-    template = "tags.htmx" if request.args.get("hx") else "tags.html"
+    template = "tags.htmx" if request.headers.get("HX-Request") else "tags.html"
     tag_service = ServiceFactory.create_tag_service()
     tags = tag_service.get_all_tags()
     return render_template(template, tags=tags)
@@ -20,7 +20,7 @@ def index() -> Response | str:
 
 @tags.route("/<alias>")
 def view(alias: str | None = None) -> Response | str:
-    template = "posts.htmx" if request.args.get("hx") else "tag.html"
+    template = "posts.htmx" if request.headers.get("HX-Request") else "tag.html"
     if alias is None:
         abort(404)
 

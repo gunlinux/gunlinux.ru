@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block content %}
-  <div hx-swap="posts" hx-get="{{url_for('post.view',alias=post.alias, hx=True)}}"
+ <div hx-swap="posts" hx-get="{{url_for('post.view',alias=post.alias)}}"
     hx-trigger="load"
     hx-target=".page__content">
   </div>
@@ -25,12 +25,12 @@
         {% endif %}
 
         {% if post.category_id != config['PAGE_CATEGORY'] %}
-            <div class="post__tags tags" hx-boost="true">
+            <div class="post__tags tags">
                 {% if tags %}
                     {% for tag in tags %}
                         <a class="tags__item" 
                 href="{{url_for('tags.view', alias=tag.alias)}}"
-                hx-get="{{url_for('tags.index', hx="true")}}"
+                hx-get="{{url_for('tags.index')}}"
                 hx-trigger="click"
                 hx-target=".page__content"
                 href="{{url_for('tags.index')}}" class="nav__link">

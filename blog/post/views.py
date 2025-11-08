@@ -59,7 +59,7 @@ def icons_hx() -> Response | str:
 @post.route("/<alias>")
 @cache.cached(timeout=50)  # pyright: ignore[reportUntypedFunctionDecorator]
 def view(alias: str | None = None, **kwargs: str) -> Response | str:
-    template = "post.htmx" if request.args.get("hx") else "post.html"
+    template = "post.htmx" if request.headers.get("HX-Request") else "post.html"
     if alias is None:
         abort(404)
 

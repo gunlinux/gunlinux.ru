@@ -5,10 +5,10 @@
                 {% for post in group.list %}
                 <div class="minipost">
                     <a class="minipost__title" href="{{url_for('post.view',alias=post.alias)}}"
-    hx-swap="posts" hx-get="{{url_for('post.view',alias=post.alias, hx=True)}}"
-    hx-trigger="click"
-    hx-target=".page__content"
-    hx-push-url="true"
+        hx-swap="posts" hx-get="{{url_for('post.view',alias=post.alias)}}"
+        hx-trigger="click"
+        hx-target=".page__content"
+        hx-push-url="true"
 >
                         {{post.pagetitle}}
                     </a>

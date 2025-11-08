@@ -6,7 +6,7 @@
     <title>{% if post %}{{post.pagetitle}}{% else %}  Неразумный перфекционизм{% endif %}</title>
     <meta name="description" content="{% if post %}{{post.pagetitle}}{% endif %}">
     {% if config['YANDEX_VERIFICATION'] %}
-      <meta name="yandex-verification" content="{{config['YANDEX_VERIFICATION']}}"/>
+      <meta name="yandex-verification" content="{{ config['YANDEX_VERIFICATION'] }}"/>
     {% endif %}
     <link href="/static/img/favicon.ico" rel="shortcut icon" />
     <base href="{{config['BASE']}}">
@@ -16,6 +16,7 @@
 
     <link rel="stylesheet" href="/static/src/global/reboot.css">
     <link rel="stylesheet" href="/static/src/global/global.css">
+    <link rel="stylesheet" href="/static/src/global/htmx.css">
     <link rel="stylesheet" href="/static/src/components/header.css">
     <link rel="stylesheet" href="/static/src/components/minipost.css">
     <link rel="stylesheet" href="/static/src/components/postGroup.css">
@@ -43,7 +44,7 @@ class="header__logo" title="На главную">@gunlinux</a>
             </div>
             <nav class="nav">
                 <a 
-                 hx-get="{{url_for('tags.index', hx=True)}}"
+                hx-get="{{url_for('tags.index')}}"
                 hx-trigger="click"
                 hx-target=".page__content"
                 href="{{url_for('tags.index')}}" class="nav__link">
