@@ -28,8 +28,13 @@ test-coverage:
 
 check: lint test
 
+css-build:
+	npm install
+	npx vite build
+
 run:
 	uv run flask db upgrade
+	npx vite build  # Build CSS before running the app
 	uv run flask run --host="0.0.0.0" --debug 
 
 docker-build:

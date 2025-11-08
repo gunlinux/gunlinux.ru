@@ -1,6 +1,11 @@
 <footer class="footer">
 
   <div class="footer__content">
+    <div hx-swap="innerHTML" hx-get="{{url_for('post.icons_hx')}}"
+         hx-trigger="load"
+         hx-target=".footer__links">
+    </div>
+
     <div class="footer__links">
       {% for icon in icons %}
         <a href="{{icon.url}}" title="{{icon.title}}" target="_blank" aria-label="{{icon.title}}" class="nav__link">

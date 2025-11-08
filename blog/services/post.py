@@ -49,6 +49,9 @@ class PostService:
     def get_published_posts(self) -> list[Post]:
         return self.post_repository.get_published_posts()
 
+    def get_all_published_content(self) -> list[Post]:
+        return self.post_repository.get_all_published_content()
+
     def get_page_posts(self, page_category_ids: list[int]) -> list[Post]:
         return self.post_repository.get_page_posts(page_category_ids)
 

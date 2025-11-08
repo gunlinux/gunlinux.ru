@@ -88,7 +88,7 @@ def test_index_view(test_client):
     post = create_test_post()
 
     # Request the index page
-    response = test_client.get("/")
+    response = test_client.get("/posts")
     assert response.status_code == 200
     assert post.pagetitle.encode() in response.data
 
