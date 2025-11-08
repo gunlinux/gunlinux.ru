@@ -1,5 +1,5 @@
     <article class="page__content post">
-        <a href="{{url_for('post.view',alias=post.alias)}}"><h1 class="post__title">{{post.pagetitle}}</h1></a>
+        <h1 class="post__title">{{post.pagetitle}}</h1>
         {% if post.category_id != config['PAGE_CATEGORY'] %}
           <div class="post__date">
             {% if post.publishedon %}
@@ -16,6 +16,7 @@
                           hx-get="{{url_for('tags.view',alias=tag.alias)}}"
                           hx-trigger="click"
                           hx-target=".page__content"
+                          hx-push-url="true"
                           class="tags__item" href="{{url_for('tags.view', alias=tag.alias)}}">{{tag}}</a>
                     {% endfor %}
                 {% endif %}

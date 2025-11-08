@@ -47,6 +47,7 @@ class="header__logo" title="На главную">@gunlinux</a>
                 hx-get="{{url_for('tags.index')}}"
                 hx-trigger="click"
                 hx-target=".page__content"
+                hx-push-url="true"
                 href="{{url_for('tags.index')}}" class="nav__link">
               tags</a>
             <span class="pages_nav"></span>

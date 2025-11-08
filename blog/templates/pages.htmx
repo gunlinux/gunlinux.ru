@@ -4,5 +4,6 @@
     hx-get="{{url_for('post.view',alias=page.alias)}}"
     hx-trigger="click"
     hx-target=".page__content"
+    hx-push-url="true"
   >{{page.pagetitle}}</a>
 {% endfor %}
