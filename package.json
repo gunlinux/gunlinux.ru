@@ -4,21 +4,25 @@
   "description": "CSS bundling for gunlinux.ru Flask application",
   "main": "index.js",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "dev": "webpack --mode development",
+    "build": "webpack --mode production",
+    "watch": "webpack --mode development --watch"
   },
   "keywords": [
     "flask",
     "css",
     "bundling",
-    "vite"
+    "webpack"
   ],
   "author": "gunlinux",
   "license": "MIT",
   "devDependencies": {
-    "@vitejs/plugin-basic-ssl": "^1.2.0",
-    "vite": "^5.4.8"
-  },
-  "dependencies": {}
+    "copy-webpack-plugin": "^13.0.1",
+    "css-loader": "^6.10.0",
+    "css-minimizer-webpack-plugin": "^5.0.1",
+    "mini-css-extract-plugin": "^2.8.0",
+    "resolve-url-loader": "^5.0.0",
+    "webpack": "^5.90.0",
+    "webpack-cli": "^5.1.0"
+  }
 }
