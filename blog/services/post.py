@@ -52,8 +52,8 @@ class PostService:
     def get_all_published_content(self) -> list[Post]:
         return self.post_repository.get_all_published_content()
 
-    def get_page_posts(self, page_category_ids: list[int]) -> list[Post]:
-        return self.post_repository.get_page_posts(page_category_ids)
+    def get_page_posts(self) -> list[Post]:
+        return self.post_repository.get_page_posts()
 
     def get_posts_by_tag(self, tag_id: int) -> list[Post]:
         """Get all posts associated with a specific tag."""

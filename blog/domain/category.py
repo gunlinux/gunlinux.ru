@@ -12,6 +12,7 @@ class Category:
     title: str = ""
     alias: str = ""
     template: str | None = None
+    page: bool | None = False
 
     @override
     def __str__(self):

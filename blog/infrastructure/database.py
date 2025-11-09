@@ -5,7 +5,16 @@ following the UNION Architecture pattern where infrastructure
 is separated from domain models.
 """
 
-from sqlalchemy import Table, Column, Integer, String, Text, DateTime, ForeignKey, Boolean
+from sqlalchemy import (
+    Table,
+    Column,
+    Integer,
+    String,
+    Text,
+    DateTime,
+    ForeignKey,
+    Boolean,
+)
 from sqlalchemy.sql.schema import MetaData
 
 

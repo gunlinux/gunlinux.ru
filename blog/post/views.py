@@ -1,11 +1,10 @@
 import datetime
-from typing import cast, ParamSpec, TypeVar
+from typing import ParamSpec, TypeVar
 
 import markdown
 from flask import (
     Blueprint,
     Response,
-    current_app,
     jsonify,
     make_response,
     render_template,
@@ -42,9 +41,8 @@ def posts(**kwargs: str) -> Response | str:
 @post.route("/hx/pages")
 @cache.cached(timeout=50)  # pyright: ignore[reportUntypedFunctionDecorator]
 def pages_hx() -> Response | str:
-    page_category = cast("list[int]", current_app.config["PAGE_CATEGORY"])
     post_service = ServiceFactory.create_post_service()
-    pages = post_service.get_page_posts(page_category)
+    pages = post_service.get_page_posts()
     return render_template("pages.htmx", pages=pages)
 
 
@@ -69,11 +67,9 @@ def view(alias: str | None = None, **kwargs: str) -> Response | str:
         abort(404)
 
     # For page categories, we need to check if it's a page or a regular post
-    page_categories = cast("list[int]", current_app.config["PAGE_CATEGORY"])
-    is_page = post.category_id is not None and post.category_id in page_categories
     is_published = post.publishedon is not None
 
-    if not (is_published or is_page):
+    if not (is_published or post.is_page):
         abort(404)
 
     # Get tags for the post
@@ -91,10 +87,8 @@ def view(alias: str | None = None, **kwargs: str) -> Response | str:
 
 @flask_sitemap.register_generator
 def site_map_gen():
-    page_category = cast("list[int]", current_app.config["PAGE_CATEGORY"])
-
     post_service = ServiceFactory.create_post_service()
-    pages = post_service.get_page_posts(page_category)
+    pages = post_service.get_page_posts()
     for page in pages:
         yield url_for("post.view", alias=page.alias)
 

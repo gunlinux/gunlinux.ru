@@ -2,7 +2,7 @@
 
 import logging
 import os
-from typing import Any, cast
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -61,17 +61,6 @@ def validate_config(config: dict[str, Any]) -> list[str]:  # pyright: ignore[rep
                 + "Supported schemes: sqlite://, postgresql://, mysql://, oracle://"
             )
 
-    # Validate PAGE_CATEGORY
-    page_category = config.get("PAGE_CATEGORY")
-    print(page_category, type(page_category))
-    if page_category is not None:
-        if not isinstance(page_category, list):
-            raise ConfigValidationError("PAGE_CATEGORY must be a list of integers")
-        for item in cast("list[Any]", page_category):  # pyright: ignore[reportExplicitAny]
-            if not isinstance(item, int):
-                raise ConfigValidationError("PAGE_CATEGORY must contain only integers")
-
-    # Validate PORT
     port = config.get("PORT")
     if port:
         try:

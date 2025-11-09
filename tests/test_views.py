@@ -22,7 +22,7 @@ def test_client():
             db.create_all()
             # Create a page category for testing
             category_service = ServiceFactory.create_category_service()
-            page_category = CategoryDomain(id=1, title="page", alias="page")
+            page_category = CategoryDomain(id=1, title="page", alias="page", page=True)
             category_service.create_category(page_category)
             yield client
         with app.app_context():
