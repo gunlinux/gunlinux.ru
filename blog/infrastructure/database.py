@@ -5,7 +5,7 @@ following the UNION Architecture pattern where infrastructure
 is separated from domain models.
 """
 
-from sqlalchemy import Table, Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy import Table, Column, Integer, String, Text, DateTime, ForeignKey, Boolean
 from sqlalchemy.sql.schema import MetaData
 
 
@@ -47,6 +47,7 @@ def get_categories_table(metadata: MetaData) -> Table:
         Column("title", String(255)),
         Column("alias", String(255), unique=True),
         Column("template", String(255), nullable=True),
+        Column("page", Boolean(), nullable=True, default=False),
         extend_existing=True,
     )
 
