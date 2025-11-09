@@ -19,6 +19,7 @@ class Post:
     createdon: datetime.datetime | None = None
     publishedon: datetime.datetime | None = None
     category_id: int | None = None
+    is_page: bool = False
     user_id: int | None = None
 
     def __post_init__(self):

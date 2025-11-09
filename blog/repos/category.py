@@ -51,6 +51,7 @@ class CategoryRepository(BaseRepository[CategoryDomain, int]):
         category_orm = CategoryORM()
         category_orm.title = entity.title
         category_orm.alias = entity.alias
+        category_orm.page = entity.page
         # Handle the case where template might be None
         if entity.template is not None:
             category_orm.template = entity.template

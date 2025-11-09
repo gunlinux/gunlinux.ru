@@ -14,10 +14,6 @@ class Config(object):
     YANDEX_VERIFICATION: str | None = environ.get("YANDEX_VERIFICATION", None)
     YANDEX_METRIKA: str = environ.get("YANDEX_METRIKA", "76938046")
 
-    PAGE_CATEGORY: list[int] = [
-        int(c) for c in environ.get("PAGE_CATEGORY", "0").split(",")
-    ]
-
 
 class DevelopmentConfig(Config):
     DEBUG: bool = True
@@ -30,9 +26,6 @@ class DevelopmentConfig(Config):
 class TestingConfig(Config):
     TESTING: bool = True
     SQLALCHEMY_DATABASE_URI: str = "sqlite:///:memory:"
-    PAGE_CATEGORY: list[int] = [
-        1,
-    ]
 
 
 class ProductionConfig(Config):

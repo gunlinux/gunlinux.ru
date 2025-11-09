@@ -20,6 +20,7 @@ class Category(db.Model):
     title: Mapped[str | None]
     alias: Mapped[str | None]
     template: Mapped[str | None]
+    page: Mapped[bool | None]
 
     posts: Mapped[list["Post"]] = relationship("Post", back_populates="category")
 

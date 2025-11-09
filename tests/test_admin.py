@@ -40,7 +40,6 @@ def temp_user(admin_app, auth_adapter, user_service):
 
         # Load the user using the adapter
         loaded_user = auth_adapter.load_user(created_user.id)
-        print(loaded_user, type(loaded_user))
         assert loaded_user is not None
 
         return user_orm

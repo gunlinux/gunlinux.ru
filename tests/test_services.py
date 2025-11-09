@@ -241,7 +241,7 @@ class TestPostService:
     def test_get_page_posts_empty_list(self, app, post_service):
         """Test getting page posts with an empty category list."""
         # Try to get page posts with an empty category list
-        posts = post_service.get_page_posts([])
+        posts = post_service.get_page_posts()
 
         # Verify an empty list is returned
         assert posts == []

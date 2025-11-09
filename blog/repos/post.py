@@ -3,6 +3,7 @@
 import sqlalchemy as sa
 from typing import Any, override
 
+from blog.category.models import Category as CategoryOrm
 from blog.extensions import db
 from blog.post.models import Post as PostORM
 from blog.tags.models import Tag as TagORM
@@ -66,7 +67,11 @@ class PostRepository(BaseRepository[PostDomain, int]):
         return None
 
     def get_by_alias(self, alias: str) -> PostDomain | None:
-        stmt = sa.select(PostORM).where(PostORM.alias == alias)
+        stmt = (
+            sa.select(PostORM)
+            .where(PostORM.alias == alias)
+            .join(CategoryOrm, PostORM.category_id == CategoryOrm.id, isouter=True)
+        )
         post_orm = self.session.scalar(stmt)
         if post_orm:
             return self._to_domain_model(post_orm)
@@ -94,15 +99,23 @@ class PostRepository(BaseRepository[PostDomain, int]):
         """Get all published content including posts and pages."""
         stmt = (
             sa.select(PostORM)
+            .join(CategoryOrm, PostORM.category_id == CategoryOrm.id, isouter=True)
             .where(PostORM.publishedon.isnot(None))
-            .where(PostORM.category_id.isnot(1))
+            .where(CategoryOrm.page.isnot(True))
             .order_by(PostORM.publishedon.desc())
         )
         posts_orm = list(self.session.scalars(stmt).all())
         return [self._to_domain_model(post_orm) for post_orm in posts_orm]
 
-    def get_page_posts(self, page_category_ids: list[int]) -> list[PostDomain]:
-        stmt = sa.select(PostORM).where(PostORM.category_id.in_(page_category_ids))
+    def get_page_posts(self) -> list[PostDomain]:
+        stmt = (
+            sa.select(PostORM)
+            .join_from(
+                PostORM,
+                CategoryOrm,
+            )
+            .where(CategoryOrm.page)  # pyright: ignore[reportArgumentType]
+        )
         posts_orm = list(self.session.scalars(stmt).all())
         return [self._to_domain_model(post_orm) for post_orm in posts_orm]
 
@@ -167,5 +180,6 @@ class PostRepository(BaseRepository[PostDomain, int]):
             createdon=post_orm.createdon,
             publishedon=post_orm.publishedon,
             category_id=post_orm.category_id,
+            is_page=bool(post_orm.category.page) if post_orm.category_id else False,
             user_id=post_orm.user_id,
         )

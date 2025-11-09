@@ -33,7 +33,7 @@ def integration_client():
             created_user = user_service.create_user(user)
 
             # Create categories
-            page_category = CategoryDomain(title="page", alias="page")
+            page_category = CategoryDomain(title="page", alias="page", page=True)
             created_page_category = category_service.create_category(page_category)
 
             regular_category = CategoryDomain(title="tech", alias="tech")
@@ -60,7 +60,7 @@ def integration_client():
             )
             created_post1 = post_service.create_post(post1)
 
-            # Page post
+            # Page
             post2 = PostDomain(
                 pagetitle="Test Page",
                 alias="test-page",

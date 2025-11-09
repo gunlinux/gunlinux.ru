@@ -29,9 +29,6 @@ export PORT="5555"
 # Yandex Metrika ID (optional)
 # export YANDEX_METRIKA="your-yandex-metrika-id"
 
-# Page categories (comma-separated list of integers)
-export PAGE_CATEGORY="0"
-
 # Cache configuration (optional)
 # export CACHE_TYPE="SimpleCache"
 # export CACHE_DEFAULT_TIMEOUT="300"

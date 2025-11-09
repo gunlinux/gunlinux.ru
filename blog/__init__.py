@@ -74,7 +74,6 @@ def create_app(init_admin: bool = False) -> Flask:
 
     configure_extensions(app)
     if init_admin or env != "testing":
-        print("init admin")
         create_admin(admin_ext)
     app.register_blueprint(post)
     app.register_blueprint(tags)

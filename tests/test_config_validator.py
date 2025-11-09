@@ -113,42 +113,6 @@ def test_validate_config_valid_port():
     assert isinstance(warnings, list)
 
 
-def test_validate_config_invalid_page_category():
-    """Test that validate_config handles invalid PAGE_CATEGORY."""
-    config = {
-        "SECRET_KEY": "a-valid-secret-key",
-        "PAGE_CATEGORY": "not-a-list",  # Invalid type
-    }
-
-    with pytest.raises(ConfigValidationError, match="PAGE_CATEGORY must be a list"):
-        validate_config(config)
-
-
-def test_validate_config_invalid_page_category_items():
-    """Test that validate_config handles invalid PAGE_CATEGORY items."""
-    config = {
-        "SECRET_KEY": "a-valid-secret-key",
-        "PAGE_CATEGORY": ["not-an-int"],  # Invalid items
-    }
-
-    with pytest.raises(
-        ConfigValidationError, match="PAGE_CATEGORY must contain only integers"
-    ):
-        validate_config(config)
-
-
-def test_validate_config_valid_page_category():
-    """Test that validate_config accepts valid PAGE_CATEGORY."""
-    config = {
-        "SECRET_KEY": "a-valid-secret-key",
-        "PAGE_CATEGORY": [1, 2, 3],
-    }
-
-    # Should not raise an exception
-    warnings = validate_config(config)
-    assert isinstance(warnings, list)
-
-
 def test_validate_config_nullcache_in_production():
     """Test that validate_config warns about NullCache in production."""
     # Temporarily set environment

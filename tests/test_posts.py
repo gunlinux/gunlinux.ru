@@ -15,7 +15,7 @@ def test_client():
     with app.test_client() as client:
         with app.app_context():
             db.create_all()
-            page_category = Category(id=1, title="page", alias="page")  # type: ignore
+            page_category = Category(id=1, title="page", alias="page", page=True)  # type: ignore
             db.session.add(page_category)
             db.session.commit()
             yield client
@@ -32,8 +32,13 @@ def post_helper(prefix="post", page=False):
     # All posts should be published for tests
     post.publishedon = db.func.now()
     post.category_id = None
+
     if page:
-        post.category_id = 1
+        page_category_query = sa.select(Category).where(
+            Category.page,
+        )
+        category = db.one_or_404(page_category_query)
+        post.category_id = category.id
     return post
 
 
@@ -66,7 +71,6 @@ def test_post_index(test_client):
         db.session.commit()
     rv = test_client.get("/posts")
     assert rv.status == "200 OK"
-    print(rv.data)
     assert b"post_title" in rv.data
 
 
@@ -77,7 +81,6 @@ def test_page_index(test_client):
         db.session.commit()
     rv = test_client.get("/hx/pages")
     assert rv.status == "200 OK"
-    print(rv.data)
 
     with test_client.application.app_context():
         post_query = sa.select(Post).where(

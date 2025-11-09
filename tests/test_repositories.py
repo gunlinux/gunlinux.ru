@@ -262,7 +262,9 @@ class TestPostRepository:
 
             category_repository = CategoryRepository(db.session)
             category_domain = CategoryDomain(
-                title="Page Category", alias="page-category"
+                title="Page Category",
+                alias="page-category",
+                page=True,
             )
             created_category = category_repository.create(category_domain)
 
@@ -289,7 +291,7 @@ class TestPostRepository:
             post_repository.create(regular_post_domain)
 
             # Get page posts
-            page_posts = post_repository.get_page_posts([created_category.id])
+            page_posts = post_repository.get_page_posts()
 
             # Verify we only got the page post
             assert len(page_posts) >= 1
@@ -305,7 +307,7 @@ class TestPostRepository:
         """Test getting page posts with an empty category list."""
         with app.app_context():
             # Get page posts with an empty category list
-            page_posts = post_repository.get_page_posts([])
+            page_posts = post_repository.get_page_posts()
 
             # Verify an empty list is returned
             assert page_posts == []
