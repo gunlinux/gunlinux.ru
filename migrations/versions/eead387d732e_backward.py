@@ -40,12 +40,6 @@ def upgrade():
 
     with op.batch_alter_table("users", schema=None) as batch_op:
         batch_op.alter_column(
-            "authenticated",
-            existing_type=sa.BOOLEAN(),
-            type_=sa.Integer(),
-            existing_nullable=True,
-        )
-        batch_op.alter_column(
             "createdon",
             existing_type=sa.DATETIME(),
             nullable=True,
@@ -63,12 +57,6 @@ def downgrade():
             existing_type=sa.DATETIME(),
             nullable=False,
             existing_server_default=sa.text("(CURRENT_TIMESTAMP)"),
-        )
-        batch_op.alter_column(
-            "authenticated",
-            existing_type=sa.Integer(),
-            type_=sa.BOOLEAN(),
-            existing_nullable=True,
         )
 
     with op.batch_alter_table("tags", schema=None) as batch_op:
