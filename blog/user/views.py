@@ -1,11 +1,13 @@
-import flask_login
 from typing import TYPE_CHECKING, cast
 
-from flask import Blueprint, flash, redirect, render_template, url_for, Response
-from flask_login import current_user, login_user  # pyright: ignore[reportUnknownVariableType]
+import flask_login
+from flask import Blueprint, Response, flash, redirect, render_template, url_for
+from flask_login import (
+    current_user,
+    login_user,
+)
 
 from blog.auth.adapter import auth_adapter
-from blog.extensions import login_manager
 from blog.user.forms import LoginForm
 
 if TYPE_CHECKING:
@@ -13,13 +15,6 @@ if TYPE_CHECKING:
 
 
 user = Blueprint("user", __name__)
-
-
-@login_manager.user_loader
-def load_user(user_id: str):
-    """Load user by ID for Flask-Login."""
-    # Use the authentication adapter for Flask-Login integration
-    return auth_adapter.load_user(int(user_id))
 
 
 @user.route("/login", methods=["GET", "POST"])
@@ -37,7 +32,7 @@ def login() -> Response | str:
             if user_orm:
                 login_user(user_orm)
                 return cast("Response", redirect(url_for("admin.index")))
-        flash("invalid user o password")
+        flash("invalid user or password")
         return cast("Response", redirect(url_for("user.login")))
     return render_template("login.html", form=form)
 

@@ -1,4 +1,64 @@
-"""Authentication adapter for Flask-Login integration."""
+"""Authentication adapter for Flask-Login integration.
+
+This module provides the authentication layer for the Flask-Login integration.
+It serves as the bridge between the domain-driven service layer and Flask-Login's
+requirements for ORM-based user models.
+
+Authentication Flow
+===================
+
+1. User Login (blog/user/views.py::login)
+   - User submits credentials via login form
+   - View calls auth_adapter.authenticate_and_login(name, password)
+   - Adapter authenticates via service layer (domain model)
+   - Adapter retrieves ORM model for Flask-Login compatibility
+   - Adapter returns FlaskLoginUser instance
+   - View calls flask_login.login_user() with the FlaskLoginUser
+
+2. Session Management (Flask-Login internal)
+   - Flask-Login stores user ID in session
+   - On subsequent requests, Flask-Login loads the user
+
+3. User Loading (this module::load_user)
+   - Flask-Login calls @login_manager.user_loader callback
+   - This callback (defined below) calls auth_adapter.load_user(user_id)
+   - Adapter retrieves user via service layer (domain model)
+   - Adapter retrieves ORM model for Flask-Login compatibility
+   - Adapter returns FlaskLoginUser instance
+   - Flask-Login sets current_user
+
+Architecture
+============
+
+The adapter pattern is used here to maintain separation of concerns:
+
+- Domain Layer (blog/domain/): Pure Python models, business logic
+- Service Layer (blog/services/): Business operations on domain models
+- Adapter Layer (blog/auth/adapter.py): Converts between domain and ORM for Flask-Login
+- ORM Layer (blog/user/models.py): SQLAlchemy models for database persistence
+
+Why Only One user_loader?
+=========================
+
+Flask-Login uses a single callback function to load users. If multiple functions
+are decorated with @login_manager.user_loader, only the LAST one registered will
+be used. This can lead to unpredictable behavior depending on import order.
+
+Therefore, the user_loader is defined ONLY in this module (blog/auth/adapter.py),
+which is the correct location following the adapter pattern. Other modules
+(like blog/user/views.py) should NOT define their own user_loader.
+
+Example::
+
+    # CORRECT: user_loader in auth/adapter.py (this file)
+    @login_manager.user_loader
+    def load_user(user_id: str):
+        return auth_adapter.load_user(int(user_id))
+
+    # INCORRECT: duplicate user_loader in user/views.py (removed)
+    # This would cause race conditions and unpredictable behavior
+
+"""
 
 from flask_login import UserMixin
 
@@ -103,5 +163,15 @@ def load_user(user_id: str) -> FlaskLoginUser | None:
 
     This function uses the authentication adapter to handle the Flask-Login
     integration while keeping the service layer clean.
+
+    Args:
+        user_id: The user ID as a string (from Flask-Login session)
+
+    Returns:
+        FlaskLoginUser instance if user exists, None otherwise
     """
-    return auth_adapter.load_user(int(user_id))
+    try:
+        return auth_adapter.load_user(int(user_id))
+    except (ValueError, TypeError):
+        # Return None for invalid user IDs (e.g., session tampering)
+        return None
