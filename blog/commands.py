@@ -29,7 +29,7 @@ def create_admin(name: str, password: str) -> None:
     ).scalar_one_or_none()
 
     if existing_user:
-        click.echo("User '{}' already exists.".format(name))
+        click.echo(f"User '{name}' already exists.")
         return
 
     # Create new user
@@ -40,7 +40,7 @@ def create_admin(name: str, password: str) -> None:
     db.session.add(user)
     db.session.commit()
 
-    click.echo("Admin user '{}' created successfully.".format(name))
+    click.echo(f"Admin user '{name}' created successfully.")
 
 
 def init_app(app: "Flask") -> None:
