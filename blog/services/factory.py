@@ -4,12 +4,10 @@ from blog.extensions import db
 from blog.repos.post import PostRepository
 from blog.repos.category import CategoryRepository
 from blog.repos.icon import IconRepository
-from blog.repos.tag import TagRepository
 from blog.repos.user import UserRepository
 from blog.services.post import PostService
 from blog.services.category import CategoryService
 from blog.services.icon import IconService
-from blog.services.tag import TagService
 from blog.services.user import UserService
 
 
@@ -33,12 +31,6 @@ class ServiceFactory:
         """Create an IconService instance with its dependencies."""
         icon_repository = IconRepository(db.session)
         return IconService(icon_repository)
-
-    @staticmethod
-    def create_tag_service():
-        """Create a TagService instance with its dependencies."""
-        tag_repository = TagRepository(db.session)
-        return TagService(tag_repository)
 
     @staticmethod
     def create_user_service():

@@ -8,7 +8,6 @@ from blog import create_app
 from blog.extensions import db
 from blog.domain.post import Post as PostDomain
 from blog.domain.category import Category as CategoryDomain
-from blog.domain.tag import Tag as TagDomain
 from blog.services.factory import ServiceFactory
 
 
@@ -46,16 +45,6 @@ def create_test_post(
     return post_service.create_post(post)
 
 
-def create_test_tag(title="Test Tag", alias="test-tag"):
-    """Helper function to create a test tag."""
-    tag_service = ServiceFactory.create_tag_service()
-    tag = TagDomain(
-        title=title,
-        alias=alias,
-    )
-    return tag_service.create_tag(tag)
-
-
 def test_post_view(test_client):
     """Test that post view works with domain models."""
     # Create a test post
@@ -91,28 +80,6 @@ def test_index_view(test_client):
     response = test_client.get("/posts")
     assert response.status_code == 200
     assert post.pagetitle.encode() in response.data
-
-
-def test_tag_index_view(test_client):
-    """Test that tag index view works with domain models."""
-    # Create a test tag
-    tag = create_test_tag()
-
-    # Request the tags index page
-    response = test_client.get("/tags/")
-    assert response.status_code == 200
-    assert tag.title.encode() in response.data
-
-
-def test_tag_view(test_client):
-    """Test that tag view works with domain models."""
-    # Create a test tag
-    tag = create_test_tag()
-
-    # Request the tag page
-    response = test_client.get(f"/tags/{tag.alias}")
-    assert response.status_code == 200
-    assert tag.title.encode() in response.data
 
 
 def test_404_view(test_client):

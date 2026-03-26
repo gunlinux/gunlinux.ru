@@ -14,16 +14,6 @@
             {% endif %}
           </div>
         {% endif %}
-
-        {% if post.category_id != config['PAGE_CATEGORY'] %}
-            <div class="post__tags tags">
-                {% if tags %}
-                    {% for tag in tags %}
-                        <a class="tags__item" href="{{url_for('tags.view', alias=tag.alias)}}">{{tag}}</a>
-                    {% endfor %}
-                {% endif %}
-            </div>
-        {% endif %}
         <div class="post__body">
             {{ post.markdown|safe }}
             <h4>Технологии:</h4>
