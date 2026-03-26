@@ -11,6 +11,7 @@ from blog.config import config
 from blog.config_validator import validate_config, ConfigValidationError
 from blog.extensions import admin_ext, cache, db, login_manager, migrate, flask_sitemap
 from blog.post.views import post
+from blog.robots.views import robots
 from blog.tags.views import tags
 from blog.user.views import user
 
@@ -76,6 +77,7 @@ def create_app(init_admin: bool = False) -> Flask:
     if init_admin or env != "testing":
         create_admin(admin_ext)
     app.register_blueprint(post)
+    app.register_blueprint(robots)
     app.register_blueprint(tags)
     app.register_blueprint(user)
 

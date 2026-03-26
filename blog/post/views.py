@@ -104,16 +104,6 @@ def getmd():
     return jsonify(out)
 
 
-@post.route("/robots.txt")
-@cache.cached(timeout=50)  # pyright: ignore[reportUntypedFunctionDecorator]
-def robots() -> Response | str:
-    response = make_response(
-        """\nUser-agent: *\nCrawl-delay: 2\nDisallow: /tag/*\nHost: gunlinux.ru\n"""
-    )
-    response.headers["Content-Type"] = "text/plain"
-    return response
-
-
 @post.route("/rss.xml")
 @cache.cached(timeout=50)  # pyright: ignore[reportUntypedFunctionDecorator]
 def rss():

@@ -1,0 +1,7 @@
+# robots.txt for gunlinux.ru
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://gunlinux.ru/sitemap.xml
