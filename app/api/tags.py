@@ -6,6 +6,7 @@ from app.core.templates import templates
 router = APIRouter(prefix="/tags")
 
 
+@router.get("")
 @router.get("/")
 async def tags_index(request: Request, tag_service: TagServiceDep) -> Response:
     tags = await tag_service.get_all_tags()

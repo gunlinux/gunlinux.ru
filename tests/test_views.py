@@ -54,6 +54,19 @@ async def test_tag_not_found(client):
 
 
 @pytest.mark.asyncio
+async def test_tags_index_with_slash(client):
+    response = await client.get("/tags/")
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_tags_index_without_slash(client):
+    # The catch-all GET /{alias} must not swallow /tags (no trailing slash).
+    response = await client.get("/tags")
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
 async def test_markdown_endpoint(client):
     response = await client.post("/md/", data={"data": "# Title"})
     assert response.status_code == 200
