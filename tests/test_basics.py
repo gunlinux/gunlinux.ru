@@ -1,37 +1,50 @@
 import pytest
-import os
-
-from blog import create_app
-from blog import db
 
 
-@pytest.fixture()
-def test_client():
-    os.environ["FLASK_ENV"] = "testing"
-    app = create_app()
-    app.config.update(
-        {"TESTING": True, "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:"}
-    )
-    with app.test_client() as client:
-        with app.app_context():
-            db.create_all()
-        yield client
-        with app.app_context():
-            db.session.remove()
-            db.drop_all()
+@pytest.mark.asyncio
+async def test_index(client):
+    response = await client.get("/")
+    assert response.status_code == 200
 
 
-def test_empty_db(test_client):
-    """Start with a blank database."""
-    rv = test_client.get("/")
-    assert b"page__content" in rv.data
+@pytest.mark.asyncio
+async def test_posts(client):
+    response = await client.get("/posts")
+    assert response.status_code == 200
 
 
-def test_app_is_testing(test_client):
-    assert test_client.application.config["TESTING"] is True
+@pytest.mark.asyncio
+async def test_tags(client):
+    response = await client.get("/tags/")
+    assert response.status_code == 200
 
 
-def test_rss(test_client):
-    rv = test_client.get("/rss.xml")
-    assert rv.status_code == 200
-    assert rv.mimetype == "application/rss+xml"
+@pytest.mark.asyncio
+async def test_robots(client):
+    response = await client.get("/robots.txt")
+    assert response.status_code == 200
+    assert "User-agent" in response.text
+
+
+@pytest.mark.asyncio
+async def test_rss(client):
+    response = await client.get("/rss.xml")
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_sitemap(client):
+    response = await client.get("/sitemap.xml")
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_login_form(client):
+    response = await client.get("/auth/login")
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_404(client):
+    response = await client.get("/nonexistent-alias-xyz")
+    assert response.status_code == 404

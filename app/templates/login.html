@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+
+{% block styles %}
+ <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/default.min.css">
+{% endblock %}
+
+{% block content %}
+    <article class="page__content post">
+      <h1 class="post__title">Sign In</h1>
+
+    {% if error %}
+      <ul class="flashes">
+        <li>{{ error }}</li>
+      </ul>
+    {% endif %}
+
+    <form action="/auth/login" method="post" novalidate>
+        <p>
+            <label for="username">Username</label><br>
+            <input type="text" id="username" name="username" size="32">
+        </p>
+        <p>
+            <label for="password">Password</label><br>
+            <input type="password" id="password" name="password" size="32">
+        </p>
+        <p><input type="submit" value="Sign In"></p>
+    </form>
+    </article>
+{% endblock %}
+
+{% block scripts %}
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+{% endblock %}

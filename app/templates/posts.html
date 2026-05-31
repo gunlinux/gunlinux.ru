@@ -1,0 +1,22 @@
+    {% for group in posts|selectattr('publishedon')|groupby('publishedon.year')|sort(reverse=True)  %}
+        <div class="postGroup">
+            <h3 class="postGroup__title">{{group.grouper}}</h3>
+            <div class="postGroup__content">
+                {% for post in group.list %}
+                <div class="minipost">
+                    <a class="minipost__title" href="/{{post.alias}}"
+        hx-swap="posts" hx-get="/{{post.alias}}"
+        hx-trigger="click"
+        hx-target=".page__content"
+        hx-push-url="true"
+>
+                        {{post.pagetitle}}
+                    </a>
+                    <span class="minipost__date">
+                        {{post.publishedon.strftime("%B %d, %Y")}}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}

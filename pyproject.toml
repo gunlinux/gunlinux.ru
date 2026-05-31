@@ -1,43 +1,43 @@
 [project]
 name = "gunlinuxblog"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.2.0"
+description = "FastAPI rewrite"
 readme = "README.md"
 authors = [
     { name = "loki", email = "gunlinux@ya.ru" }
 ]
 requires-python = ">=3.10"
 dependencies = [
-    "Flask-Admin>=1.6.1",
-    "flask-caching>=2.3.1",
-    "flask-login>=0.6.3",
-    "flask-migrate>=4.1.0",
-    "flask-sitemap>=0.4.0",
-    "flask-sqlalchemy>=3.1.1",
-    "flask-wtf>=1.2.2",
-    "gevent>=25.5.1",
-    "gunicorn>=23.0.0",
-    "markdown>=3.7",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "sqlalchemy[asyncio]>=2.0.0",
+    "aiosqlite>=0.20.0",
+    "asyncpg>=0.30.0",
     "psycopg2-binary>=2.9.10",
-    "python-dotenv>=1.0.1",
-    "wtforms<3.0",
+    "alembic>=1.14.0",
+    "bcrypt>=4.0.0",
+    "python-jose[cryptography]>=3.3.0",
+    "pydantic-settings>=2.6.0",
+    "sqladmin>=0.20.0",
+    "python-multipart>=0.0.12",
+    "jinja2>=3.1.4",
+    "itsdangerous>=2.2.0",
+    "markdown>=3.7",
+    "gunicorn>=23.0.0",
+    "fastapi-cache2>=0.2.0",
 ]
-
-[project.scripts]
-gunlinuxblog = "gunlinuxblog:main"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["gunlinuxblog"]
+packages = ["app"]
 
 [tool.pyright]
-ignore = ["tests", "migrations"]
+ignore = ["tests", "migrations", "blog", "app.py"]
 reportOptionalCall = false
 reportUnusedCallResult = false
-# enable?
 reportUnannotatedClassAttribute = false
 reportAny = false
 reportMissingTypeStubs = false
@@ -47,22 +47,24 @@ reportUnknownArgumentType = false
 reportUnknownMemberType = false
 reportUnknownParameterType = false
 reportAttributeAccessIssue = false
+reportCallInDefaultInitializer = false
+reportUnknownVariableType = false
 
 [tool.coverage.run]
 branch = true
 
 [tool.pytest.ini_options]
-norecursedirs = "__pycache__"
-addopts = "--strict-markers --cov=blog --cov-report xml"
+norecursedirs = "__pycache__ blog"
+addopts = "--strict-markers --cov=app --cov-report xml"
+asyncio_mode = "auto"
 filterwarnings = [
     "ignore::UserWarning:.*pkg_resources.*",
     "ignore::DeprecationWarning:.*pkg_resources.*",
-    "ignore::UserWarning:.*flask_admin.*",
-    "ignore::DeprecationWarning:.*flask_admin.*",
+    "ignore::DeprecationWarning:.*passlib.*",
 ]
 
 [tool.ruff]
-exclude = ["wrk/*", "migrations/*", ".venv/*", "venv/*"]
+exclude = ["wrk/*", "migrations/*", ".venv/*", "venv/*", "blog/*"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I"]
@@ -73,4 +75,7 @@ dev = [
     "mypy>=1.15.0",
     "pytest>=8.3.5",
     "pytest-cov>=6.0.0",
+    "pytest-asyncio>=0.24.0",
+    "httpx>=0.27.0",
+    "anyio[trio]>=4.6.0",
 ]

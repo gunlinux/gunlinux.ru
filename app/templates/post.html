@@ -1,0 +1,47 @@
+{% extends "layout.html" %}
+
+{% block styles %}
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css">
+{% endblock %}
+
+{% block content %}
+ <div hx-swap="posts" hx-get="/{{post.alias}}"
+    hx-trigger="load"
+    hx-target=".page__content">
+  </div>
+
+    <article class="page__content post">
+        <h1 class="post__title">{{post.pagetitle}}</h1>
+        {% if not post.is_page %}
+          <div class="post__date">
+            {% if post.publishedon %}
+              {{post.publishedon.strftime("%B %d, %Y")}}
+            {% endif %}
+          </div>
+        {% endif %}
+
+        {% if not post.is_page %}
+            <div class="post__tags tags">
+                {% if tags %}
+                    {% for tag in tags %}
+                        <a class="tags__item"
+                href="/tags/{{tag.alias}}"
+                hx-get="/tags/{{tag.alias}}"
+                hx-trigger="click"
+                hx-target=".page__content">
+              {{tag.title}}</a>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        {% endif %}
+        <div class="post__body">
+            {{ post.markdown|safe }}
+       </div>
+
+    </article>
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+{% endblock %}

@@ -1,4 +1,4 @@
-VERSION = 0.0.7
+VERSION = 0.2.0
 
 
 all: check
@@ -18,13 +18,13 @@ lint-types:
 
 
 test:
-	FLASK_ENV=testing FLASK_APP=blog uv run pytest
+	uv run pytest
 
 test-dev:
-	FLASK_ENV=testing FLASK_APP=blog uv run pytest -vv -s
+	uv run pytest -vv -s
 
 test-coverage:
-	FLASK_ENV=testing FLASK_APP=blog uv run pytest --cov=blog --cov-report xml
+	uv run pytest --cov=app --cov-report xml
 
 check: lint test
 
@@ -33,9 +33,12 @@ css-build:
 	npx webpack --mode production
 
 run:
-	uv run flask db upgrade
-	npx webpack --mode production  # Build CSS before running the app
-	uv run flask run --host="0.0.0.0" --debug 
+	uv run alembic upgrade head
+	npx webpack --mode production
+	uv run uvicorn main:app --host 0.0.0.0 --reload
+
+create-admin:
+	uv run python scripts/create_admin.py
 
 docker-build:
 	docker build . --tag="gunlinux:$(VERSION)"
@@ -46,7 +49,7 @@ docker:
 	docker run --rm -d --name gunlinux -v /home/loki/projects/gunlinux.ru/tmp:/app/tmp -p 5000:5000 gunlinux:$(VERSION)
 
 docker-shell:
-	docker run --rm -it --entrypoint="" gunlinux:$(VERSION) sh 
+	docker run --rm -it --entrypoint="" gunlinux:$(VERSION) sh
 
 docker-test:
 	docker build --target test-image -t gunlinux:$(VERSION)-test .
