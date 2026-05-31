@@ -7,6 +7,7 @@ from sqladmin.authentication import AuthenticationBackend
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from app.auth.jwt import COOKIE_NAME, create_access_token, decode_token
+from app.core.settings import get_settings
 from app.infrastructure.session import AsyncSessionLocal
 from app.models.category import Category
 from app.models.post import Icon, Post
@@ -93,7 +94,7 @@ class IconAdmin(ModelView, model=Icon):
 
 
 def create_admin(app: FastAPI, engine: AsyncEngine) -> Admin:
-    authentication_backend = AdminAuth(secret_key="admin-secret-fallback")
+    authentication_backend = AdminAuth(secret_key=get_settings().secret_key)
     admin = Admin(
         app,
         engine,
