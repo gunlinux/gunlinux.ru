@@ -1,7 +1,9 @@
+import logging
 from typing import override
 
 from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse
+from fastapi_cache import FastAPICache
 from sqladmin import Admin, ModelView
 from sqladmin.authentication import AuthenticationBackend
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -14,6 +16,35 @@ from app.models.post import Icon, Post
 from app.models.tag import Tag
 from app.models.user import User
 from app.repositories.user import UserRepository
+
+logger = logging.getLogger(__name__)
+
+
+async def _clear_response_cache() -> None:
+    """Invalidate the public response cache after a content write."""
+    try:
+        await FastAPICache.clear()
+    except Exception:  # cache may be uninitialized (e.g. in tests/scripts)
+        logger.warning("Failed to clear response cache", exc_info=True)
+
+
+class CacheClearingModelView(ModelView):
+    """ModelView that flushes the public response cache on every write,
+    so admin edits are reflected immediately instead of after the TTL."""
+
+    @override
+    async def after_model_change(
+        self,
+        data: dict[str, object],
+        model: object,
+        is_created: bool,
+        request: Request,
+    ) -> None:
+        await _clear_response_cache()
+
+    @override
+    async def after_model_delete(self, model: object, request: Request) -> None:
+        await _clear_response_cache()
 
 
 class AdminAuth(AuthenticationBackend):
@@ -47,7 +78,7 @@ class AdminAuth(AuthenticationBackend):
         return True
 
 
-class PostAdmin(ModelView, model=Post):
+class PostAdmin(CacheClearingModelView, model=Post):
     column_list = [
         Post.id,
         Post.pagetitle,
@@ -64,21 +95,21 @@ class PostAdmin(ModelView, model=Post):
     edit_template = "sqladmin/post_edit.html"
 
 
-class CategoryAdmin(ModelView, model=Category):
+class CategoryAdmin(CacheClearingModelView, model=Category):
     column_list = [Category.id, Category.title, Category.alias, Category.page]
     name = "Category"
     name_plural = "Categories"
     icon = "fa-solid fa-folder"
 
 
-class TagAdmin(ModelView, model=Tag):
+class TagAdmin(CacheClearingModelView, model=Tag):
     column_list = [Tag.id, Tag.title, Tag.alias]
     name = "Tag"
     name_plural = "Tags"
     icon = "fa-solid fa-tag"
 
 
-class UserAdmin(ModelView, model=User):
+class UserAdmin(CacheClearingModelView, model=User):
     column_list = [User.id, User.name, User.createdon]
     form_excluded_columns = [User.password]
     name = "User"
@@ -86,7 +117,7 @@ class UserAdmin(ModelView, model=User):
     icon = "fa-solid fa-user"
 
 
-class IconAdmin(ModelView, model=Icon):
+class IconAdmin(CacheClearingModelView, model=Icon):
     column_list = [Icon.id, Icon.title, Icon.url]
     name = "Icon"
     name_plural = "Icons"
