@@ -74,6 +74,31 @@ async def test_markdown_endpoint(client):
 
 
 @pytest.mark.asyncio
+async def test_rss_includes_teaser(client, db_session):
+    repo = PostRepository(db_session)
+    post = Post(
+        pagetitle="Feed Post",
+        alias="feed-post",
+        content="A short teaser sentence.\n\nSecond paragraph.",
+        publishedon=datetime.datetime.now(),
+    )
+    await repo.create(post)
+    await db_session.commit()
+
+    response = await client.get("/rss.xml")
+    assert response.status_code == 200
+    assert "A short teaser sentence." in response.text
+    assert "Second paragraph." not in response.text
+
+
+def test_post_teaser_truncates():
+    post = Post(content="x" * 500)
+    teaser = post.teaser
+    assert teaser.endswith("…")
+    assert len(teaser) <= 301
+
+
+@pytest.mark.asyncio
 async def test_htmx_pages(client):
     response = await client.get("/hx/pages")
     assert response.status_code == 200

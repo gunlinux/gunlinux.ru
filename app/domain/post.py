@@ -25,3 +25,11 @@ class Post:
     @property
     def markdown(self) -> str:
         return markdown.markdown(self.content or "", extensions=MARKDOWN_EXTENSIONS)
+
+    @property
+    def teaser(self) -> str:
+        """Short plain-text excerpt (first paragraph, capped) for RSS/meta."""
+        first = (self.content or "").strip().split("\n\n", 1)[0].strip()
+        if len(first) > 300:
+            first = first[:300].rstrip() + "…"
+        return first
