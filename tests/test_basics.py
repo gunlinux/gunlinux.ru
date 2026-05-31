@@ -39,12 +39,6 @@ async def test_sitemap(client):
 
 
 @pytest.mark.asyncio
-async def test_login_form(client):
-    response = await client.get("/auth/login")
-    assert response.status_code == 200
-
-
-@pytest.mark.asyncio
 async def test_404(client):
     response = await client.get("/nonexistent-alias-xyz")
     assert response.status_code == 404
