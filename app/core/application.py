@@ -31,12 +31,13 @@ def create_app() -> FastAPI:
     # Static files
     app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-    # Routers
+    # Routers — register prefixed routers before posts, whose catch-all
+    # GET /{alias} would otherwise shadow single-segment paths.
     from app.api.posts import router as posts_router
     from app.api.tags import router as tags_router
 
-    app.include_router(posts_router)
     app.include_router(tags_router)
+    app.include_router(posts_router)
 
     # Admin
     from app.admin import create_admin
