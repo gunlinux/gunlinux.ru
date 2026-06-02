@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, override
 
-import markdown
 from sqlalchemy.orm import Mapped, relationship
 
 from app.infrastructure.database import (
@@ -38,10 +37,6 @@ class Post(Base):
         secondary=get_posts_tags_table(Base.metadata),
         back_populates="posts",
     )
-
-    @property
-    def markdown_html(self) -> str:
-        return markdown.markdown(self.content or "", extensions=MARKDOWN_EXTENSIONS)
 
     @override
     def __str__(self) -> str:
