@@ -33,10 +33,9 @@ css-build:
 	npx webpack --mode production
 
 run:
-	uv run alembic upgrade head
+	uv run alembic -c migrations/alembic.ini upgrade head
 	npx webpack --mode production
-	uv run uvicorn main:app --host 0.0.0.0 --reload
-
+	uv run granian --interface asgi --access-log --workers 4 --workers-kill-timeout 1 main:app
 create-admin:
 	uv run python scripts/create_admin.py
 
