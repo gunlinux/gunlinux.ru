@@ -2,7 +2,6 @@ from typing import override
 
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.domain.tag import Tag as TagDomain
 from app.models.post import Post as PostORM
@@ -30,11 +29,6 @@ class TagRepository(BaseRepository[TagDomain, int]):
         stmt = sa.select(TagORM)
         result = await self.session.scalars(stmt)
         return [self._to_domain(t) for t in result.all()]
-
-    async def get_tags_with_posts(self) -> list[TagDomain]:
-        stmt = sa.select(TagORM).options(selectinload(TagORM.posts))
-        result = await self.session.scalars(stmt)
-        return [self._to_domain(t) for t in result.unique().all()]
 
     async def get_tags_for_post(self, post_id: int) -> list[TagDomain]:
         stmt = sa.select(TagORM).join(TagORM.posts).where(PostORM.id == post_id)

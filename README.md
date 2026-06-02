@@ -1,56 +1,70 @@
-[![Maintainability](https://api.codeclimate.com/v1/badges/a096eddf8f8dbfdbd05b/maintainability)](https://codeclimate.com/github/gunlinux/gunlinux.ru/maintainability)
-[![Python application](https://github.com/gunlinux/gunlinux.ru/actions/workflows/python-app.yml/badge.svg)](https://github.com/gunlinux/gunlinux.ru/actions/workflows/python-app.yml)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/a096eddf8f8dbfdbd05b/test_coverage)](https://codeclimate.com/github/gunlinux/gunlinux.ru/test_coverage)
+[![Code quality](https://github.com/gunlinux/gunlinux.ru/actions/workflows/code-quality.yaml/badge.svg)](https://github.com/gunlinux/gunlinux.ru/actions/workflows/code-quality.yaml)
+[![Deploy](https://github.com/gunlinux/gunlinux.ru/actions/workflows/deploy.yaml/badge.svg)](https://github.com/gunlinux/gunlinux.ru/actions/workflows/deploy.yaml)
+
+# gunlinux.ru
+
+Personal blog. **FastAPI** application (a rewrite of an older Flask app) served via
+[granian](https://github.com/emmett-framework/granian) as `main:app`. Tooling is
+[`uv`](https://docs.astral.sh/uv/) for Python and `npm`/webpack for CSS/JS. Requires Python 3.10+.
 
 ## Install
 
-
 ```bash
+# Python deps (uv reads pyproject.toml / uv.lock)
+$ uv sync
 
-$ cp config.example.sh config.sh
+# CSS/JS assets
+$ make css-build   # npm install + webpack production build
 
-$ cp gunicorn.example.conf gunicorn.conf
+# Database schema
+$ uv run alembic -c migrations/alembic.ini upgrade head
 
-$ python3 -m venv venv
-
-$ source venv/bin/activate
-
-$ pip install -r requirements.txt 
-
-$ flask dbinit
-
+# Create an admin user for /admin
+$ make create-admin
 ```
 
-## Configs
+## Configuration
 
-* config.sh
+Settings are loaded from `.env` via `pydantic-settings` (see `app/core/settings.py`).
+Key variables — override the dev defaults in production:
 
-* gunicorn.conf
+- `DATABASE_URL` — async driver URL, e.g. `sqlite+aiosqlite:///./tmp/dev.db` or
+  `postgresql+asyncpg://user:pass@host/db`
+- `SECRET_KEY` — used to sign JWTs / session cookies
+- `JWT_*` — JWT algorithm / expiry settings
 
-## Debug
+## Run
 
-```bash 
-$ source env/bin/activate
+```bash
+$ make run   # runs migrations, builds CSS, then serves main:app via granian on :8000
+```
 
-$ source config.sh
+## Develop
 
-$ flask run
+```bash
+$ make check     # full gate: ruff lint + format check + basedpyright + pytest
+$ make lint      # lint and type-check only
+$ make test      # pytest (--cov=app); make test-dev for verbose
+
+# run a single test
+$ uv run pytest tests/test_posts.py::test_name
 ```
 
 ## Deploy
 
+The multi-stage `Dockerfile` runs `make check` in a `test-image` stage (the build fails on
+lint/type/test errors), then ships a slim runtime stage. `entrypoint.sh` applies alembic
+migrations and launches granian on port 8000.
+
 ```bash
-
-$ source env/bin/activate
-
-$ source config.sh
-
-$ gunicorn -c gunicorn.conf "app:create_app()" 
-
+$ make docker-build
+$ make docker
 ```
 
 ## Contribution
 
-Check for linter and tests
+Run the full gate before opening a PR:
 
-`$ make check`
+```bash
+$ make check
+```

@@ -27,9 +27,6 @@ class PostService:
     def __init__(self, post_repository: PostRepository) -> None:
         self.post_repository = post_repository
 
-    async def get_post_by_id(self, post_id: int) -> Post | None:
-        return await self.post_repository.get_by_id(post_id)
-
     async def get_post_by_alias(self, alias: str) -> Post | None:
         return await self.post_repository.get_by_alias(alias)
 
@@ -57,17 +54,3 @@ class PostService:
         except Exception as e:
             logger.error("Failed to create post: %s", str(e), exc_info=True)
             raise PostCreationError(f"Failed to create post: {str(e)}") from e
-
-    async def update_post(self, post: Post) -> Post:
-        try:
-            return await self.post_repository.update(post)
-        except ValueError as e:
-            logger.error("Failed to update post: %s", str(e), exc_info=True)
-            raise PostUpdateError(f"Failed to update post: {str(e)}") from e
-
-    async def delete_post(self, post_id: int) -> bool:
-        try:
-            return await self.post_repository.delete(post_id)
-        except Exception as e:
-            logger.error("Failed to delete post %s: %s", post_id, str(e), exc_info=True)
-            raise PostNotFoundError(f"Failed to delete post: {str(e)}") from e
