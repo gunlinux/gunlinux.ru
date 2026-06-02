@@ -13,13 +13,13 @@ router = APIRouter()
 
 
 @router.get("/")
-@cache(expire=50, coder=ResponseCoder, key_builder=htmx_key_builder)
+@cache(expire=50, namespace="blog", coder=ResponseCoder, key_builder=htmx_key_builder)
 async def index(request: Request) -> Response:
     return templates.TemplateResponse(request, "index.html")
 
 
 @router.get("/posts")
-@cache(expire=50, coder=ResponseCoder, key_builder=htmx_key_builder)
+@cache(expire=50, namespace="blog", coder=ResponseCoder, key_builder=htmx_key_builder)
 async def posts(request: Request, post_service: PostServiceDep) -> Response:
     all_posts = await post_service.get_all_published_content()
     is_htmx = bool(request.headers.get("HX-Request"))
@@ -28,21 +28,21 @@ async def posts(request: Request, post_service: PostServiceDep) -> Response:
 
 
 @router.get("/hx/pages")
-@cache(expire=50, coder=ResponseCoder, key_builder=htmx_key_builder)
+@cache(expire=50, namespace="blog", coder=ResponseCoder, key_builder=htmx_key_builder)
 async def pages_hx(request: Request, post_service: PostServiceDep) -> Response:
     pages = await post_service.get_page_posts()
     return templates.TemplateResponse(request, "pages.htmx", {"pages": pages})
 
 
 @router.get("/hx/icons")
-@cache(expire=50, coder=ResponseCoder, key_builder=htmx_key_builder)
+@cache(expire=50, namespace="blog", coder=ResponseCoder, key_builder=htmx_key_builder)
 async def icons_hx(request: Request, icon_service: IconServiceDep) -> Response:
     icons = await icon_service.get_all_icons()
     return templates.TemplateResponse(request, "icons/icons.htmx", {"icons": icons})
 
 
 @router.get("/robots.txt")
-@cache(expire=50, coder=ResponseCoder)
+@cache(expire=50, namespace="blog", coder=ResponseCoder)
 async def robots() -> Response:
     content = "\nUser-agent: *\nCrawl-delay: 2\nDisallow: /tags/*\nHost: gunlinux.ru\n"
     return Response(content=content, media_type="text/plain")
@@ -60,7 +60,7 @@ async def sitemap(post_service: PostServiceDep) -> Response:
 
 
 @router.get("/rss.xml")
-@cache(expire=50, coder=ResponseCoder)
+@cache(expire=50, namespace="blog", coder=ResponseCoder)
 async def rss(request: Request, post_service: PostServiceDep) -> Response:
     posts_list = await post_service.get_published_posts()
     date = datetime.datetime.now()
@@ -78,7 +78,7 @@ async def getmd(request: Request) -> JSONResponse:
 
 
 @router.get("/{alias}")
-@cache(expire=50, coder=ResponseCoder, key_builder=htmx_key_builder)
+@cache(expire=50, namespace="blog", coder=ResponseCoder, key_builder=htmx_key_builder)
 async def post_view(
     alias: str, request: Request, post_service: PostServiceDep
 ) -> Response:

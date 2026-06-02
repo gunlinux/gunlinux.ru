@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 async def _clear_response_cache() -> None:
     """Invalidate the public response cache after a content write."""
     try:
-        await FastAPICache.clear()
+        await FastAPICache.clear(namespace="blog")
     except Exception:  # cache may be uninitialized (e.g. in tests/scripts)
         logger.warning("Failed to clear response cache", exc_info=True)
 
