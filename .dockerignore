@@ -1,7 +1,7 @@
 Dockerfile
 tmp/*.db
 __pycache__
-blog/static/img/
+app/static/upload/
 .git
 venv
 .env

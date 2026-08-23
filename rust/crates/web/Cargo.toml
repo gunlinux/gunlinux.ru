@@ -27,4 +27,23 @@ tower = { version = "0.5", features = ["util"] }
 tower-http = { version = "0.6", features = ["fs", "trace"] }
 tracing = "0.1"
 
+# Headless-browser E2E tests (opt-in). chromiumoxide is CDP-based and drives a
+# real Chrome/Chromium; the `fetcher` feature can download a Chromium binary
+# when none is installed (see tests/test_browser.rs). `chromiumoxide_fetcher`
+# is listed directly with its default features (rustls + zip) because the
+# `fetcher` feature enables it with default-features=false, which would leave
+# the downloader without a TLS backend. `futures` drives the CDP event-handler
+# stream. All three are optional and only compiled when the `browser-tests`
+# feature is enabled, keeping the default `cargo test` fast and offline.
+chromiumoxide = { version = "0.9", optional = true, features = ["fetcher"] }
+chromiumoxide_fetcher = { version = "0.9", optional = true }
+futures = { version = "0.3", optional = true }
+
+[features]
+browser-tests = [
+    "dep:chromiumoxide",
+    "dep:chromiumoxide_fetcher",
+    "dep:futures",
+]
+
 [dev-dependencies]

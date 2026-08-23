@@ -38,8 +38,16 @@ fn text_response(body: String, content_type: &str) -> Response {
     ([(header::CONTENT_TYPE, content_type)], body).into_response()
 }
 
+/// 404 body matching FastAPI's default HTTPException handler:
+/// `{"detail":"Not Found"}` with `application/json` (Starlette compact
+/// separators, no charset).
 pub fn not_found() -> Response {
-    StatusCode::NOT_FOUND.into_response()
+    (
+        StatusCode::NOT_FOUND,
+        [(header::CONTENT_TYPE, "application/json")],
+        "{\"detail\":\"Not Found\"}",
+    )
+        .into_response()
 }
 
 impl IntoResponse for WebError {
@@ -254,7 +262,9 @@ pub async fn getmd(
         form.get("data").cloned().unwrap_or_default()
     };
 
-    let html = domain::post::render_markdown(&data);
+    // python-markdown-compatible preview (no fenced_code extension) to match
+    // the Python `POST /md/` route byte-for-byte.
+    let html = domain::post::render_markdown_preview(&data);
     Ok(Json(serde_json::json!({ "data": html })).into_response())
 }
 

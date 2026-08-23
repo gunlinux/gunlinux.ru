@@ -156,22 +156,35 @@ this is what replaces sqladmin's per-`ModelView` classes.
 
 > **Status legend:** ✅ done · 🟡 partial (note) · ⬜ pending
 >
-> **Overall status (2026-08-23):** the rewrite core (Stages 1–7) is complete and
-> verified — 72 Rust tests passing, fmt + clippy clean, live smoke test green.
-> **Stages 8–9 remain**: production cutover and parity/cleanup. Partials: no
-> golden contract file, no Postgres parity suite, no dedicated service tests.
+> **Overall status (2026-08-23, re-verified):** the rewrite is **complete
+> through Stage 9** — 111 Rust tests passing across features (98 default:
+> domain 11 · repositories 10 · web lib 11 · admin 10 · auth 8 · basics 8 ·
+> services 21 · tags 3 · views 16; +10 Postgres parity; +3 browser E2E),
+> fmt + clippy clean. Parity vs Python: 18/19 status MATCH, remaining DIFFs
+> documented (admin root + /md/ whitespace quirk). Python code removed, docs
+> rewritten. **The only remaining work is the operator-executed production
+> cutover (Stage 8)**: everything is prepared (systemd unit, deploy.sh, CI
+> trigger, runbook) but the live switch is deliberately manual.
+>
+> ⚠️ **Prod reality (verified 2026-08-23):** `origin/master` is stale at
+> `a808b26` (Flask era) — local `master` is **18 commits ahead**. The
+> FastAPI rewrite was never deployed; the server runs the Flask-era app via
+> `gunicorn`. The cutover push therefore jumps prod directly from Flask-era
+> to the Rust build. `deploy/CUTOVER.md` accounts for this.
 
-### Stage 0 — Recon & contract freeze (no code) — 🟡 Partial
-- **Freeze the HTTP contract** 🟡 — instead of a golden snapshot file, the
-  contract is pinned by the ported route suites (`test_basics`/`test_views`/
-  `test_tags` assert status codes + key bodies) and a live smoke test.
-- **Inventory** ✅ — schema (6 tables), routes (12), templates (16), Alembic
-  revisions (16) all documented in this plan.
-- **Fix/ignore stale docs** 🟡 — identified as stale (`CLAUDE.md`, `README.md`,
-  `deploy.sh`), left untouched; rewrite deferred to Stage 9.
+### Stage 0 — Recon & contract freeze (no code) — ✅
+- **Freeze the HTTP contract** ✅ — `MIGRATION_CONTRACT.md` (routes, status
+  codes, bodies, htmx matrix, schema, auth) + the route suites + the final
+  parity run pin the contract. Known implicit behaviors documented there.
+- **Inventory** ✅ — schema (6 tables), routes (12), templates, Alembic
+  revisions (16) all documented. (Templates: 20 files on disk — 16 vendored +
+  4 admin — plan's earlier "16" counted only the vendored set.)
+- **Fix/ignore stale docs** ✅ — rewritten in Stage 9 (`README.md`,
+  `CLAUDE.md`, `deploy.sh`).
 - **Decide & record stack** ✅ — Axum + SeaORM + Minijinja + moka, confirmed by
   the working implementation.
-- **Deliverable `MIGRATION_CONTRACT.md`** ⬜ — not created.
+- **Deliverable `MIGRATION_CONTRACT.md`** ✅ — created (2026-08-23), with an
+  ambiguities section listing unpinned behaviors.
 
 ### Stage 1 — Workspace scaffold & CI — ✅
 - Cargo workspace ✅ — `rust/` with `domain` / `persistence` / `web` / `server`.
@@ -190,23 +203,31 @@ this is what replaces sqladmin's per-`ModelView` classes.
 - **First platform-independent tests** ✅ — 8 unit tests (no DB, no HTTP).
 - **Acceptance** ✅ — pass on any OS, zero external services.
 
-### Stage 3 — Persistence: entities, migrations, repository traits — 🟡
+### Stage 3 — Persistence: entities, migrations, repository traits — ✅
 - SeaORM entities + relations (6 tables) ✅ — exact column/nullability match.
-- **Repository traits for all models** (Thread B) + impls ✅ — SQLite verified;
-  Postgres feature-flagged impls compile.
-- **Migrations** ✅ — baseline `m20260101_000001_create_schema` (stamp on the
-  existing DB is part of Stage 8 cutover).
-- **Recreate repository tests** ✅ — 10 tests on temp-file SQLite; **Postgres
-  parity via testcontainers** ⬜ not implemented.
-- **Acceptance** 🟡 — SQLite green; Postgres backend unverified.
+- **Repository traits for all models** (Thread B) + impls ✅ — SQLite and
+  Postgres runtime-verified (no feature flag — `sqlx-sqlite` +
+  `sqlx-postgres` both always enabled; impls backend-agnostic over
+  `DatabaseConnection`).
+- **Migrations** ✅ — baseline `m20260101_000001_create_schema`; verified to
+  apply cleanly on both SQLite and Postgres (stamp on the existing prod DB is
+  part of the Stage 8 cutover).
+- **Recreate repository tests** ✅ — 10 tests shared between SQLite and
+  Postgres (`tests/common/suite.rs`); **Postgres parity via testcontainers**
+  ✅ implemented (`postgres-parity` feature, `TEST_DATABASE_URL` for CI,
+  scratch DB per test, zero leaks).
+- **Acceptance** ✅ — SQLite + Postgres green; the suite exposed and fixed a
+  real divergence (`page IS NOT $1` → three-valued-logic equivalent in
+  `get_all_published_content`).
 
-### Stage 4 — Services — 🟡
+### Stage 4 — Services — ✅
 - Services over repository traits ✅ — all five in `web/src/services.rs`.
 - `thiserror` error types ✅ — `WebError` (NotFound/Conflict/Internal); no
   `Validation` variant (nothing to validate in the real code).
-- **Recreate service tests** (port `test_services.py`) ⬜ — no dedicated suite;
-  services are exercised indirectly through the route tests with fake repos.
-- **Acceptance** 🟡 — green via routes, no standalone service suite.
+- **Recreate service tests** (port `test_services.py`) ✅ — 21 tests in
+  `web/tests/test_services.rs` with in-memory fake repos (CRUD, published
+  filtering, is_page, ordering, not-found, duplicate-alias → Conflict).
+- **Acceptance** ✅ — standalone service suite green.
 
 ### Stage 5 — HTTP layer (Axum) — ✅
 - App factory + route ordering ✅ — catch-all `/{alias}` registered last.
@@ -221,30 +242,52 @@ this is what replaces sqladmin's per-`ModelView` classes.
 - **Custom admin on repository traits** (Thread B) ✅ — `AdminModel` descriptors
   for all 5 models, generic CRUD, `User.password` excluded, cache cleared on
   every write.
-- `test_auth` ✅ (8 tests) + admin CRUD tests ✅ (7 tests, writes go through
+- `test_auth` ✅ (7 tests) + admin CRUD tests ✅ (10 tests, writes go through
   the repo traits).
 - **Acceptance** ✅.
 
-### Stage 7 — Frontend & static integration — 🟡
+### Stage 7 — Frontend & static integration — ✅
 - webpack kept, `app/static` served via tower-http ✅ — `bundle.css` 200.
-- htmx end-to-end 🟡 — fragments verified at HTTP level (`/hx/pages`,
-  `/hx/icons`); no browser-level swap automation.
-- **Acceptance** 🟡 — route-level verified; browser parity not automated.
+- htmx end-to-end ✅ — real headless-Chrome tests (`test_browser.rs`,
+  chromiumoxide): load-triggered and click-driven swaps asserted on actual
+  `htmx:afterSwap` events, dual-mode fragment consistency, push-URL behavior.
+  Feature-gated `browser-tests`; CI job added.
+- **Acceptance** ✅ — browser parity automated.
 
-### Stage 8 — Deploy & cutover — ⬜
-- `Dockerfile` ✅ finalized + build-validated; `.github/workflows` replacement
-  and `deploy.sh` stale-Flask fix ⬜ (Rust CI added alongside, not swapped).
-- systemd unit for the Rust binary ⬜.
-- **DB cutover** (backup → baseline stamp → smoke test) ⬜.
-- **Rollback plan** 📝 documented in §5 but not rehearsed.
-- **Acceptance** ⬜ — deploy not yet pointed at prod.
+### Stage 8 — Deploy & cutover — 🟡 Prepared; operator executes
+- `Dockerfile` ✅ finalized + build-validated; `.github/deploy.sh` rewritten
+  for Rust (docker-build path — no cargo on the server, docker works without
+  sudo; installs `gunlinux-ru` unit, swaps off the legacy service) ✅;
+  `deploy.yaml` trigger swapped to the Rust workflow ✅ — all three must ship
+  together in the cutover commit.
+- systemd unit for the Rust binary ✅ — `deploy/gunlinux-ru.service`
+  (EnvironmentFile = server `.env`, hardening, distinct name so the legacy
+  unit survives for rollback).
+- **DB cutover** (backup → baseline stamp → smoke test) 📋 prepared — exact
+  `pg_dump` command, stamp semantics (server binary runs `Migrator::up` on
+  startup; baseline is non-destructive `CREATE TABLE IF NOT EXISTS`), smoke
+  matrix, and nginx `/static/` repoint all in `deploy/CUTOVER.md`. **Not yet
+  executed — operator runs it.**
+- **Rollback plan** ✅ documented in §5 + `deploy/CUTOVER.md` (git revert,
+  re-enable legacy unit, pg_restore if needed); **not rehearsed** (operator).
+- **Acceptance** ⬜ — deploy not yet pointed at prod (operator executes the
+  runbook; preflight facts: origin/master is Flask-era, local master ahead 18,
+  prod Postgres is a docker container on 127.0.0.1:5433, db/user `gunlinux`).
 
-### Stage 9 — Parity, cleanup & docs — ⬜
-- Side-by-side parity run (old Python vs new Rust, golden outputs) ⬜.
-- Remove Python (`app/`, `migrations/`, `pyproject.toml`, `uv.lock`, Makefile
-  targets) ⬜.
-- Rewrite `README.md` + `CLAUDE.md` (currently wrong) ⬜.
-- **Acceptance** ⬜.
+### Stage 9 — Parity, cleanup & docs — ✅
+- Side-by-side parity run (old Python vs new Rust, golden outputs) ✅ —
+  `scripts/parity/` harness + results: 19 routes, 18/19 status MATCH, 404
+  bodies and `/md/` fenced-code output fixed to match Python byte-for-byte;
+  documented deviations only (bare `/admin` 302-vs-404, `/admin/login`
+  markup — Thread B — and a whitespace-only raw-HTML blank line).
+- Remove Python ✅ — `app/` (except `app/static/` — webpack pipeline + user
+  uploads), `migrations/`, `pyproject.toml`, `uv.lock`, `main.py`,
+  `entrypoint.sh`, `Dockerfile`, `tests/`, `scripts/create_admin.py`,
+  `.pre-commit-config.yaml`, `code-quality.yaml`, Python Makefile targets.
+- Rewrite `README.md` + `CLAUDE.md` ✅ — both accurate for the Rust app
+  (layout, layering, config, testing, deploy).
+- **Acceptance** ✅ — Python gone, docs accurate, parity green (remaining:
+  operator cutover, Stage 8).
 
 ---
 
@@ -274,12 +317,14 @@ this is what replaces sqladmin's per-`ModelView` classes.
 ## 6. Definition of done
 
 - All 6 tables, all routes, and admin CRUD behave identically to the frozen
-  contract — 🟡 routes + admin verified by tests/smoke; full golden-output
-  parity vs Python pending Stage 9.
+  contract — ✅ parity run (19 routes) + test suites + `MIGRATION_CONTRACT.md`;
+  remaining deviations are documented and deliberate (admin root/markup —
+  Thread B — and a whitespace-only markdown quirk).
 - Repository trait is the **only** data-access seam, used by routes, services,
   **and** admin — ✅ (the admin no longer bypasses the layer, unlike sqladmin).
 - One test suite runs on SQLite (CI, every push) and Postgres (parity, opt-in)
-  — 🟡 SQLite done; Postgres parity suite not implemented yet.
-- CI is Rust-native (`fmt`, `clippy`, `test`); deploy path is correct and
-  rollbackable — 🟡 CI done; deploy/cutover (Stage 8) pending.
-- Python code and stale docs are removed or rewritten — ⬜ (Stage 9).
+  — ✅ shared suite bodies; `postgres-parity` feature + CI job.
+- CI is Rust-native (`fmt`, `clippy`, `test`, postgres-parity, browser-e2e);
+  deploy path is correct and rollbackable — 🟡 CI done; the live cutover
+  (Stage 8) is prepared but operator-executed and not yet rehearsed.
+- Python code and stale docs are removed or rewritten — ✅ (Stage 9).

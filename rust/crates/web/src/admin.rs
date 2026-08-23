@@ -913,6 +913,7 @@ pub fn router() -> Router<AppState> {
     use axum::routing::get;
     Router::new()
         .route("/admin", get(dashboard))
+        .route("/admin/", get(dashboard)) // sqladmin serves the index at /admin/
         .route("/admin/login", get(login_get).post(login_post))
         .route("/admin/logout", get(logout))
         .route("/admin/{model}", get(list))

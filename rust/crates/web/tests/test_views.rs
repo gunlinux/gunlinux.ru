@@ -34,6 +34,9 @@ async fn test_unpublished_post_is_404() {
     }
 
     expect_status(get(&app, "/draft-view-post").await, StatusCode::NOT_FOUND).await;
+    // 404 body matches FastAPI's default HTTPException JSON.
+    let body = body_text(get(&app, "/draft-view-post").await).await;
+    assert_eq!(body, "{\"detail\":\"Not Found\"}");
 }
 
 #[tokio::test]
@@ -66,6 +69,9 @@ async fn test_tag_not_found() {
         StatusCode::NOT_FOUND,
     )
     .await;
+    // 404 body matches FastAPI's default HTTPException JSON.
+    let body = body_text(get(&app, "/tags/nonexistent-xyz").await).await;
+    assert_eq!(body, "{\"detail\":\"Not Found\"}");
 }
 
 #[tokio::test]
@@ -89,6 +95,25 @@ async fn test_markdown_endpoint() {
     let body = body_text(resp).await;
     let json: serde_json::Value = serde_json::from_str(&body).unwrap();
     assert!(json["data"].as_str().unwrap().contains("Title"));
+}
+
+#[tokio::test]
+async fn test_markdown_endpoint_renders_fence_as_inline_code() {
+    // Matches python-markdown without fenced_code (the Python /md/ route):
+    // the fence becomes an inline <code> span, language tag first.
+    let (_store, app) = test_app();
+    let resp = post_form(
+        &app,
+        "/md/",
+        "data=%60%60%60rust%0Afn+main()%7B%7D%0A%60%60%60",
+    )
+    .await;
+    let body = body_text(resp).await;
+    let json: serde_json::Value = serde_json::from_str(&body).unwrap();
+    assert_eq!(
+        json["data"].as_str().unwrap(),
+        "<p><code>rust\nfn main(){}</code></p>"
+    );
 }
 
 #[tokio::test]

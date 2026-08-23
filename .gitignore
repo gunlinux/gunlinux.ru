@@ -62,3 +62,6 @@ pip-log.txt
 tmp/*
 coverage.xml
 .env
+
+# parity harness scratch (DBs, logs, per-route response snapshots)
+scripts/parity/tmp/

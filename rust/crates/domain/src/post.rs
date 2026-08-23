@@ -21,6 +21,80 @@ pub fn render_markdown(src: &str) -> String {
     comrak::markdown_to_html(src, &options)
 }
 
+/// Render markdown for the `POST /md/` admin preview, matching the Python
+/// route's plain `markdown.markdown(data)` call (NO extensions). python-markdown
+/// without `fenced_code` renders fenced blocks as inline `<code>` spans inside a
+/// `<p>` (language tag first, then a newline, then the content) instead of
+/// `<pre><code>`. comrak 0.30 always parses fences (core CommonMark), so the
+/// rendered `<pre><code>` blocks are converted back to that inline form. The
+/// residual difference vs python-markdown (blank line after raw-HTML blocks
+/// before lists) is documented in MIGRATION_CONTRACT.md.
+pub fn render_markdown_preview(src: &str) -> String {
+    let mut options = comrak::Options::default();
+    options.extension.strikethrough = false;
+    options.extension.table = false;
+    options.extension.tasklist = false;
+    options.extension.autolink = false;
+    options.extension.tagfilter = false;
+    options.extension.superscript = false;
+    options.extension.footnotes = false;
+    options.extension.description_lists = false;
+    options.render.unsafe_ = true;
+    options.render.hardbreaks = false;
+    let html = comrak::markdown_to_html(src, &options);
+    let html = python_md_code_spans(&html);
+    // python-markdown never emits a trailing newline; comrak always does.
+    html.trim_end().to_string()
+}
+
+/// Convert comrak `<pre><code class="language-X">content\n</code></pre>` blocks
+/// into python-markdown's inline form `<p><code>X\ncontent</code></p>`, and
+/// unescape `&quot;` inside the code content (python-markdown does not escape
+/// quotes in code spans; comrak does).
+fn python_md_code_spans(html: &str) -> String {
+    const OPEN: &str = "<pre><code";
+    const CLOSE: &str = "</code></pre>";
+    let mut out = String::with_capacity(html.len());
+    let mut rest = html;
+    loop {
+        let Some(start) = rest.find(OPEN) else {
+            out.push_str(rest);
+            break;
+        };
+        let after = &rest[start..];
+        // The opening tag is `<pre><code...>`; its end `>` is the first one
+        // AFTER the `<pre><code` prefix (not the one closing `<pre>`).
+        let Some(tag_end_rel) = after[OPEN.len()..].find('>') else {
+            out.push_str(rest);
+            break;
+        };
+        let tag_end = tag_end_rel + OPEN.len();
+        let open_tag = &after[..=tag_end];
+        let Some(close) = after.find(CLOSE) else {
+            out.push_str(rest);
+            break;
+        };
+        out.push_str(&rest[..start]);
+        let content = after[tag_end + 1..close]
+            .strip_suffix('\n')
+            .unwrap_or(&after[tag_end + 1..close]);
+        let lang = open_tag
+            .split("language-")
+            .nth(1)
+            .and_then(|s| s.split('"').next())
+            .unwrap_or("");
+        out.push_str("<p><code>");
+        if !lang.is_empty() {
+            out.push_str(lang);
+            out.push('\n');
+        }
+        out.push_str(&content.replace("&quot;", "\""));
+        out.push_str("</code></p>");
+        rest = &after[close + CLOSE.len()..];
+    }
+    out
+}
+
 /// Mirrors `app/domain/post.py` `Post` dataclass.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Post {
@@ -105,6 +179,32 @@ mod tests {
     fn markdown_passes_raw_html_through() {
         let html = render_markdown("<div class=\"x\">hi</div>");
         assert!(html.contains("<div class=\"x\">hi</div>"));
+    }
+
+    #[test]
+    fn preview_renders_fence_as_inline_code() {
+        // python-markdown without fenced_code: ```rust block becomes an inline
+        // <code> span in a <p>, language tag first, quotes left unescaped.
+        let html = render_markdown_preview("```rust\nfn main() { println!(\"hi\"); }\n```");
+        assert_eq!(
+            html,
+            "<p><code>rust\nfn main() { println!(\"hi\"); }</code></p>"
+        );
+    }
+
+    #[test]
+    fn preview_renders_fence_without_language() {
+        let html = render_markdown_preview("```\nplain\n```");
+        assert_eq!(html, "<p><code>plain</code></p>");
+    }
+
+    #[test]
+    fn preview_keeps_normal_markdown() {
+        let html = render_markdown_preview("# Title\n\nText with `code` and **bold**.");
+        assert_eq!(
+            html,
+            "<h1>Title</h1>\n<p>Text with <code>code</code> and <strong>bold</strong>.</p>"
+        );
     }
 
     #[test]

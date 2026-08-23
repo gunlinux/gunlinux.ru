@@ -61,11 +61,19 @@ async fn test_sitemap() {
 #[tokio::test]
 async fn test_404() {
     let (_store, app) = test_app();
-    expect_status(
-        get(&app, "/nonexistent-alias-xyz").await,
-        StatusCode::NOT_FOUND,
-    )
-    .await;
+    let resp = get(&app, "/nonexistent-alias-xyz").await;
+    assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+    // Body matches FastAPI's default HTTPException handler exactly.
+    let body = body_text(resp).await;
+    assert_eq!(body, "{\"detail\":\"Not Found\"}");
+    assert_eq!(
+        get(&app, "/nonexistent-alias-xyz")
+            .await
+            .headers()
+            .get("content-type")
+            .unwrap(),
+        "application/json"
+    );
 }
 
 #[tokio::test]

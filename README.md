@@ -1,70 +1,124 @@
-[![Code quality](https://github.com/gunlinux/gunlinux.ru/actions/workflows/code-quality.yaml/badge.svg)](https://github.com/gunlinux/gunlinux.ru/actions/workflows/code-quality.yaml)
+[![Rust](https://github.com/gunlinux/gunlinux.ru/actions/workflows/rust-ci.yaml/badge.svg)](https://github.com/gunlinux/gunlinux.ru/actions/workflows/rust-ci.yaml)
 [![Deploy](https://github.com/gunlinux/gunlinux.ru/actions/workflows/deploy.yaml/badge.svg)](https://github.com/gunlinux/gunlinux.ru/actions/workflows/deploy.yaml)
 
 # gunlinux.ru
 
-Personal blog. **FastAPI** application (a rewrite of an older Flask app) served via
-[granian](https://github.com/emmett-framework/granian) as `main:app`. Tooling is
-[`uv`](https://docs.astral.sh/uv/) for Python and `npm`/webpack for CSS/JS. Requires Python 3.10+.
+Personal blog, rewritten in **Rust** (axum). Server-rendered HTML with **htmx**
+for progressive enhancement, a repository-trait admin panel, PostgreSQL in
+production (SQLite in dev/tests).
 
-## Install
+The original FastAPI/Python implementation was migrated to Rust in a staged
+rewrite — see [`plan.md`](plan.md) for the migration plan and
+[`MIGRATION_CONTRACT.md`](MIGRATION_CONTRACT.md) for the frozen HTTP/DB/admin
+contract. [`TASKS.md`](TASKS.md) tracks the remaining work.
 
-```bash
-# Python deps (uv reads pyproject.toml / uv.lock)
-$ uv sync
+## Repository layout
 
-# CSS/JS assets
-$ make css-build   # npm install + webpack production build
-
-# Database schema
-$ uv run alembic -c migrations/alembic.ini upgrade head
-
-# Create an admin user for /admin
-$ make create-admin
+```
+rust/                Cargo workspace — the application
+  crates/domain/       Pure types + logic (serde structs, markdown, teaser, bcrypt,
+                       repository traits). FROZEN contract — do not change public APIs.
+  crates/persistence/  SeaORM entities, baseline migration, repository trait impls
+  crates/web/          Axum app: routes, services, templates (Minijinja), admin, auth
+  crates/server/       Wiring binary: reads DATABASE_URL, applies migrations, serves
+app/static/          webpack output + sources (CSS/fonts/img/upload) — served at /static
+deploy/              systemd unit + production cutover runbook (CUTOVER.md)
+scripts/parity/      Python-vs-Rust parity harness (archived; golden results in results.md)
+.github/workflows/   rust-ci.yaml (fmt/clippy/test/postgres-parity/browser-e2e), deploy.yaml
 ```
 
-## Configuration
+## Architecture
 
-Settings are loaded from `.env` via `pydantic-settings` (see `app/core/settings.py`).
-Key variables — override the dev defaults in production:
-
-- `DATABASE_URL` — async driver URL, e.g. `sqlite+aiosqlite:///./tmp/dev.db` or
-  `postgresql+asyncpg://user:pass@host/db`
-- `SECRET_KEY` — used to sign JWTs / session cookies
-- `JWT_*` — JWT algorithm / expiry settings
-
-## Run
-
-```bash
-$ make run   # runs migrations, builds CSS, then serves main:app via granian on :8000
+```
+route (axum handlers) → service (structs) → repository (async traits) → entity (SeaORM)
+                             ↑ domain (serde structs, pure logic) crosses boundaries
 ```
 
-## Develop
+- **Web:** Axum + tower-http (static files) on Tokio.
+- **ORM/DB:** SeaORM (SQLx underneath); PostgreSQL in prod, SQLite in dev/tests.
+- **Templates:** Minijinja — 16 templates ported from Jinja2; htmx dual-mode
+  rendering (full page vs fragment based on the `HX-Request` header).
+- **Auth:** JWT in a signed `session` cookie; bcrypt password hashes (existing
+  hashes keep verifying — do not switch to argon2 without a re-hash migration).
+- **Cache:** moka (in-memory TTL, 50s, `"blog"` namespace); admin writes
+  invalidate it. Single-process, so no cross-worker staleness.
+- **Markdown:** comrak for post pages; `POST /md/` uses a python-markdown-
+  compatible preview renderer (see MIGRATION_CONTRACT.md for the residual
+  differences).
+- **Frontend:** unchanged webpack/npm CSS pipeline; output served from
+  `app/static/dist`.
 
-```bash
-$ make check     # full gate: ruff lint + format check + basedpyright + pytest
-$ make lint      # lint and type-check only
-$ make test      # pytest (--cov=app); make test-dev for verbose
+## Requirements
 
-# run a single test
-$ uv run pytest tests/test_posts.py::test_name
+- Rust **1.96** (pinned in CI; rustfmt output is version-sensitive)
+- Node + npm (only for `make css-build`)
+- Docker (optional — Postgres parity tests via testcontainers)
+
+## Quick start
+
+```sh
+make css-build                                  # webpack CSS (app/static/dist)
+cd rust
+DATABASE_URL='sqlite:///tmp/gunlinux-dev.db?mode=rwc' cargo run -p server
+# or: make rust-run
 ```
 
-## Deploy
+Notes:
 
-The multi-stage `Dockerfile` runs `make check` in a `test-image` stage (the build fails on
-lint/type/test errors), then ships a slim runtime stage. `entrypoint.sh` applies alembic
-migrations and launches granian on port 8000.
+- `sqlite://` URLs need `?mode=rwc` — sqlx cannot create a missing file.
+- The server applies the baseline migration on startup (also on PostgreSQL;
+  the production cutover *stamps* it rather than re-running schema creation).
+- The dev default `sqlite://./tmp/dev.db` only works because the file exists.
 
-```bash
-$ make docker-build
-$ make docker
+## Configuration (env vars / `.env`)
+
+| Var | Default | Used by |
+|---|---|---|
+| `DATABASE_URL` | `sqlite://./tmp/dev.db` | server (DB connection) |
+| `BIND_ADDR` | `0.0.0.0:8000` | server (listen address) |
+| `STATIC_DIR` | `app/static` | web (static file root) |
+| `SECRET_KEY` | dev-only default | web (session cookie signing) |
+| `ENV` | `development` | web settings |
+| `YANDEX_VERIFICATION` / `YANDEX_METRIKA` | — / `76938046` | templates |
+| `JWT_ALGORITHM` / `JWT_EXPIRE_MINUTES` | `HS256` / `1440` | web auth |
+| `RUST_LOG` | `info` | tracing |
+
+## Testing
+
+```sh
+make check                        # fmt + clippy + full workspace tests
+cd rust && cargo test --workspace # default suite (SQLite)
 ```
 
-## Contribution
+Feature-gated suites (default `cargo test` never compiles them):
 
-Run the full gate before opening a PR:
+- `cargo test -p persistence --features postgres-parity` — the same repository
+  suite against real PostgreSQL (testcontainers locally, or set
+  `TEST_DATABASE_URL` for CI). Catches SQLite↔Postgres divergence.
+- `cargo test -p web --features browser-tests --test test_browser` — real
+  headless-Chrome htmx swap tests (needs a browser; downloads one on demand).
 
-```bash
-$ make check
-```
+## Deployment
+
+- Image: `docker build -f rust/Dockerfile -t gunlinux-rust .` (multi-stage;
+  requires `app/static/dist` from `make css-build`).
+- Deploy script: `.github/deploy.sh` (builds the image on the server, installs
+  the systemd unit `gunlinux-ru`, swaps off the legacy service).
+- **Production cutover:** follow [`deploy/CUTOVER.md`](deploy/CUTOVER.md)
+  (backup → build/install → baseline stamp → smoke → rollback). The cutover
+  commit ships the deploy script + CI trigger swap together.
+
+## Database
+
+6 tables: `users`, `posts`, `categories`, `tags`, `posts_tags` (m2m), `icons`.
+Single SeaORM baseline migration `m20260101_000001_create_schema` (the 16
+Alembic revisions it replaces); `CREATE TABLE IF NOT EXISTS` — non-destructive.
+
+## Contract & parity
+
+- [`MIGRATION_CONTRACT.md`](MIGRATION_CONTRACT.md) — the frozen HTTP/htmx/DB/
+  admin contract (routes, status codes, bodies, schema, auth).
+- [`scripts/parity/results.md`](scripts/parity/results.md) — final Python-vs-
+  Rust comparison: 18/19 status MATCH (one documented admin-root deviation),
+  16/19 normalized-body MATCH (remaining DIFFs are documented Thread-B admin
+  differences and a whitespace-only markdown quirk).

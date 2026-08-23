@@ -12,6 +12,19 @@ sea-orm-migration = { version = "1", features = ["runtime-tokio-rustls", "sqlx-p
 thiserror = "2"
 tokio = { version = "1", features = ["full"] }
 tracing = "0.1"
+# Test-only: used by tests/common/postgres.rs to spin up a `postgres:16`
+# container. Lives in [dependencies] (optional, enabled by `postgres-parity`)
+# because Cargo does not allow optional dev-dependencies; with the feature off
+# it is not compiled at all, keeping default `cargo test` and the workspace
+# CI build container-free.
+testcontainers = { version = "0.28", optional = true }
+
+[features]
+# Runs the repository test suite against a real PostgreSQL 16 instance (plan.md
+# §3 Thread A). Resolves Postgres from TEST_DATABASE_URL when set (CI service
+# container), otherwise via a testcontainers postgres:16 container. Off by
+# default so `cargo test` stays SQLite-only.
+postgres-parity = ["dep:testcontainers"]
 
 [dev-dependencies]
 tempfile = "3"

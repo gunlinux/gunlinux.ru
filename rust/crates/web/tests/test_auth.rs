@@ -27,6 +27,15 @@ async fn test_admin_requires_login() {
 }
 
 #[tokio::test]
+async fn test_admin_trailing_slash_requires_login() {
+    // sqladmin serves the index at /admin/ — both forms must redirect.
+    let (_store, app) = test_app();
+    let resp = get(&app, "/admin/").await;
+    assert_eq!(resp.status(), StatusCode::FOUND);
+    assert_eq!(resp.headers().get("location").unwrap(), "/admin/login");
+}
+
+#[tokio::test]
 async fn test_admin_login_wrong_password() {
     let (store, app) = test_app();
     common::seed_user(&store, "admin", "right-password");

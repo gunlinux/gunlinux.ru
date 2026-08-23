@@ -168,11 +168,21 @@ impl PostRepoTrait for PostRepository {
     /// predicate (null-safe: `NULL IS NOT TRUE` is true, so uncategorised
     /// posts are included) guarantees every returned post has `is_page ==
     /// false`, matching the Python `_to_domain` with the loaded category.
+    ///
+    /// Rendered as `page = false OR page IS NULL` rather than
+    /// `page IS NOT TRUE`: `is_not(true)` binds the bool as a parameter on
+    /// Postgres (`IS NOT $1`), which is a syntax error there — SQLite accepts
+    /// it (`IS NOT ?`). The two predicates are three-valued-logic equivalent
+    /// on both backends: excluded only when `page` is true.
     async fn get_all_published_content(&self) -> Result<Vec<Post>, RepoError> {
         let rows = post::Entity::find()
             .join(JoinType::LeftJoin, post::Relation::Category.def())
             .filter(post::Column::Publishedon.is_not_null())
-            .filter(Expr::col(category::Column::Page).is_not(true))
+            .filter(
+                Expr::col(category::Column::Page)
+                    .eq(false)
+                    .or(Expr::col(category::Column::Page).is_null()),
+            )
             .order_by_desc(post::Column::Publishedon)
             .all(&self.db)
             .await

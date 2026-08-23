@@ -41,3 +41,43 @@ jobs:
         with:
           toolchain: 1.96.0
       - run: cargo test --workspace
+
+  postgres-parity:
+    name: Postgres Parity Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.96.0
+      - run: cargo test -p persistence --features postgres-parity
+        env:
+          # The parity suite reads this and skips testcontainers, using the
+          # postgres:16 service container above instead.
+          TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+
+  browser-e2e:
+    name: Browser E2E (htmx)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.96.0
+      # Real headless-Chrome htmx swap tests (test_browser.rs). ubuntu-latest
+      # ships Google Chrome; the test sets --no-sandbox itself. Needs network:
+      # htmx is loaded from the jsdelivr CDN (as in production), and if no
+      # system Chrome is found chromiumoxide_fetcher downloads a pinned build.
+      - run: cargo test -p web --features browser-tests --test test_browser
