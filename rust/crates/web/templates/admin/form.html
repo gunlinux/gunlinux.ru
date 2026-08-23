@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% if is_create %}Create{% else %}Edit{% endif %} {{ model.name }} — Admin</title>
+<link rel="stylesheet" href="/static/dist/css/bundle.css">
+</head>
+<body>
+<h1>{% if is_create %}Create{% else %}Edit{% endif %} {{ model.name }}</h1>
+<p><a href="/admin/{{ model.slug }}/">← Back to {{ model.name_plural }}</a></p>
+{% if error %}<p style="color:#c00">{{ error }}</p>{% endif %}
+<form method="post" action="{{ action }}">
+{% for field in fields %}
+  {% if not is_create and field in model.form_excluded %}{% continue %}{% endif %}
+  <p>
+    <label>{{ field }}</label>
+    {% if field in textareas %}
+      <br><textarea name="{{ field }}" rows="10" cols="80">{{ values[field]|default("") }}</textarea>
+    {% elif field in checkboxes %}
+      <br><input type="checkbox" name="{{ field }}" {% if values[field] %}checked{% endif %}>
+    {% else %}
+      <br><input type="text" name="{{ field }}" value="{{ values[field]|default("") }}">
+    {% endif %}
+  </p>
+{% endfor %}
+<button type="submit">Save</button>
+</form>
+</body>
+</html>

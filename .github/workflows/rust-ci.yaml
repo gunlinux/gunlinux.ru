@@ -1,0 +1,43 @@
+name: Rust
+
+# Additive quality gate for the Rust migration (plan.md). Distinct name from
+# the "Python Code quality" workflow so the two run side by side until cutover.
+
+on: [push, pull_request]
+
+defaults:
+  run:
+    working-directory: rust
+
+jobs:
+  fmt:
+    name: Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Pin to the project toolchain (cargo 1.96) — rustfmt output is
+      # version-sensitive and must match what contributors run locally.
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.96.0
+      - run: cargo fmt --check
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.96.0
+      - run: cargo clippy --workspace -- -D warnings
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.96.0
+      - run: cargo test --workspace

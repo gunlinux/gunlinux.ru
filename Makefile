@@ -52,3 +52,23 @@ docker-shell:
 
 docker-test:
 	docker build --target test-image -t gunlinux:$(VERSION)-test .
+
+# ---------------------------------------------------------------------------
+# Rust (migration) — the Python targets above are the LEGACY path and stay
+# untouched until the Rust cutover (see plan.md, stage 8). The rust-* targets
+# operate on the `rust/` workspace.
+# ---------------------------------------------------------------------------
+
+RUST_DIR := rust
+
+rust-check:
+	cd $(RUST_DIR) && cargo fmt --check && cargo clippy --workspace -- -D warnings
+
+rust-test:
+	cd $(RUST_DIR) && cargo test --workspace
+
+rust-build:
+	cd $(RUST_DIR) && cargo build --release -p server
+
+rust-run:
+	cd $(RUST_DIR) && cargo run -p server

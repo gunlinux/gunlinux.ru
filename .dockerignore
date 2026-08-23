@@ -5,3 +5,4 @@ blog/static/img/
 .git
 venv
 .env
+rust/target

@@ -1,0 +1,15 @@
+[package]
+name = "server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1"
+config = "0.14"
+domain = { path = "../domain" }
+dotenvy = "0.15"
+persistence = { path = "../persistence" }
+tokio = { version = "1", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+web = { path = "../web" }

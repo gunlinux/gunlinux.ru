@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+
+{% block content %}
+  <div hx-swap="posts" hx-get="/posts"
+    hx-trigger="load"
+    hx-target=".page__content">
+  </div>
+    <article class="page__content">
+        {% if tag %}
+            <h3 class="page__title">Посты c тэгом: {{tag.title}}</h3>
+        {% endif %}
+      <div id="posts" class="posts">
+      </div>
+    </article>
+{% endblock %}

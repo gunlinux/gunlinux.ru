@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ model.name_plural }} — Admin</title>
+<link rel="stylesheet" href="/static/dist/css/bundle.css">
+</head>
+<body>
+<h1>{{ model.name_plural }}</h1>
+<p><a href="/admin">← Dashboard</a> | <a href="/admin/{{ model.slug }}/create">Create {{ model.name }}</a></p>
+<form method="get" action="/admin/{{ model.slug }}/">
+  <input type="text" name="search" value="{{ search }}">
+  <button type="submit">Search</button>
+</form>
+<table border="1" cellpadding="4" cellspacing="0">
+<tr>
+{% for col in model.columns %}<th>{{ col }}</th>{% endfor %}
+<th>Actions</th>
+</tr>
+{% for row in rows %}
+<tr>
+{% for col in model.columns %}<td>{{ row[col] }}</td>{% endfor %}
+<td>
+<a href="/admin/{{ model.slug }}/{{ row.id }}/edit">Edit</a>
+<form method="post" action="/admin/{{ model.slug }}/{{ row.id }}/delete" style="display:inline" onsubmit="return confirm('Delete this row?')">
+<button type="submit">Delete</button>
+</form>
+</td>
+</tr>
+{% endfor %}
+</table>
+</body>
+</html>
