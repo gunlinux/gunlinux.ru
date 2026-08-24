@@ -21,9 +21,12 @@ jobs:
       - uses: actions/checkout@v4
       # Pin to the project toolchain (cargo 1.96, matching rust/Dockerfile) —
       # rustfmt output is version-sensitive and must match contributors.
+      # rustfmt/clippy are separate components the action does not install
+      # by default.
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: 1.96.0
+          components: rustfmt, clippy
       - run: cargo fmt --check
 
   clippy:
@@ -34,6 +37,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: 1.96.0
+          components: rustfmt, clippy
       - run: cargo clippy --workspace -- -D warnings
 
   test:
@@ -44,6 +48,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: 1.96.0
+          components: rustfmt, clippy
       - name: Build CSS bundle
         working-directory: .
         run: make css-build
@@ -57,6 +62,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: 1.96.0
+          components: rustfmt, clippy
       # Spins up a scratch Postgres via testcontainers (or TEST_DATABASE_URL)
       # and runs the shared persistence suite against it.
       - run: cargo test -p persistence --features postgres-parity
@@ -69,6 +75,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: 1.96.0
+          components: rustfmt, clippy
       # Browser tests load the vendored htmx from /static; the bundle must
       # exist even though the browser tests don't assert on CSS.
       - name: Build CSS bundle
