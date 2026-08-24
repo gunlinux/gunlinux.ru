@@ -10,8 +10,12 @@
       <meta name="yandex-verification" content="{{ settings.yandex_verification }}"/>
     {% endif %}
     <link href="/static/img/favicon.ico" rel="shortcut icon" />
+    {% if inline_css %}
+    <style>{{ inline_css|safe }}</style>
+    {% else %}
     <link rel="stylesheet" href="/static/dist/css/bundle.css">
-    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js"></script>
+    {% endif %}
+    <script defer src="/static/vendor/htmx.min.js"></script>
     {% block styles %}
     {% endblock %}
 </head>

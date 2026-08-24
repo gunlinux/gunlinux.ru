@@ -25,7 +25,7 @@ rust-build:
 	cd $(RUST_DIR) && cargo build --release -p server
 
 rust-run:
-	cd $(RUST_DIR) && cargo run -p server
+	cd $(RUST_DIR) && STATIC_DIR=../app/static cargo run -p server
 
 rust-docker:
 	docker build -f rust/Dockerfile -t gunlinux-rust:$(VERSION) .

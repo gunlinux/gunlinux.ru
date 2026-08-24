@@ -11,5 +11,5 @@ pub mod services;
 pub mod settings;
 pub mod templates;
 
-pub use app::{build_app, run, AppState};
+pub use app::{build_app, build_app_with_static, run, AppState};
 pub use services::WebError;

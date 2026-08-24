@@ -3,7 +3,7 @@
 //!
 //! All 16 templates from `app/templates/` are vendored under `templates/`
 //! (same directory structure). The `settings` global is registered so
-//! templates can access `settings.yandex_verification` / `settings.yandex_metrika`.
+//! templates can access `settings.yandex_verification`.
 
 use std::sync::Arc;
 
@@ -236,7 +236,8 @@ mod tests {
         let env = build_env(settings);
         let out = render(&env, "index.html", context! {}).unwrap();
         assert!(out.contains("Неразумный перфекционизм"));
-        assert!(out.contains("yandex</noscript>") || out.contains("mc.yandex.ru"));
+        // Yandex.Metrika was removed; the counter snippet must not render.
+        assert!(!out.contains("mc.yandex.ru"));
     }
 
     #[test]

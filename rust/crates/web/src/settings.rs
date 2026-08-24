@@ -22,7 +22,6 @@ pub struct Settings {
     pub secret_key: String,
     pub database_url: String,
     pub yandex_verification: Option<String>,
-    pub yandex_metrika: Option<String>,
     pub jwt_algorithm: String,
     pub jwt_expire_minutes: i64,
 }
@@ -34,7 +33,6 @@ impl Default for Settings {
             secret_key: "hard-to-guess-string-change-in-production".to_string(),
             database_url: "sqlite+aiosqlite:///./tmp/dev.db".to_string(),
             yandex_verification: None,
-            yandex_metrika: Some("76938046".to_string()),
             jwt_algorithm: "HS256".to_string(),
             jwt_expire_minutes: 60 * 24,
         }
@@ -77,7 +75,6 @@ mod tests {
         assert_eq!(s.secret_key, "hard-to-guess-string-change-in-production");
         assert_eq!(s.database_url, "sqlite+aiosqlite:///./tmp/dev.db");
         assert_eq!(s.yandex_verification, None);
-        assert_eq!(s.yandex_metrika.as_deref(), Some("76938046"));
         assert_eq!(s.jwt_algorithm, "HS256");
         assert_eq!(s.jwt_expire_minutes, 1440);
     }

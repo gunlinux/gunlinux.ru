@@ -12,7 +12,7 @@ use domain::{
     Repository, Tag, TagRepository, User, UserRepository,
 };
 use web::settings;
-use web::{build_app, AppState};
+use web::{build_app_with_static, AppState};
 
 /// All fake state in one lockable store.
 #[derive(Default)]
@@ -447,7 +447,14 @@ pub fn build_test_app(store: SharedStore) -> Router {
         Arc::new(FakeIconRepo::new(store.clone())),
         settings,
     );
-    build_app(state)
+    // Point /static at the repo's real static dir: the layout loads htmx from
+    // /static/vendor/htmx.min.js (the trimmed local build), and build_app's
+    // STATIC_DIR default is relative to the cwd, which does not resolve from
+    // the test directory.
+    build_app_with_static(
+        state,
+        concat!(env!("CARGO_MANIFEST_DIR"), "/../../../app/static"),
+    )
 }
 
 // ---------------------------------------------------------------------------

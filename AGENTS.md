@@ -1,4 +1,4 @@
-# CLAUDE.md
+# AGENTS.md
 
 Guidance for AI coding assistants working in this repository.
 
@@ -109,7 +109,7 @@ line.
 ## Configuration (env / `.env`)
 
 `web/src/settings.rs` (config + dotenvy, cached in a `OnceLock`): `ENV`,
-`SECRET_KEY`, `YANDEX_VERIFICATION`, `YANDEX_METRIKA`, `JWT_ALGORITHM`,
+`SECRET_KEY`, `YANDEX_VERIFICATION`, `JWT_ALGORITHM`,
 `JWT_EXPIRE_MINUTES`. Server: `DATABASE_URL` (default `sqlite://./tmp/dev.db`),
 `BIND_ADDR` (default `0.0.0.0:8000`), `STATIC_DIR` (default `app/static`),
 `RUST_LOG` (default `info`). `database_url` in settings is informational only —

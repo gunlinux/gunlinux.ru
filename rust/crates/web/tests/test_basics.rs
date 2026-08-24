@@ -81,7 +81,7 @@ async fn test_catch_all_does_not_shadow_tags_or_static() {
     let (_store, app) = test_app();
     expect_status(get(&app, "/tags").await, StatusCode::OK).await;
     // /static is mounted; a missing file inside it is a 404, not the catch-all.
-    let resp = get(&app, "/static/dist/css/bundle.css").await;
+    let resp = get(&app, "/static/missing-file.css").await;
     assert_eq!(resp.status(), StatusCode::NOT_FOUND);
     let body = body_text(resp).await;
     assert!(!body.contains("postGroup"));

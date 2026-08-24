@@ -9,7 +9,7 @@ use std::sync::Arc;
 
 use axum::routing::{get, post};
 use axum::Router;
-use minijinja::Environment;
+use minijinja::{Environment, Value};
 use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 
@@ -64,6 +64,32 @@ pub fn build_app(state: AppState) -> Router {
     // Static files: `app/static` (repo root) by default, overridable via
     // STATIC_DIR (mirrors `app.mount("/static", StaticFiles(...))`).
     let static_dir = std::env::var("STATIC_DIR").unwrap_or_else(|_| "app/static".to_string());
+    build_app_with_static(state, &static_dir)
+}
+
+/// Like [`build_app`], but with an explicit static-file directory. Tests use
+/// this to point at the repo's `app/static` regardless of the cwd.
+pub fn build_app_with_static(state: AppState, static_dir: &str) -> Router {
+    // Inline the built stylesheet into every rendered page: the bundle is
+    // ~6.6 KiB, so embedding it removes a render-blocking request from the
+    // critical path. `dist/` is gitignored, so when the CSS has not been
+    // built (`make css-build`) the template falls back to the external
+    // <link>.
+    let css_path = format!("{static_dir}/dist/css/bundle.css");
+    let inline_css = match std::fs::read_to_string(&css_path) {
+        Ok(css) => css,
+        Err(e) => {
+            tracing::warn!(
+                "cannot read {css_path} for inlining ({e}); falling back to external stylesheet"
+            );
+            String::new()
+        }
+    };
+
+    let mut state = state;
+    let mut env = build_env(state.settings.clone());
+    env.add_global("inline_css", Value::from_safe_string(inline_css));
+    state.templates = Arc::new(env);
 
     Router::new()
         .route("/", get(routes::index))
@@ -77,7 +103,7 @@ pub fn build_app(state: AppState) -> Router {
         .route("/tags", get(routes::tags_index))
         .route("/tags/", get(routes::tags_index))
         .route("/tags/{alias}", get(routes::tag_view))
-        .nest_service("/static", ServeDir::new(&static_dir))
+        .nest_service("/static", ServeDir::new(static_dir))
         .merge(admin::router())
         // Catch-all must stay last.
         .route("/{alias}", get(routes::post_view))

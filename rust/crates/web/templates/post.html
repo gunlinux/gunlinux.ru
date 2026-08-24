@@ -1,9 +1,5 @@
 {% extends "layout.html" %}
 
-{% block styles %}
- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css">
-{% endblock %}
-
 {% block content %}
  <div hx-swap="posts" hx-get="/{{post.alias}}"
     hx-trigger="load"
@@ -39,9 +35,4 @@
        </div>
 
     </article>
-{% endblock %}
-
-{% block scripts %}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
-    <script>hljs.highlightAll();</script>
 {% endblock %}

@@ -21,7 +21,7 @@ rust/                Cargo workspace — the application
   crates/persistence/  SeaORM entities, baseline migration, repository trait impls
   crates/web/          Axum app: routes, services, templates (Minijinja), admin, auth
   crates/server/       Wiring binary: reads DATABASE_URL, applies migrations, serves
-app/static/          esbuild output + sources (CSS/fonts/img/upload) — served at /static
+app/static/          esbuild output + sources (CSS/img/upload) — served at /static
 deploy/              systemd unit + production cutover runbook (CUTOVER.md)
 scripts/parity/      Python-vs-Rust parity harness (archived; golden results in results.md)
 .github/workflows/   rust-ci.yaml (fmt/clippy/test/postgres-parity/browser-e2e), deploy.yaml
@@ -79,7 +79,7 @@ Notes:
 | `STATIC_DIR` | `app/static` | web (static file root) |
 | `SECRET_KEY` | dev-only default | web (session cookie signing) |
 | `ENV` | `development` | web settings |
-| `YANDEX_VERIFICATION` / `YANDEX_METRIKA` | — / `76938046` | templates |
+| `YANDEX_VERIFICATION` | — | web settings (search-console meta tag) |
 | `JWT_ALGORITHM` / `JWT_EXPIRE_MINUTES` | `HS256` / `1440` | web auth |
 | `RUST_LOG` | `info` | tracing |
 

@@ -31,9 +31,10 @@
 //!
 //! # Network
 //!
-//! The templates load htmx from the jsdelivr CDN (as in production), so the
-//! browser needs outbound HTTPS to `cdn.jsdelivr.net`. If htmx never loads,
-//! the tests fail with a message pointing here.
+//! The layout loads a trimmed, locally-vendored htmx
+//! (`/static/vendor/htmx.min.js` — a derivative of htmx 2.0.8, see
+//! `app/static/vendor/htmx.js`), so the browser needs no outbound network
+//! access. If htmx never loads, the tests fail with a message pointing here.
 //!
 //! # What is asserted
 //!
@@ -262,11 +263,11 @@ async fn wait_for(page: &Page, js_condition: &str, timeout: Duration) -> Result<
     }
 }
 
-/// Wait until the htmx library itself is loaded (CDN script tag).
+/// Wait until the htmx library itself is loaded (vendored script tag).
 async fn wait_for_htmx(page: &Page) {
     wait_for(page, "window.htmx !== undefined", SWAP_TIMEOUT)
         .await
-        .expect("htmx did not load — the browser needs outbound HTTPS to cdn.jsdelivr.net");
+        .expect("htmx did not load — check app/static/vendor/htmx.min.js");
 }
 
 /// Evaluate a JS expression and deserialize it as an integer.

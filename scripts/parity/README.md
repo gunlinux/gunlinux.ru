@@ -1,5 +1,9 @@
 # Parity harness — gunlinux.ru Python (FastAPI) vs Rust (axum)
 
+> **⚠️ Archived.** This harness requires the Python app, which Stage 9 removed
+> (plan.md T17) — it cannot be re-run. Kept as a historical record; the golden
+> comparison lives in `results.md`.
+
 Side-by-side behavioral comparison of the legacy Python app and the Rust
 rewrite, run against **two scratch SQLite databases seeded with identical
 data** (plan.md Task T16, first half / Stage 9 parity). The harness starts

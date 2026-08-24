@@ -2,8 +2,9 @@
 
 Rust (axum) port of the gunlinux.ru blog, built as a cargo workspace under
 `rust/`. See `plan.md` (repo root) for the staged migration strategy; the
-Python/FastAPI app at the repo root remains the live deploy until cutover
-(stage 8).
+Python source was removed in Stage 9 — the **production server still runs the
+pre-Rust app** until the operator executes the Stage 8 cutover
+(`deploy/CUTOVER.md`).
 
 ## Workspace layout
 
@@ -31,7 +32,7 @@ cargo build --release -p server     # binary: rust/target/release/server
 
 ```sh
 cd rust
-cargo test --workspace              # currently the domain unit tests
+cargo test --workspace              # default suite (98 tests; SQLite scratch DBs)
 cargo fmt --check
 cargo clippy --workspace -- -D warnings
 ```
@@ -43,22 +44,23 @@ exist in the root Makefile.)
 
 ```sh
 cd rust
-DATABASE_URL="sqlite://tmp/dev.db" \
+DATABASE_URL="sqlite:///tmp/gunlinux-dev.db?mode=rwc" \
 SECRET_KEY="change-me" \
 STATIC_DIR="../app/static" \
 cargo run -p server
 ```
 
-The server binds `0.0.0.0:8000`.
+The server binds `0.0.0.0:8000`. Note `sqlite://` URLs need `?mode=rwc` —
+sqlx cannot create a missing DB file (the code default `sqlite://./tmp/dev.db`
+only works because the file already exists).
 
 ## Environment variables
 
 | Variable             | Default                        | Purpose                                              |
 |----------------------|--------------------------------|------------------------------------------------------|
-| `DATABASE_URL`       | `sqlite:///app/tmp/prod.db?mode=rwc` | SQLx connection string (SQLite or PostgreSQL); absolute sqlite paths need 3 slashes + `?mode=rwc` |
+| `DATABASE_URL`       | `sqlite://./tmp/dev.db` (code); `sqlite:///app/tmp/prod.db?mode=rwc` (Docker image) | SQLx connection string (SQLite or PostgreSQL); absolute sqlite paths need 3 slashes + `?mode=rwc` |
 | `SECRET_KEY`         | *(dev default in code)*        | Signs JWT tokens / session cookies                   |
-| `STATIC_DIR`         | `/app/static`                  | Directory served at `/static`                        |
-| `YANDEX_METRIKA`     | `76938046`                     | Yandex.Metrika counter id (footer snippet)           |
+| `STATIC_DIR`         | `app/static` (code); `/app/static` (Docker image) | Directory served at `/static`                        |
 | `YANDEX_VERIFICATION`| *(empty)*                      | Yandex site-verification meta tag content            |
 | `JWT_ALGORITHM`      | `HS256`                        | JWT signing algorithm                                |
 | `JWT_EXPIRE_MINUTES` | `1440`                         | JWT lifetime in minutes                              |

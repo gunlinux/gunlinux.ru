@@ -6,7 +6,7 @@
 #
 #   docker build -f rust/Dockerfile -t gunlinux-rust:0.2.0 .
 #
-# The webpack output (`app/static/dist`) must exist before building — run
+# The esbuild output (`app/static/dist`) must exist before building — run
 # `make css-build` first (see rust/README.md). Templates are embedded into the
 # binary at build time, so any template files the `web` crate embeds with
 # include_dir! must live inside `rust/crates/` (they travel via `COPY rust/crates/`).
@@ -67,7 +67,7 @@ RUN adduser \
     --uid "${UID}" \
     appuser
 
-# Static assets (CSS/JS/fonts/images). `app/static/dist` is the webpack output
+# Static assets (CSS/JS/fonts/images). `app/static/dist` is the esbuild output
 # directory; copying it here keeps the image self-contained.
 COPY app/static /app/static
 

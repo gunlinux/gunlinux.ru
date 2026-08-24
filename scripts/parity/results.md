@@ -105,6 +105,6 @@ Artifacts from this run: `scripts/parity/tmp/{python,rust}.db`,
 `tmp/*.log`, `tmp/out/` (per-route `.py.raw/.rs.raw/.py.norm/.rs.norm`
 snapshots), `tmp/out/summary.txt`.
 
-**Note:** the harness requires the Python app (`main:app` + `.venv`); once
-Stage 9 removes the Python codebase (plan.md T17), this harness is archived
-as a historical record — the golden outputs above are the frozen reference.
+**Note:** the harness requires the Python app (`main:app` + `.venv`), which
+Stage 9 removed (plan.md T17) — the harness is archived as a historical
+record; the golden outputs above are the frozen reference.

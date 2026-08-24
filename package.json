@@ -4,8 +4,8 @@
   "description": "CSS bundling for gunlinux.ru",
   "main": "index.js",
   "scripts": {
-    "build": "rm -rf app/static/dist && esbuild app/static/src/styles.css --bundle --minify --external:../fonts/* --outfile=app/static/dist/css/bundle.css && cp -r app/static/fonts app/static/dist/fonts",
-    "watch": "esbuild app/static/src/styles.css --bundle --minify --external:../fonts/* --outfile=app/static/dist/css/bundle.css --watch"
+    "build": "rm -rf app/static/dist && esbuild app/static/src/styles.css --bundle --minify --outfile=app/static/dist/css/bundle.css",
+    "watch": "esbuild app/static/src/styles.css --bundle --minify --outfile=app/static/dist/css/bundle.css --watch"
   },
   "keywords": [
     "css",
