@@ -3,8 +3,8 @@
 //!
 //! Column types / nullability / uniqueness match the SQLAlchemy definitions:
 //! - `users.id`, `posts.id`, `categories.id`, `tags.id`, `icons.id` — INTEGER PK
-//! - `users.authenticated` — nullable INTEGER, no server default (Python uses a
-//!   client-side `default=0`; the repository always writes a value)
+//! - `users.authenticated` — nullable BOOLEAN, no server default (prod schema;
+//!   the repository always writes a value, `NULL` reads as `false`)
 //! - `categories.page` — nullable BOOLEAN, no server default (same reasoning)
 //! - `createdon` / `publishedon` — timezone-aware datetimes, matching
 //!   `DateTime(timezone=True)`: Postgres `TIMESTAMPTZ`; SQLite stores values
@@ -37,7 +37,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(ColumnDef::new(Users::Name).string_len(50).not_null())
                     .col(ColumnDef::new(Users::Password).string_len(255).null())
-                    .col(ColumnDef::new(Users::Authenticated).integer().null())
+                    .col(ColumnDef::new(Users::Authenticated).boolean().null())
                     .col(
                         ColumnDef::new(Users::Createdon)
                             .timestamp_with_time_zone()

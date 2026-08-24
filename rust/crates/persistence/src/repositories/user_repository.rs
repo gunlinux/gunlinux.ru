@@ -27,7 +27,7 @@ pub(crate) fn to_domain(u: user::Model) -> User {
         id: Some(u.id),
         name: u.name,
         password: u.password.unwrap_or_default(),
-        authenticated: u.authenticated.map(|a| a != 0).unwrap_or(false),
+        authenticated: u.authenticated.unwrap_or(false),
         createdon: u.createdon,
     }
 }
@@ -54,7 +54,7 @@ impl Repository<User, i32> for UserRepository {
         let mut active = user::ActiveModel {
             name: Set(entity.name.clone()),
             password: Set(Some(entity.password.clone())),
-            authenticated: Set(Some(entity.authenticated as i32)),
+            authenticated: Set(Some(entity.authenticated)),
             ..Default::default()
         };
         if let Some(createdon) = entity.createdon {
@@ -81,7 +81,7 @@ impl Repository<User, i32> for UserRepository {
         };
         active.name = Set(entity.name.clone());
         active.password = Set(Some(entity.password.clone()));
-        active.authenticated = Set(Some(entity.authenticated as i32));
+        active.authenticated = Set(Some(entity.authenticated));
         if let Some(createdon) = entity.createdon {
             active.createdon = Set(Some(createdon));
         }

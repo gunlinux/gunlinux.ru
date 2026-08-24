@@ -14,9 +14,10 @@ pub struct Model {
         nullable
     )]
     pub password: Option<String>,
-    /// Python: `Column("authenticated", Integer, default=0)` — nullable
-    /// INTEGER, value written by the repository on every insert/update.
-    pub authenticated: Option<i32>,
+    /// `authenticated` — nullable BOOLEAN (prod schema; mirrors the
+    /// `categories.page` treatment). The repository always writes a value;
+    /// `NULL` reads as `false`.
+    pub authenticated: Option<bool>,
     pub createdon: Option<DateTimeUtc>,
 }
 
