@@ -82,5 +82,13 @@ sudo systemctl daemon-reload
 sudo systemctl disable --now "$OLD_UNIT" || true
 sudo systemctl enable --now "$NEW_UNIT"
 
+# `enable --now` does not restart an already-active unit; restart explicitly
+# when the running image differs from the deployed tag (idempotent no-op when
+# the tag is unchanged).
+CURRENT="$(docker inspect --format '{{.Config.Image}}' "$NEW_UNIT" 2>/dev/null || true)"
+if [ "$CURRENT" != "$IMAGE:$TAG" ]; then
+    sudo systemctl restart "$NEW_UNIT"
+fi
+
 echo "Deployment completed: $IMAGE:$TAG"
 echo "Next: run the smoke test and acceptance checks in deploy/CUTOVER.md"
