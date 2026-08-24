@@ -86,3 +86,24 @@ async fn test_catch_all_does_not_shadow_tags_or_static() {
     let body = body_text(resp).await;
     assert!(!body.contains("postGroup"));
 }
+
+/// The served CSS bundle must reserve the vertical scrollbar gutter
+/// (`scrollbar-gutter: stable` on `html`). Without it the centered layout
+/// (header included) shifts ~half a scrollbar-width left when htmx swaps in
+/// a page tall enough to scroll. The rule lives in `app/static/src/global/
+/// reboot.css`; this test also fails when the bundle is stale (CSS changed
+/// but `make css-build` not re-run).
+#[tokio::test]
+async fn test_css_bundle_reserves_scrollbar_gutter() {
+    let (_store, app) = test_app();
+    let body = expect_status(
+        get(&app, "/static/dist/css/bundle.css").await,
+        StatusCode::OK,
+    )
+    .await;
+    assert!(
+        body.contains("scrollbar-gutter:stable"),
+        "bundle.css must contain `scrollbar-gutter:stable` — rebuild with `make css-build` \
+         if reboot.css was changed"
+    );
+}

@@ -1,6 +1,9 @@
 html {
   box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
+  /* Reserve the vertical scrollbar gutter so the centered layout (header
+     included) does not shift when navigating to a page that scrolls. */
+  scrollbar-gutter: stable;
 }
 
 *,
