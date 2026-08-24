@@ -25,7 +25,7 @@ GitHub push to master
       └─ on success: "Deploy to Server" workflow
           ├─ make css-build
           ├─ docker build (rust/Dockerfile, multi-stage) → push
-          │    gunlinux/gunlinux.ru:<sha7>  +  :latest   (public image)
+          │    gunlinuxloki/gunlinux.ru:<sha7>  +  :latest   (public image)
           └─ ssh loki@gunlinux.ru:187 → bash .github/deploy.sh
                ├─ git fetch + reset --hard origin/master   (guard: rust/ + deploy/ present)
                ├─ append DATABASE_URL to .env if missing   (Flask-name → Rust-name)
@@ -89,7 +89,7 @@ git push origin master
 # Watch in GitHub Actions: "Rust" → "Deploy to Server".
 ```
 
-`deploy.sh` prints `Deployment completed: gunlinux/gunlinux.ru:<sha7>`.
+`deploy.sh` prints `Deployment completed: gunlinuxloki/gunlinux.ru:<sha7>`.
 
 ## Phase 3 — Verify the swap and the migration baseline
 

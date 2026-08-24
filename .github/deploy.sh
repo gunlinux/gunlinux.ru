@@ -4,7 +4,7 @@
 #
 # Runs ON the server, invoked by .github/workflows/deploy.yaml over SSH with
 # DEPLOY_TAG=<commit short SHA> exported. The image is built and pushed in CI
-# (public repo gunlinux/gunlinux.ru — no docker login needed here); this
+# (public repo gunlinuxloki/gunlinux.ru — no docker login needed here); this
 # script pulls that exact tag, installs the systemd unit with the tag baked
 # in, and restarts the service. Idempotent: safe to re-run.
 #
@@ -15,7 +15,7 @@ set -euo pipefail
 
 REPO_DIR="/home/loki/www/gunlinux.ru"
 BRANCH="master"
-IMAGE="gunlinux/gunlinux.ru"
+IMAGE="gunlinuxloki/gunlinux.ru"
 OLD_UNIT="gunlinux.ru"   # legacy Python/gunicorn unit (file kept for rollback)
 NEW_UNIT="gunlinux-ru"
 

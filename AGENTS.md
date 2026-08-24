@@ -122,7 +122,7 @@ line.
 - **Deploys are automated:** pushing to `master` runs the `Rust` quality-gate
   workflow (fmt, clippy, test, postgres-parity, browser-e2e); on success the
   `Deploy to Server` workflow builds the image, pushes it to the **public**
-  Docker Hub repo `gunlinux/gunlinux.ru` tagged with the commit short SHA
+  Docker Hub repo `gunlinuxloki/gunlinux.ru` tagged with the commit short SHA
   (+ `latest`), and runs `.github/deploy.sh` on the server over SSH
   (`loki@gunlinux.ru:187`). Secrets required: `DOCKERHUB_USERNAME`,
   `DOCKERHUB_TOKEN`, `PRIVATE_KEY_SSH`.

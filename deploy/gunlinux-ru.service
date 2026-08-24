@@ -1,6 +1,6 @@
 # gunlinux.ru — Rust (axum) service, Docker image deployment.
 #
-# Runs the public Docker Hub image gunlinux/gunlinux.ru. The @IMAGE_TAG@
+# Runs the public Docker Hub image gunlinuxloki/gunlinux.ru. The @IMAGE_TAG@
 # placeholder is substituted with the deploying commit's short SHA by
 # .github/deploy.sh at install time (sed), so the unit always pins the exact
 # deployed revision — rollback is a restart with a previous tag.
@@ -26,12 +26,12 @@ Group=loki
 
 # `-` prefix: tolerated failure (container not running yet on first start).
 ExecStartPre=-/usr/bin/docker rm -f gunlinux-ru
-ExecStartPre=/usr/bin/docker pull gunlinux/gunlinux.ru:@IMAGE_TAG@
+ExecStartPre=/usr/bin/docker pull gunlinuxloki/gunlinux.ru:@IMAGE_TAG@
 ExecStart=/usr/bin/docker run --rm --name gunlinux-ru \
   --network host \
   --env-file /home/loki/www/gunlinux.ru/.env \
   -e BIND_ADDR=127.0.0.1:5000 \
-  gunlinux/gunlinux.ru:@IMAGE_TAG@
+  gunlinuxloki/gunlinux.ru:@IMAGE_TAG@
 ExecStop=/usr/bin/docker stop gunlinux-ru
 Restart=on-failure
 RestartSec=3

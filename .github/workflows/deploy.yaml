@@ -4,7 +4,7 @@ name: Deploy to Server
 # Docker image, push it to Docker Hub tagged with the commit short SHA (plus
 # `latest`), then run .github/deploy.sh on the production server over SSH.
 #
-# The image is PUBLIC (gunlinux/gunlinux.ru) — no registry credentials are
+# The image is PUBLIC (gunlinuxloki/gunlinux.ru) — no registry credentials are
 # needed on the server; it just `docker pull`s the tagged image.
 
 on:
@@ -18,7 +18,7 @@ permissions:
   contents: read
 
 env:
-  IMAGE: gunlinux/gunlinux.ru
+  IMAGE: gunlinuxloki/gunlinux.ru
 
 jobs:
   build-and-deploy:
