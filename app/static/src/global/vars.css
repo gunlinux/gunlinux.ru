@@ -10,7 +10,7 @@
   /* Base Colors */
   --color-text: #000;
   --color-text-light: #444;
-  --color-text-lighter: #ccc;
+  --color-text-lighter: #767676;
   --color-text-link: #474747;
   --color-text-link-hover: #000;
 }
@@ -19,7 +19,7 @@
   /* Dark theme color overrides */
   --color-text: #f0f0f0;
   --color-text-light: #b0b0b0;
-  --color-text-lighter: #606060;
+  --color-text-lighter: #808080;
   --color-text-link: #a0a0a0;
   --color-text-link-hover: #ffffff;
 
@@ -33,7 +33,7 @@
   :root:not([data-theme="light"]) {
     --color-text: #f0f0f0;
     --color-text-light: #b0b0b0;
-    --color-text-lighter: #606060;
+    --color-text-lighter: #808080;
     --color-text-link: #a0a0a0;
     --color-text-link-hover: #ffffff;
     background-color: #121212;

@@ -312,9 +312,9 @@ fn seed_icon(store: &common::SharedStore, title: &str, url: &str, content: &str)
 // Tests
 // ---------------------------------------------------------------------------
 
-/// Navigate to `/` and prove the three load-triggered htmx swaps happen in a
-/// real browser: posts into `.page__content`, nav pages into `.pages_nav`,
-/// footer icons into `.footer__links`.
+/// Navigate to `/` and prove the load-triggered htmx swaps happen in a real
+/// browser: posts into `.page__content`, footer icons into `.footer__links`.
+/// The nav pages are server-rendered — they must NOT arrive via htmx.
 #[tokio::test(flavor = "multi_thread")]
 async fn index_load_triggers_real_htmx_swaps() {
     let (store, app) = test_app();
@@ -376,14 +376,15 @@ async fn index_load_triggers_real_htmx_swaps() {
         "swapped-in DOM misses the hx-get link"
     );
 
-    // The other two load-triggered swaps: nav pages and footer icons.
+    // The nav pages are server-rendered into `.pages_nav` (no /hx/pages
+    // load swap) — the About link must be in the initial DOM.
     wait_for(
         &page,
         "document.querySelector('.pages_nav a.nav__link') !== null",
         SWAP_TIMEOUT,
     )
     .await
-    .expect("pages_nav should be populated by /hx/pages");
+    .expect("pages_nav should be server-rendered in the initial HTML");
     let nav_text = eval_string(
         &page,
         "document.querySelector('.pages_nav') ? document.querySelector('.pages_nav').textContent : ''",
@@ -402,6 +403,13 @@ async fn index_load_triggers_real_htmx_swaps() {
     )
     .await
     .expect("footer links should be populated by /hx/icons");
+    // The only load-triggered swaps are posts + footer icons — a nav htmx
+    // swap would have bumped this counter to 3.
+    let swaps = eval_int(&page, "window.__htmxSwaps").await.unwrap_or(-1);
+    assert_eq!(
+        swaps, 2,
+        "expected exactly two load-triggered swaps (posts + icons), got {swaps}"
+    );
     let footer_text = eval_string(
         &page,
         "document.querySelector('.footer__links') ? document.querySelector('.footer__links').textContent : ''",

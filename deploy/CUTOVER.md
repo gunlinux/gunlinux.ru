@@ -136,7 +136,7 @@ bypass the nginx IP allowlist on `/admin/`:
 ```bash
 B=http://127.0.0.1:5000
 # Route sweep — expect all 200
-for p in / /posts /hx/pages /hx/icons /robots.txt /sitemap.xml /rss.xml /tags /tags/; do
+for p in / /posts /hx/icons /robots.txt /sitemap.xml /rss.xml /tags /tags/; do
   printf '%-12s %s\n' "$p" "$(curl -s -o /dev/null -w '%{http_code}' "$B$p")"
 done
 # Markdown helper

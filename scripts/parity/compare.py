@@ -86,7 +86,6 @@ MD_PAYLOAD = (
 ROUTES = [
     ("GET", "/", None, "html", ""),
     ("GET", "/posts", None, "html", ""),
-    ("GET", "/hx/pages", None, "html", ""),
     ("GET", "/hx/icons", None, "html", ""),
     ("GET", "/robots.txt", None, "text", ""),
     ("GET", "/sitemap.xml", None, "xml", ""),

@@ -65,7 +65,7 @@ Routes (from plan.md §1, plus extras):
 
 | Route | Notes |
 |---|---|
-| `GET /`, `/posts`, `/hx/pages`, `/hx/icons` | cached public pages / htmx fragments |
+| `GET /`, `/posts`, `/hx/icons` | cached public pages / htmx fragments |
 | `GET /robots.txt` | exact text |
 | `GET /sitemap.xml`, `/rss.xml` | XML feeds |
 | `POST /md/` | markdown preview (urlencoded `data=`) |

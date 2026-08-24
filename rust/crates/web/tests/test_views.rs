@@ -48,6 +48,8 @@ async fn test_page_view() {
     assert!(body.contains("About"));
     // Pages render their content too.
     assert!(body.contains("page content"));
+    // The nav pages are server-rendered into the layout (no /hx/pages swap).
+    assert!(body.contains("href=\"/about\" class=\"nav__link\""));
 }
 
 #[tokio::test]
@@ -137,14 +139,6 @@ fn test_post_teaser_truncates() {
     let teaser = post.teaser();
     assert!(teaser.ends_with('…'));
     assert!(teaser.chars().count() <= 301);
-}
-
-#[tokio::test]
-async fn test_htmx_pages() {
-    let (_store, app) = test_app();
-    let resp = get(&app, "/hx/pages").await;
-    assert_eq!(resp.status(), StatusCode::OK);
-    assert!(!body_text(resp).await.contains("<!DOCTYPE"));
 }
 
 #[tokio::test]

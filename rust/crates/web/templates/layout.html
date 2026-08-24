@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-theme="dark">
+<html lang="ru" data-theme="dark">
     <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="utf-8">
@@ -27,10 +27,6 @@ hx-swap="posts" hx-get="/posts"
             hx-target=".page__content"
 class="header__logo" title="На главную">@gunlinux</a>
         <div class="header__nav">
-            <div hx-swap="innerHTML" hx-get="/hx/pages"
-              hx-trigger="load"
-              hx-target=".pages_nav">
-            </div>
             <nav class="nav">
                 <a
                 hx-get="/tags"
@@ -39,12 +35,24 @@ class="header__logo" title="На главную">@gunlinux</a>
                 hx-push-url="true"
                 href="/tags/" class="nav__link">
               tags</a>
-            <span class="pages_nav"></span>
+            <span class="pages_nav">
+            {% for page in pages %}
+            <a href="/{{page.alias}}" class="nav__link"
+                hx-swap="posts"
+                hx-get="/{{page.alias}}"
+                hx-trigger="click"
+                hx-target=".page__content"
+                hx-push-url="true"
+            >{{page.pagetitle}}</a>
+            {% endfor %}
+            </span>
             </nav>
         </div>
     </div>
+    <main>
     {% block content %}
     {% endblock %}
+    </main>
     {% block scripts %}
     {% endblock %}
     {% include "footer.html" %}

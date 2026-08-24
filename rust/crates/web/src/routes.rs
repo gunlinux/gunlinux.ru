@@ -71,6 +71,18 @@ fn is_htmx_request(headers: &HeaderMap) -> bool {
     headers.contains_key(header::HeaderName::from_static("hx-request"))
 }
 
+/// Nav pages for the layout, serialized for the template context. Only
+/// full-page renders extend the layout; htmx fragments skip the query.
+async fn nav_pages(state: &AppState, headers: &HeaderMap) -> Result<minijinja::Value, WebError> {
+    if is_htmx_request(headers) {
+        return Ok(minijinja::Value::from_serialize(&[] as &[()]));
+    }
+    let pages = PostService::new(state.posts.clone())
+        .get_page_posts()
+        .await?;
+    Ok(minijinja::Value::from_serialize(&pages))
+}
+
 /// Serve a rendered (or otherwise produced) response through the cache:
 /// return a hit immediately; otherwise run `f`, cache the 200 response and
 /// return it. Non-200 responses are not cached (matches fastapi-cache, which
@@ -115,7 +127,8 @@ pub async fn index(
 ) -> Result<Response, WebError> {
     let key = htmx_key_builder(&path_query(&uri), &headers);
     with_cache(&state.cache, key, || async {
-        let body = render(&state.templates, "index.html", context! {})?;
+        let pages = nav_pages(&state, &headers).await?;
+        let body = render(&state.templates, "index.html", context! { pages => pages })?;
         Ok(html_response(body))
     })
     .await
@@ -137,27 +150,12 @@ pub async fn posts(
         } else {
             "posts.html"
         };
+        let pages = nav_pages(&state, &headers).await?;
         let body = render(
             &state.templates,
             template,
-            context! { posts_by_year => posts_by_year },
+            context! { posts_by_year => posts_by_year, pages => pages },
         )?;
-        Ok(html_response(body))
-    })
-    .await
-}
-
-/// `GET /hx/pages` — nav pages fragment (cached, htmx-aware key).
-pub async fn pages_hx(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-    uri: Uri,
-) -> Result<Response, WebError> {
-    let key = htmx_key_builder(&path_query(&uri), &headers);
-    with_cache(&state.cache, key, || async {
-        let post_service = PostService::new(state.posts.clone());
-        let pages = post_service.get_page_posts().await?;
-        let body = render(&state.templates, "pages.htmx", context! { pages => pages })?;
         Ok(html_response(body))
     })
     .await
@@ -280,7 +278,12 @@ pub async fn tags_index(
     } else {
         "tags.html"
     };
-    let body = render(&state.templates, template, context! { tags => tags })?;
+    let pages = nav_pages(&state, &headers).await?;
+    let body = render(
+        &state.templates,
+        template,
+        context! { tags => tags, pages => pages },
+    )?;
     Ok(html_response(body))
 }
 
@@ -305,10 +308,11 @@ pub async fn tag_view(
     } else {
         "tag.html"
     };
+    let pages = nav_pages(&state, &headers).await?;
     let body = render(
         &state.templates,
         template,
-        context! { posts_by_year => posts_by_year, tag => tag },
+        context! { posts_by_year => posts_by_year, tag => tag, pages => pages },
     )?;
     Ok(html_response(body))
 }
@@ -341,10 +345,11 @@ pub async fn post_view(
         } else {
             "post.html"
         };
+        let pages = nav_pages(&state, &headers).await?;
         let body = render(
             &state.templates,
             template,
-            context! { post => view, tags => tags },
+            context! { post => view, tags => tags, pages => pages },
         )?;
         Ok(html_response(body))
     })

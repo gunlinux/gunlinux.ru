@@ -94,7 +94,6 @@ pub fn build_app_with_static(state: AppState, static_dir: &str) -> Router {
     Router::new()
         .route("/", get(routes::index))
         .route("/posts", get(routes::posts))
-        .route("/hx/pages", get(routes::pages_hx))
         .route("/hx/icons", get(routes::icons_hx))
         .route("/robots.txt", get(routes::robots))
         .route("/sitemap.xml", get(routes::sitemap))
