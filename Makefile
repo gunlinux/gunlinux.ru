@@ -1,9 +1,9 @@
 VERSION = 0.2.0
 
-# Frontend assets (webpack CSS build; output served from app/static/dist).
+# Frontend assets (esbuild CSS build; output served from app/static/dist).
 css-build:
 	npm install
-	npx webpack --mode production
+	npm run build
 
 # ---------------------------------------------------------------------------
 # Rust — the deployed service (rust/ workspace: domain, persistence, web,

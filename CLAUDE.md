@@ -24,7 +24,7 @@ All through the Makefile (see `rust/README.md` for details):
 
 - `make check` — full gate: `cargo fmt --check` + `clippy -D warnings` +
   `cargo test --workspace` (run before considering work done).
-- `make css-build` — webpack CSS build (output `app/static/dist`).
+- `make css-build` — esbuild CSS build (output `app/static/dist`).
 - `make rust-run` — `cargo run -p server` (reads `DATABASE_URL`; sqlite URLs
   need `?mode=rwc`).
 - Feature-gated suites: `cargo test -p persistence --features postgres-parity`

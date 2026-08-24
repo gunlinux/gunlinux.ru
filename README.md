@@ -21,7 +21,7 @@ rust/                Cargo workspace — the application
   crates/persistence/  SeaORM entities, baseline migration, repository trait impls
   crates/web/          Axum app: routes, services, templates (Minijinja), admin, auth
   crates/server/       Wiring binary: reads DATABASE_URL, applies migrations, serves
-app/static/          webpack output + sources (CSS/fonts/img/upload) — served at /static
+app/static/          esbuild output + sources (CSS/fonts/img/upload) — served at /static
 deploy/              systemd unit + production cutover runbook (CUTOVER.md)
 scripts/parity/      Python-vs-Rust parity harness (archived; golden results in results.md)
 .github/workflows/   rust-ci.yaml (fmt/clippy/test/postgres-parity/browser-e2e), deploy.yaml
@@ -45,7 +45,7 @@ route (axum handlers) → service (structs) → repository (async traits) → en
 - **Markdown:** comrak for post pages; `POST /md/` uses a python-markdown-
   compatible preview renderer (see MIGRATION_CONTRACT.md for the residual
   differences).
-- **Frontend:** unchanged webpack/npm CSS pipeline; output served from
+- **Frontend:** esbuild CSS pipeline (single dep); output served from
   `app/static/dist`.
 
 ## Requirements
@@ -57,7 +57,7 @@ route (axum handlers) → service (structs) → repository (async traits) → en
 ## Quick start
 
 ```sh
-make css-build                                  # webpack CSS (app/static/dist)
+make css-build                                  # esbuild CSS (app/static/dist)
 cd rust
 DATABASE_URL='sqlite:///tmp/gunlinux-dev.db?mode=rwc' cargo run -p server
 # or: make rust-run

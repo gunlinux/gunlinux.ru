@@ -1,28 +1,19 @@
 {
   "name": "gunlinux.ru",
   "version": "1.0.0",
-  "description": "CSS bundling for gunlinux.ru Flask application",
+  "description": "CSS bundling for gunlinux.ru",
   "main": "index.js",
   "scripts": {
-    "dev": "webpack --mode development",
-    "build": "webpack --mode production",
-    "watch": "webpack --mode development --watch"
+    "build": "rm -rf app/static/dist && esbuild app/static/src/styles.css --bundle --minify --external:../fonts/* --outfile=app/static/dist/css/bundle.css && cp -r app/static/fonts app/static/dist/fonts",
+    "watch": "esbuild app/static/src/styles.css --bundle --minify --external:../fonts/* --outfile=app/static/dist/css/bundle.css --watch"
   },
   "keywords": [
-    "flask",
     "css",
-    "bundling",
-    "webpack"
+    "bundling"
   ],
   "author": "gunlinux",
   "license": "MIT",
   "devDependencies": {
-    "copy-webpack-plugin": "^13.0.1",
-    "css-loader": "^6.10.0",
-    "css-minimizer-webpack-plugin": "^5.0.1",
-    "mini-css-extract-plugin": "^2.8.0",
-    "resolve-url-loader": "^5.0.0",
-    "webpack": "^5.90.0",
-    "webpack-cli": "^5.1.0"
+    "esbuild": "^0.28.2"
   }
 }

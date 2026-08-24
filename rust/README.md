@@ -67,18 +67,18 @@ A `.env` file in the working directory is also loaded (via `dotenvy`).
 
 ## Static assets
 
-CSS is built by the existing webpack pipeline — it is **not** compiled by
-cargo. Run it from the repo root:
+CSS is built with esbuild — it is **not** compiled by cargo. Run it from the
+repo root:
 
 ```sh
-make css-build          # = npm install && npx webpack --mode production
+make css-build          # = npm install && npm run build (esbuild)
 ```
 
 The output goes to `app/static/dist` (e.g. `css/bundle.css`). The server serves
 `STATIC_DIR` at runtime, so point it at `app/static` (the default) and the
-webpack `dist/` subdirectory is picked up automatically.
+esbuild `dist/` subdirectory is picked up automatically.
 
-- **Docker image:** the build context must already contain the webpack output —
+- **Docker image:** the build context must already contain the esbuild output —
   run `make css-build` before `docker build`. CI/deploy pipelines must build
   CSS before invoking the Docker build.
 - **Local runs:** run `make css-build` once, or point `STATIC_DIR` at a
