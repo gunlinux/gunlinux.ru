@@ -21,6 +21,8 @@ NEW_UNIT="gunlinux-ru"
 
 cd "$REPO_DIR" || exit 1
 
+TAG="${DEPLOY_TAG:?DEPLOY_TAG is required (commit short SHA)}"
+
 # The server's git remote historically pointed at the wrong repo
 # (gunlinux.org); enforce the real one so `git fetch` always pulls this repo.
 git remote set-url origin git@github.com:gunlinux/gunlinux.ru.git
@@ -43,7 +45,8 @@ fi
 # the unit) feeds both into the container; unknown keys are ignored by the
 # Rust settings loader.
 if ! grep -q '^DATABASE_URL=' .env; then
-    DSN="$(grep '^SQLALCHEMY_DATABASE_URI=' .env | cut -d= -f2-)"
+    # `tr -d '"'`: strip the pydantic-style quotes the legacy values carry.
+    DSN="$(grep '^SQLALCHEMY_DATABASE_URI=' .env | cut -d= -f2- | tr -d '"')"
     if [ -n "$DSN" ]; then
         printf '\nDATABASE_URL=%s\n' "$DSN" >> .env
         echo "Added DATABASE_URL to .env (copied from SQLALCHEMY_DATABASE_URI)."
@@ -52,13 +55,28 @@ if ! grep -q '^DATABASE_URL=' .env; then
     fi
 fi
 
-# --- 3. Install the unit with the commit-hash tag baked in --------------------
-TAG="${DEPLOY_TAG:?DEPLOY_TAG is required (commit short SHA)}"
+# docker --env-file does NOT strip quotes (unlike systemd EnvironmentFile);
+# normalize any remaining KEY="value" lines so the container gets clean env
+# (a quoted DATABASE_URL made sqlx fail to parse the connection string).
+sed -i -E 's/^([A-Z_]+)="(.*)"$/\1=\2/' .env || true
+
+# --- 3. Materialize the CI-built CSS bundle for nginx -------------------------
+# app/static/dist is gitignored (absent after the git reset above) and the
+# server has no npm, so `make css-build` cannot run here. Extract the bundle
+# from the image instead — nginx serves /static from disk, and the image
+# always carries the exact bundle CI built.
+docker pull "$IMAGE:$TAG" >/dev/null
+CID="$(docker create "$IMAGE:$TAG")"
+rm -rf app/static/dist
+docker cp "$CID:/app/static/dist" app/static/
+docker rm "$CID" >/dev/null
+
+# --- 4. Install the unit with the commit-hash tag baked in --------------------
 sed -e "s|@IMAGE_TAG@|$TAG|g" deploy/gunlinux-ru.service \
     | sudo tee "/etc/systemd/system/$NEW_UNIT.service" >/dev/null
 sudo systemctl daemon-reload
 
-# --- 4. Swap services ---------------------------------------------------------
+# --- 5. Swap services ---------------------------------------------------------
 # Stop+disable the legacy Python app (`|| true`: idempotent — fine if it is
 # already stopped/disabled on a re-run).
 sudo systemctl disable --now "$OLD_UNIT" || true

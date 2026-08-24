@@ -29,6 +29,8 @@ GitHub push to master
           └─ ssh loki@gunlinux.ru:187 → bash .github/deploy.sh
                ├─ git fetch + reset --hard origin/master   (guard: rust/ + deploy/ present)
                ├─ append DATABASE_URL to .env if missing   (Flask-name → Rust-name)
+               ├─ unquote .env values                      (docker --env-file keeps quotes)
+               ├─ extract app/static/dist from the image   (server has no npm; nginx serves from disk)
                ├─ install deploy/gunlinux-ru.service with @IMAGE_TAG@ = <sha7>
                ├─ systemctl disable --now gunlinux.ru       (legacy, file kept)
                └─ systemctl enable --now gunlinux-ru        (docker run --network host)
