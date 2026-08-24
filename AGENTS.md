@@ -119,9 +119,17 @@ line.
 
 - `rust/Dockerfile` (multi-stage; templates are embedded via `include_dir!`,
   static assets copied from `app/static` — `make css-build` must run first).
-- `.github/deploy.sh` + `deploy/gunlinux-ru.service` + `deploy/CUTOVER.md`:
-  the cutover is **executed manually by the operator** — do not deploy to the
-  production server from here. The cutover commit must ship the deploy.sh
-  rewrite + deploy.yaml trigger swap together.
-- CI: `rust-ci.yaml` (fmt, clippy, test, postgres-parity, browser-e2e);
-  `deploy.yaml` triggers on the Rust workflow on master.
+- **Deploys are automated:** pushing to `master` runs the `Rust` quality-gate
+  workflow (fmt, clippy, test, postgres-parity, browser-e2e); on success the
+  `Deploy to Server` workflow builds the image, pushes it to the **public**
+  Docker Hub repo `gunlinux/gunlinux.ru` tagged with the commit short SHA
+  (+ `latest`), and runs `.github/deploy.sh` on the server over SSH
+  (`loki@gunlinux.ru:187`). Secrets required: `DOCKERHUB_USERNAME`,
+  `DOCKERHUB_TOKEN`, `PRIVATE_KEY_SSH`.
+- The server runs the container with `--network host` via the systemd unit
+  `deploy/gunlinux-ru.service` (legacy Python unit `gunlinux.ru` is kept for
+  rollback); env comes from the host `.env` via docker `--env-file`.
+  `deploy/CUTOVER.md` is the runbook (backup, smoke tests, nginx `/static`
+  root edit, rollback).
+- Do not push to `origin/master` without the user asking — every master push
+  deploys to production.

@@ -1,0 +1,77 @@
+name: Deploy to Server
+
+# Fires when the "Rust" quality-gate workflow passes on master: build the
+# Docker image, push it to Docker Hub tagged with the commit short SHA (plus
+# `latest`), then run .github/deploy.sh on the production server over SSH.
+#
+# The image is PUBLIC (gunlinux/gunlinux.ru) — no registry credentials are
+# needed on the server; it just `docker pull`s the tagged image.
+
+on:
+  workflow_run:
+    workflows: ["Rust"]
+    branches: [master]
+    types:
+      - completed
+
+permissions:
+  contents: read
+
+env:
+  IMAGE: gunlinux/gunlinux.ru
+
+jobs:
+  build-and-deploy:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the tested commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      # app/static/dist is gitignored build output; the image COPYs it, so it
+      # must exist before docker build (same requirement as local builds).
+      - name: Build CSS bundle
+        run: make css-build
+
+      - name: Compute image tag
+        id: tag
+        env:
+          RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: echo "sha7=${RUN_SHA:0:7}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: rust/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ steps.tag.outputs.sha7 }}
+            ${{ env.IMAGE }}:latest
+
+      - name: Set up SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.PRIVATE_KEY_SSH }}
+
+      # SSH port 187 is the server's non-standard port (see deploy/CUTOVER.md).
+      # The script runs from stdin (`bash -s`) with the tag exported so the
+      # remote shell can bake it into the systemd unit.
+      - name: Deploy to server
+        env:
+          DEPLOY_TAG: ${{ steps.tag.outputs.sha7 }}
+        run: |
+          ssh -o StrictHostKeyChecking=no -p 187 "loki@gunlinux.ru" \
+            "DEPLOY_TAG=$DEPLOY_TAG bash -s" < .github/deploy.sh

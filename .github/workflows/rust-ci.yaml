@@ -1,0 +1,77 @@
+name: Rust
+
+# Quality gate for the Rust (axum) workspace. Runs on every push/PR; the
+# "Deploy to Server" workflow triggers on this workflow's success on master
+# (workflow_run), so anything merged to master that passes here ships.
+#
+# The default test suite serves the real esbuild bundle from app/static/dist
+# (gitignored), so CI builds the CSS before running cargo tests.
+
+on: [push, pull_request]
+
+defaults:
+  run:
+    working-directory: rust
+
+jobs:
+  fmt:
+    name: Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Pin to the project toolchain (cargo 1.96, matching rust/Dockerfile) —
+      # rustfmt output is version-sensitive and must match contributors.
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.96.0
+      - run: cargo fmt --check
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.96.0
+      - run: cargo clippy --workspace -- -D warnings
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.96.0
+      - name: Build CSS bundle
+        working-directory: .
+        run: make css-build
+      - run: cargo test --workspace
+
+  postgres-parity:
+    name: Postgres parity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.96.0
+      # Spins up a scratch Postgres via testcontainers (or TEST_DATABASE_URL)
+      # and runs the shared persistence suite against it.
+      - run: cargo test -p persistence --features postgres-parity
+
+  browser-e2e:
+    name: Browser e2e
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.96.0
+      # Browser tests load the vendored htmx from /static; the bundle must
+      # exist even though the browser tests don't assert on CSS.
+      - name: Build CSS bundle
+        working-directory: .
+        run: make css-build
+      - run: cargo test -p web --features browser-tests --test test_browser
