@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1
 #
 # Multi-stage build for the Rust server (axum port of gunlinux.ru).
+# PostgreSQL only — SQLite support was removed from the workspace.
 #
 # Build from the REPO ROOT so the context contains both `rust/` and `app/`:
 #
@@ -12,15 +13,18 @@
 # include_dir! must live inside `rust/crates/` (they travel via `COPY rust/crates/`).
 
 # ---------------------------------------------------------------- builder --
-FROM rust:1.96-slim AS builder
+# Alpine-based builder: the host IS musl, so `cargo build --release` produces a
+# fully static musl binary for the build platform with no cross-compilation or
+# target flags (x86_64 in CI, arm64 on Apple Silicon — buildx drives the arch).
+# gcc + musl-dev are needed only for `ring` (C/asm sources, pulled in by
+# jsonwebtoken and rustls); SQLite removal means no bundled-C toolchain beyond
+# that (aws-lc-rs/cmake lives only in the browser-test lockfile closure, never
+# compiled here).
+FROM rust:1.96-alpine AS builder
 
 WORKDIR /build
 
-# C compiler needed to compile the bundled SQLite (libsqlite3-sys "bundled",
-# pulled in via sea-orm's sqlx-sqlite feature — no system libsqlite3 needed).
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends gcc \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache gcc musl-dev
 
 # Cache-friendly dependency layer: copy manifests + lockfile first and build
 # against stub sources, so the (large) dependency tree compiles once and is
@@ -47,25 +51,19 @@ RUN find crates -type f -name '*.rs' -exec touch {} + \
     && cp target/release/server /build/server
 
 # ---------------------------------------------------------------- runtime --
-FROM debian:bookworm-slim AS runtime
+FROM alpine:3.22 AS runtime
 
 # ca-certificates: harmless to include (outbound HTTPS not used server-side
-# today, but keeps the image safe for future external fetches).
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+# today, but keeps the image safe for future external fetches). DATABASE_URL
+# is NOT defaulted here — the server requires it (PostgreSQL only) and
+# production feeds it via docker --env-file from the host `.env`.
+RUN apk add --no-cache ca-certificates
 
 WORKDIR /app
 
-# Non-root user, mirroring the Python Dockerfile (UID 10000).
+# Non-root user, mirroring the Python Dockerfile (UID 10000). Busybox adduser.
 ARG UID=10000
-RUN adduser \
-    --disabled-password \
-    --gecos "" \
-    --home "/app" \
-    --shell "/sbin/nologin" \
-    --uid "${UID}" \
-    appuser
+RUN adduser -D -h "/app" -s "/sbin/nologin" -u "${UID}" appuser
 
 # Static assets (CSS/JS/fonts/images). `app/static/dist` is the esbuild output
 # directory; copying it here keeps the image self-contained.
@@ -73,13 +71,7 @@ COPY app/static /app/static
 
 COPY --from=builder /build/server /app/server
 
-ENV DATABASE_URL=sqlite:///app/tmp/prod.db?mode=rwc
 ENV STATIC_DIR=/app/static
-
-# SQLite database directory (a volume mounted at /app/tmp in production
-# shadows this). Chown so the non-root user can write it.
-RUN mkdir -p /app/tmp \
-    && chown -R appuser:appuser /app
 
 EXPOSE 8000
 

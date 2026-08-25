@@ -28,11 +28,11 @@ async fn main() -> anyhow::Result<()> {
 
     let settings = Arc::new(web::settings::get_settings().clone());
 
-    // The DB URL is read from the environment directly (plain `sqlite://` or
-    // `postgres://` URL). `settings.database_url` keeps the pydantic-style
-    // `sqlite+aiosqlite://...` default for parity and is not usable here.
-    let database_url =
-        std::env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite://./tmp/dev.db".to_string());
+    // PostgreSQL only (SQLite support was removed). DATABASE_URL is required —
+    // the server has no embedded-DB fallback; production and dev both supply
+    // it (host `.env` via docker --env-file, or the repo `.env` for local runs).
+    let database_url = std::env::var("DATABASE_URL")
+        .context("DATABASE_URL must be set (postgres:// connection string)")?;
 
     let db = persistence::pool::connect(&database_url)
         .await

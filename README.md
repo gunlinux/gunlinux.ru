@@ -4,8 +4,8 @@
 # gunlinux.ru
 
 Personal blog, rewritten in **Rust** (axum). Server-rendered HTML with **htmx**
-for progressive enhancement, a repository-trait admin panel, PostgreSQL in
-production (SQLite in dev/tests).
+for progressive enhancement, a repository-trait admin panel, **PostgreSQL
+everywhere** (SQLite support was removed from the workspace).
 
 The original FastAPI/Python implementation was migrated to Rust in a staged
 rewrite — see [`plan.md`](plan.md) for the migration plan and
@@ -24,7 +24,7 @@ rust/                Cargo workspace — the application
 app/static/          esbuild output + sources (CSS/img/upload) — served at /static
 deploy/              systemd unit + production cutover runbook (CUTOVER.md)
 scripts/parity/      Python-vs-Rust parity harness (archived; golden results in results.md)
-.github/workflows/   rust-ci.yaml (fmt/clippy/test/postgres-parity/browser-e2e), deploy.yaml
+.github/workflows/   rust-ci.yaml (fmt/clippy/test incl. postgres suite/browser-e2e), deploy.yaml
 ```
 
 ## Architecture
@@ -35,7 +35,7 @@ route (axum handlers) → service (structs) → repository (async traits) → en
 ```
 
 - **Web:** Axum + tower-http (static files) on Tokio.
-- **ORM/DB:** SeaORM (SQLx underneath); PostgreSQL in prod, SQLite in dev/tests.
+- **ORM/DB:** SeaORM (SQLx underneath); PostgreSQL only.
 - **Templates:** Minijinja — 16 templates ported from Jinja2; htmx dual-mode
   rendering (full page vs fragment based on the `HX-Request` header).
 - **Auth:** JWT in a signed `session` cookie; bcrypt password hashes (existing
@@ -52,29 +52,30 @@ route (axum handlers) → service (structs) → repository (async traits) → en
 
 - Rust **1.96** (pinned in CI; rustfmt output is version-sensitive)
 - Node + npm (only for `make css-build`)
-- Docker (optional — Postgres parity tests via testcontainers)
+- Docker (required for the persistence test suite via testcontainers, or set
+  `TEST_DATABASE_URL` to a Postgres instance)
 
 ## Quick start
 
 ```sh
 make css-build                                  # esbuild CSS (app/static/dist)
 cd rust
-DATABASE_URL='sqlite:///tmp/gunlinux-dev.db?mode=rwc' cargo run -p server
+DATABASE_URL='postgres://postgres:postgres@localhost:5432/gunlinux' cargo run -p server
 # or: make rust-run
 ```
 
 Notes:
 
-- `sqlite://` URLs need `?mode=rwc` — sqlx cannot create a missing file.
-- The server applies the baseline migration on startup (also on PostgreSQL;
-  the production cutover *stamps* it rather than re-running schema creation).
-- The dev default `sqlite://./tmp/dev.db` only works because the file exists.
+- `DATABASE_URL` is **required** and must be a `postgres://` URL — the server
+  has no embedded-DB fallback.
+- The server applies the baseline migration on startup; the production
+  cutover *stamps* it rather than re-running schema creation.
 
 ## Configuration (env vars / `.env`)
 
 | Var | Default | Used by |
 |---|---|---|
-| `DATABASE_URL` | `sqlite://./tmp/dev.db` | server (DB connection) |
+| `DATABASE_URL` | *(required)* | server (DB connection, `postgres://`) |
 | `BIND_ADDR` | `0.0.0.0:8000` | server (listen address) |
 | `STATIC_DIR` | `app/static` | web (static file root) |
 | `SECRET_KEY` | dev-only default | web (session cookie signing) |
@@ -87,21 +88,22 @@ Notes:
 
 ```sh
 make check                        # fmt + clippy + full workspace tests
-cd rust && cargo test --workspace # default suite (SQLite)
+cd rust && cargo test --workspace # web tests (in-memory fakes) + persistence suite (scratch Postgres 16)
 ```
 
 Feature-gated suites (default `cargo test` never compiles them):
 
-- `cargo test -p persistence --features postgres-parity` — the same repository
-  suite against real PostgreSQL (testcontainers locally, or set
-  `TEST_DATABASE_URL` for CI). Catches SQLite↔Postgres divergence.
 - `cargo test -p web --features browser-tests --test test_browser` — real
   headless-Chrome htmx swap tests (needs a browser; downloads one on demand).
+
+The persistence suite provisions per-test scratch PostgreSQL 16 databases —
+via testcontainers locally (needs Docker), or the CI `postgres:16` service
+container when `TEST_DATABASE_URL` is set.
 
 ## Deployment
 
 - Image: `docker build -f rust/Dockerfile -t gunlinux-rust .` (multi-stage;
-  requires `app/static/dist` from `make css-build`).
+  Alpine musl static build — requires `app/static/dist` from `make css-build`).
 - Deploy script: `.github/deploy.sh` (builds the image on the server, installs
   the systemd unit `gunlinux-ru`, swaps off the legacy service).
 - **Production cutover:** follow [`deploy/CUTOVER.md`](deploy/CUTOVER.md)

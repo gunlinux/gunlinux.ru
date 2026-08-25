@@ -1,9 +1,14 @@
 //! Port of `tests/test_repositories.py` — repository CRUD/finder tests run
-//! against a temp-file SQLite database with the baseline migration applied.
+//! against a real PostgreSQL 16 with the baseline migration applied.
+//!
+//! Postgres is resolved from `TEST_DATABASE_URL` when set (CI service
+//! container), otherwise via a `postgres:16` testcontainer. Every test gets a
+//! fresh scratch database with the baseline migration applied by the real
+//! `Migrator`, so this suite also verifies
+//! `m20260101_000001_create_schema` is Postgres-correct.
 //!
 //! The test bodies live in `common::suite`; this file only wires them to a
-//! SQLite database (default, fast, CI). The same bodies run against real
-//! PostgreSQL in `parity_postgres.rs` (feature `postgres-parity`).
+//! migrated scratch database.
 
 mod common;
 
@@ -11,66 +16,77 @@ use common::suite;
 
 #[tokio::test]
 async fn test_post_crud() {
-    let (db, _file) = common::sqlite_db().await;
-    suite::post_crud(&db).await;
+    let test_db = common::postgres::provision().await;
+    suite::post_crud(&test_db.db).await;
+    common::postgres::cleanup(test_db).await;
 }
 
 #[tokio::test]
 async fn test_post_update_not_found_is_notfound() {
-    let (db, _file) = common::sqlite_db().await;
-    suite::post_update_not_found_is_notfound(&db).await;
+    let test_db = common::postgres::provision().await;
+    suite::post_update_not_found_is_notfound(&test_db.db).await;
+    common::postgres::cleanup(test_db).await;
 }
 
 #[tokio::test]
 async fn test_post_duplicate_alias_is_conflict() {
-    let (db, _file) = common::sqlite_db().await;
-    suite::post_duplicate_alias_is_conflict(&db).await;
+    let test_db = common::postgres::provision().await;
+    suite::post_duplicate_alias_is_conflict(&test_db.db).await;
+    common::postgres::cleanup(test_db).await;
 }
 
 #[tokio::test]
 async fn test_post_published() {
-    let (db, _file) = common::sqlite_db().await;
-    suite::post_published(&db).await;
+    let test_db = common::postgres::provision().await;
+    suite::post_published(&test_db.db).await;
+    common::postgres::cleanup(test_db).await;
 }
 
 #[tokio::test]
 async fn test_post_tag_relations_and_page_queries() {
-    let (db, _file) = common::sqlite_db().await;
-    suite::post_tag_relations_and_page_queries(&db).await;
+    let test_db = common::postgres::provision().await;
+    suite::post_tag_relations_and_page_queries(&test_db.db).await;
+    common::postgres::cleanup(test_db).await;
 }
 
 #[tokio::test]
 async fn test_tag_crud() {
-    let (db, _file) = common::sqlite_db().await;
-    suite::tag_crud(&db).await;
+    let test_db = common::postgres::provision().await;
+    suite::tag_crud(&test_db.db).await;
+    common::postgres::cleanup(test_db).await;
 }
 
 #[tokio::test]
 async fn test_user_crud() {
-    let (db, _file) = common::sqlite_db().await;
-    suite::user_crud(&db).await;
+    let test_db = common::postgres::provision().await;
+    suite::user_crud(&test_db.db).await;
+    common::postgres::cleanup(test_db).await;
 }
 
 #[tokio::test]
 async fn test_user_authenticate() {
-    let (db, _file) = common::sqlite_db().await;
-    suite::user_authenticate(&db).await;
+    let test_db = common::postgres::provision().await;
+    suite::user_authenticate(&test_db.db).await;
+    common::postgres::cleanup(test_db).await;
 }
 
 #[tokio::test]
 async fn test_category_crud() {
-    let (db, _file) = common::sqlite_db().await;
-    suite::category_crud(&db).await;
+    let test_db = common::postgres::provision().await;
+    suite::category_crud(&test_db.db).await;
+    common::postgres::cleanup(test_db).await;
 }
 
 #[tokio::test]
 async fn test_icon_crud() {
-    let (db, _file) = common::sqlite_db().await;
-    suite::icon_crud(&db).await;
+    let test_db = common::postgres::provision().await;
+    suite::icon_crud(&test_db.db).await;
+    common::postgres::cleanup(test_db).await;
 }
 
 #[tokio::test]
 async fn test_visit_repo() {
-    let (db, _file) = common::sqlite_db().await;
-    suite::visit_repo(&db).await;
+    let test_db = common::postgres::provision().await;
+    suite::visit_repo(&test_db.db).await;
+    common::postgres::cleanup(test_db).await;
 }

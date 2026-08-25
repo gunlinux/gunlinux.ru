@@ -6,3 +6,10 @@ members = [
     "crates/web",
     "crates/server",
 ]
+
+# Small, deployment-friendly release binary: strip symbols, thin LTO, single
+# codegen unit. The Docker image is the only release consumer.
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true

@@ -32,7 +32,7 @@ cargo build --release -p server     # binary: rust/target/release/server
 
 ```sh
 cd rust
-cargo test --workspace              # default suite (98 tests; SQLite scratch DBs)
+cargo test --workspace              # web tests (in-memory fakes) + persistence suite (scratch Postgres 16; needs Docker or TEST_DATABASE_URL)
 cargo fmt --check
 cargo clippy --workspace -- -D warnings
 ```
@@ -44,21 +44,21 @@ exist in the root Makefile.)
 
 ```sh
 cd rust
-DATABASE_URL="sqlite:///tmp/gunlinux-dev.db?mode=rwc" \
+DATABASE_URL="postgres://postgres:postgres@localhost:5432/gunlinux" \
 SECRET_KEY="change-me" \
 STATIC_DIR="../app/static" \
 cargo run -p server
 ```
 
-The server binds `0.0.0.0:8000`. Note `sqlite://` URLs need `?mode=rwc` —
-sqlx cannot create a missing DB file (the code default `sqlite://./tmp/dev.db`
-only works because the file already exists).
+The server binds `0.0.0.0:8000`. `DATABASE_URL` is **required** (PostgreSQL
+only — SQLite support was removed) and is usually supplied by the repo `.env`
+(`postgres://...`); the migrations run against it on startup.
 
 ## Environment variables
 
 | Variable             | Default                        | Purpose                                              |
 |----------------------|--------------------------------|------------------------------------------------------|
-| `DATABASE_URL`       | `sqlite://./tmp/dev.db` (code); `sqlite:///app/tmp/prod.db?mode=rwc` (Docker image) | SQLx connection string (SQLite or PostgreSQL); absolute sqlite paths need 3 slashes + `?mode=rwc` |
+| `DATABASE_URL`       | *(required — no default)*      | PostgreSQL connection string (`postgres://...`)      |
 | `SECRET_KEY`         | *(dev default in code)*        | Signs JWT tokens / session cookies                   |
 | `STATIC_DIR`         | `app/static` (code); `/app/static` (Docker image) | Directory served at `/static`                        |
 | `YANDEX_VERIFICATION`| *(empty)*                      | Yandex site-verification meta tag content            |
@@ -94,12 +94,12 @@ Build from the repo root (context needs both `rust/` and `app/`):
 ```sh
 docker build -f rust/Dockerfile -t gunlinux-rust:0.2.0 .
 docker run --rm -p 8000:8000 \
-  -v "$PWD/tmp:/app/tmp" \
+  -e DATABASE_URL="postgres://postgres:postgres@host.docker.internal:5432/gunlinux" \
   gunlinux-rust:0.2.0
 ```
 
-The image is self-contained: multi-stage (builder compiles `server` in
-release, runtime is `debian:bookworm-slim` with just the binary + `app/static`),
-runs as the non-root `appuser`, listens on `0.0.0.0:8000`, and defaults to a
-SQLite database at `/app/tmp/prod.db` (mount a volume at `/app/tmp` to
-persist it).
+The image is self-contained: multi-stage (Alpine builder compiles `server`
+with the musl target into a **fully static binary**, runtime is a tiny
+`alpine` image with just the binary + `app/static`), runs as the non-root
+`appuser`, and listens on `0.0.0.0:8000`. `DATABASE_URL` (PostgreSQL) is
+required at runtime — production feeds it via docker `--env-file`.

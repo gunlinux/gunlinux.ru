@@ -33,7 +33,7 @@ impl Default for Settings {
         Self {
             env: "development".to_string(),
             secret_key: "hard-to-guess-string-change-in-production".to_string(),
-            database_url: "sqlite+aiosqlite:///./tmp/dev.db".to_string(),
+            database_url: "postgres://postgres:postgres@localhost:5432/gunlinux".to_string(),
             yandex_verification: None,
             jwt_algorithm: "HS256".to_string(),
             jwt_expire_minutes: 60 * 24,
@@ -72,11 +72,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn defaults_match_python() {
+    fn defaults() {
         let s = Settings::default();
         assert_eq!(s.env, "development");
         assert_eq!(s.secret_key, "hard-to-guess-string-change-in-production");
-        assert_eq!(s.database_url, "sqlite+aiosqlite:///./tmp/dev.db");
+        assert_eq!(
+            s.database_url,
+            "postgres://postgres:postgres@localhost:5432/gunlinux"
+        );
         assert_eq!(s.yandex_verification, None);
         assert_eq!(s.jwt_algorithm, "HS256");
         assert_eq!(s.jwt_expire_minutes, 1440);

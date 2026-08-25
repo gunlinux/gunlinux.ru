@@ -178,7 +178,9 @@ ssh gunlinux 'docker exec -i db pg_restore -U gunlinux -d gunlinux --clean --if-
 2. **Markdown drift** — `comrak` vs python-markdown rendering differs
    slightly (raw-HTML pass-through, fenced_code). Parity is pinned by the
    test suites; judge any drift on `/` and `/posts` acceptable.
-3. **SQLite↔Postgres divergence** — guarded by the postgres-parity suite.
+3. **Postgres-only** — SQLite support was removed; the persistence suite runs
+   against scratch PostgreSQL 16 databases (testcontainers or
+   `TEST_DATABASE_URL`), pinning the schema and repository behavior.
 4. **Route ordering** — the catch-all `GET /{alias}` is registered last
    (never shadows `/tags`, `/admin`, `/static`); pinned by route tests.
 5. **`.env` parsing** — docker `--env-file` parses `KEY=VALUE` lines with

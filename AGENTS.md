@@ -6,10 +6,10 @@ Guidance for AI coding assistants working in this repository.
 
 `gunlinux.ru` is a personal blog written in **Rust** (axum). Server-rendered
 HTML over **htmx** (dual-mode: full page vs fragment based on the `HX-Request`
-header), a custom admin panel built on repository traits, PostgreSQL in
-production, SQLite in dev/tests. The Python/FastAPI implementation was
-migrated to Rust in a staged rewrite; the Python code is **removed** (Stage 9
-complete). Key documents:
+header), a custom admin panel built on repository traits, **PostgreSQL
+everywhere** (SQLite support was removed from the workspace). The
+Python/FastAPI implementation was migrated to Rust in a staged rewrite; the
+Python code is **removed** (Stage 9 complete). Key documents:
 
 - [`plan.md`](plan.md) — the migration plan (history, stages, risks, DoD).
 - [`MIGRATION_CONTRACT.md`](MIGRATION_CONTRACT.md) — the **frozen HTTP/htmx/
@@ -23,13 +23,13 @@ complete). Key documents:
 All through the Makefile (see `rust/README.md` for details):
 
 - `make check` — full gate: `cargo fmt --check` + `clippy -D warnings` +
-  `cargo test --workspace` (run before considering work done).
+  `cargo test --workspace` (run before considering work done; the persistence
+  suite needs Docker or `TEST_DATABASE_URL` — PostgreSQL only).
 - `make css-build` — esbuild CSS build (output `app/static/dist`).
-- `make rust-run` — `cargo run -p server` (reads `DATABASE_URL`; sqlite URLs
-  need `?mode=rwc`).
-- Feature-gated suites: `cargo test -p persistence --features postgres-parity`
-  (needs Docker or `TEST_DATABASE_URL`) and `cargo test -p web --features
-  browser-tests --test test_browser` (needs Chrome; downloads one on demand).
+- `make rust-run` — `cargo run -p server` (reads `DATABASE_URL`, required,
+  `postgres://` URL from env or repo `.env`).
+- Feature-gated suites: `cargo test -p web --features browser-tests --test
+  test_browser` (needs Chrome; downloads one on demand).
 
 ## Workspace layout & layering (critical)
 
@@ -46,8 +46,8 @@ route (axum handlers) → service (structs) → repository (async traits) → en
   depend on persistence/web.
 - **`persistence`** — SeaORM entities, the baseline migration
   (`m20260101_000001_create_schema`), and the concrete repository impls.
-  Repos are backend-agnostic over `DatabaseConnection` (both `sqlx-sqlite`
-  and `sqlx-postgres` always enabled).
+  Backend is PostgreSQL (`sqlx-postgres`); repos are backend-agnostic over
+  `DatabaseConnection`.
 - **`web`** — the axum app. **MUST NOT depend on `persistence`**: data access
   happens only through `Arc<dyn ...Repository>` trait objects in `AppState`
   (see `web/src/app.rs`). Tests fake the traits with in-memory repos.
@@ -90,8 +90,8 @@ line.
   hash). Registered at both `/admin` and `/admin/` (bare `/admin` → 302 login
   is a deliberate, documented improvement over the Python 404). Every write
   invalidates the cache.
-- **Markdown drift / SQLite↔Postgres divergence:** known risks (§5 of
-  plan.md) — the postgres-parity suite and MIGRATION_CONTRACT.md guard them.
+- **Markdown drift:** known risk (§5 of plan.md) — `MIGRATION_CONTRACT.md`
+  and the tests guard it.
 - **Known faithful quirks (do NOT "fix" them — they match the Python
   reference):** drafts leak into `/tags/{alias}` listings; `users.authenticated`
   is never enforced at login; some queries have no ORDER BY (DB-dependent
@@ -99,12 +99,15 @@ line.
 
 ## Testing conventions
 
-- Default suite: SQLite scratch DBs (temp files, `?mode=rwc`), `#[tokio::test]`
-  with `tower::ServiceExt` against the axum router (see `rust/crates/web/tests/
-  common/` for the app builder + seed helpers).
-- `persistence` shares one suite body between SQLite and Postgres
-  (`tests/common/suite.rs`); the Postgres side provisions a scratch DB per
-  test and drops it after. `TEST_DATABASE_URL` skips testcontainers.
+- Web tests: in-memory fake repos driving the axum router with
+  `tower::ServiceExt` (see `rust/crates/web/tests/common/` for the app
+  builder + seed helpers); no database required.
+- `persistence` runs one suite body (`tests/common/suite.rs`) against scratch
+  PostgreSQL 16 databases — provisioned per test, dropped after
+  (`tests/common/postgres.rs`). Postgres is resolved from `TEST_DATABASE_URL`
+  when set (CI service container), otherwise via a testcontainers
+  `postgres:16` container, so `make check` needs Docker (or
+  `TEST_DATABASE_URL`) locally.
 - Browser tests use chromiumoxide + the system Chrome (or a downloaded
   build); they assert on real htmx `afterSwap` events, never sleeps.
 - Feature flags must keep the default `cargo test` compile graph unchanged —
@@ -115,17 +118,18 @@ line.
 
 `web/src/settings.rs` (config + dotenvy, cached in a `OnceLock`): `ENV`,
 `SECRET_KEY`, `YANDEX_VERIFICATION`, `JWT_ALGORITHM`,
-`JWT_EXPIRE_MINUTES`. Server: `DATABASE_URL` (default `sqlite://./tmp/dev.db`),
-`BIND_ADDR` (default `0.0.0.0:8000`), `STATIC_DIR` (default `app/static`),
-`RUST_LOG` (default `info`). `database_url` in settings is informational only —
-`server` owns the real connection.
+`JWT_EXPIRE_MINUTES`. Server: `DATABASE_URL` (required — no default;
+`postgres://` URL), `BIND_ADDR` (default `0.0.0.0:8000`), `STATIC_DIR`
+(default `app/static`), `RUST_LOG` (default `info`). `database_url` in
+settings is informational only — `server` owns the real connection.
 
 ## Deployment
 
 - `rust/Dockerfile` (multi-stage; templates are embedded via `include_dir!`,
   static assets copied from `app/static` — `make css-build` must run first).
+  Alpine builder → fully static musl binary → tiny `alpine` runtime image.
 - **Deploys are automated:** pushing to `master` runs the `Rust` quality-gate
-  workflow (fmt, clippy, test, postgres-parity, browser-e2e); on success the
+  workflow (fmt, clippy, test incl. postgres suite, browser-e2e); on success the
   `Deploy to Server` workflow builds the image, pushes it to the **public**
   Docker Hub repo `gunlinuxloki/gunlinux.ru` tagged with the commit short SHA
   (+ `latest`), and runs `.github/deploy.sh` on the server over SSH

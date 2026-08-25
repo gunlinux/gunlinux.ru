@@ -1,8 +1,8 @@
 //! The repository CRUD/finder suite — backend-agnostic test bodies.
 //!
 //! Port of `tests/test_repositories.py`. Each `pub async fn` takes a migrated
-//! `&DatabaseConnection` and is invoked by both the SQLite and the Postgres
-//! parity test files, so behavior is pinned identically on both backends.
+//! `&DatabaseConnection`; `tests/repositories.rs` wires each body to a fresh
+//! scratch PostgreSQL database (per-test `provision` + `cleanup`).
 
 use chrono::{DateTime, Utc};
 use domain::repositories::{

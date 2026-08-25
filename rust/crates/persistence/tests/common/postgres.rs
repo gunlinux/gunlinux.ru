@@ -1,5 +1,4 @@
-//! PostgreSQL scratch-database provisioning for the parity suite (feature
-//! `postgres-parity`, plan.md §3 Thread A).
+//! PostgreSQL scratch-database provisioning for the repository suite.
 //!
 //! Postgres 16 is resolved from `TEST_DATABASE_URL` when set (GitHub Actions
 //! service container), otherwise a `postgres:16` container is started via
