@@ -5,7 +5,7 @@ use chrono::{DateTime, Utc};
 use sea_orm::sea_query::{Expr, JoinType};
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, FromQueryResult, QueryFilter,
-    QueryOrder, QuerySelect, RelationTrait, Set,
+    QueryOrder, QuerySelect, RelationTrait, Set, TransactionTrait,
 };
 
 use domain::repositories::{PostRepository as PostRepoTrait, Repository};
@@ -269,5 +269,27 @@ impl PostRepoTrait for PostRepository {
                 .flatten()
                 .max()
         }))
+    }
+
+    /// Replace the `posts_tags` links for a post. Runs in a transaction so a
+    /// partial write cannot leave the post with a stale subset of tags.
+    async fn set_tags_for_post(&self, post_id: i32, tag_ids: &[i32]) -> Result<(), RepoError> {
+        let txn = self.db.begin().await.map_err(translate_err)?;
+        posts_tag::Entity::delete_many()
+            .filter(posts_tag::Column::PostId.eq(post_id))
+            .exec(&txn)
+            .await
+            .map_err(translate_err)?;
+        for tag_id in tag_ids {
+            posts_tag::ActiveModel {
+                post_id: Set(post_id),
+                tag_id: Set(*tag_id),
+            }
+            .insert(&txn)
+            .await
+            .map_err(translate_err)?;
+        }
+        txn.commit().await.map_err(translate_err)?;
+        Ok(())
     }
 }

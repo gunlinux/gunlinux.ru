@@ -1,30 +1,61 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{% if is_create %}Create{% else %}Edit{% endif %} {{ model.name }} — Admin</title>
-<link rel="stylesheet" href="/static/dist/css/bundle.css">
-</head>
-<body>
-<h1>{% if is_create %}Create{% else %}Edit{% endif %} {{ model.name }}</h1>
-<p><a href="/admin/{{ model.slug }}/">← Back to {{ model.name_plural }}</a></p>
-{% if error %}<p style="color:#c00">{{ error }}</p>{% endif %}
-<form method="post" action="{{ action }}">
+{% extends "admin/layout.html" %}
+
+{% block title %}{% if is_create %}Create{% else %}Edit{% endif %} {{ model.name }}{% endblock %}
+
+{% block styles %}
+{% if model.slug == "post" %}
+<link rel="stylesheet" href="/static/vendor/easymde/easymde.min.css">
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if model.slug == "post" %}
+<script src="/static/vendor/easymde/easymde.min.js"></script>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-head">
+  <h1 class="admin-title">{% if is_create %}Create{% else %}Edit{% endif %} {{ model.name }}</h1>
+  <a class="admin-btn" href="/admin/{{ model.slug }}/">← Back to {{ model.name_plural }}</a>
+</div>
+{% if error %}<div class="admin-alert admin-alert--error">{{ error }}</div>{% endif %}
+<form method="post" action="{{ action }}" class="admin-form">
 {% for field in fields %}
   {% if not is_create and field in model.form_excluded %}{% continue %}{% endif %}
-  <p>
-    <label>{{ field }}</label>
+  <div class="admin-field">
+    <label class="admin-field__label" for="field-{{ field }}">{{ field }}</label>
     {% if field in textareas %}
-      <br><textarea name="{{ field }}" rows="10" cols="80">{{ values[field]|default("") }}</textarea>
+      <textarea id="field-{{ field }}" name="{{ field }}" rows="16">{{ values[field]|default("") }}</textarea>
     {% elif field in checkboxes %}
-      <br><input type="checkbox" name="{{ field }}" {% if values[field] %}checked{% endif %}>
+      <label class="admin-check"><input type="checkbox" name="{{ field }}" {% if values[field] %}checked{% endif %}> {{ field }}</label>
+    {% elif field == "category_id" and options[field]|length > 0 %}
+      <select id="field-{{ field }}" name="{{ field }}">
+        <option value="">— none —</option>
+        {% for opt in options[field] %}
+        <option value="{{ opt.value }}" {% if values[field] == opt.value %}selected{% endif %}>{{ opt.label }}</option>
+        {% endfor %}
+      </select>
+    {% elif field == "tags" and options[field]|length > 0 %}
+      <div class="admin-chips">
+        {% for opt in options[field] %}
+        <label class="admin-chip">
+          <input type="checkbox" name="tag_check" value="{{ opt.value }}" data-tag {% if opt.value in values["tags"]|default([]) %}checked{% endif %}>
+          <span>{{ opt.label }}</span>
+        </label>
+        {% endfor %}
+      </div>
+      <input type="hidden" name="tags" value="">
+    {% elif field == "publishedon" %}
+      <input id="field-{{ field }}" type="datetime-local" name="{{ field }}" value="{{ values[field]|default("") }}">
+      <span class="admin-field__hint">Local time; stored as UTC.</span>
     {% else %}
-      <br><input type="text" name="{{ field }}" value="{{ values[field]|default("") }}">
+      <input id="field-{{ field }}" type="text" name="{{ field }}" value="{{ values[field]|default("") }}">
     {% endif %}
-  </p>
+  </div>
 {% endfor %}
-<button type="submit">Save</button>
+<div class="admin-form__actions">
+  <button type="submit" class="admin-btn admin-btn--primary">Save</button>
+</div>
 </form>
-</body>
-</html>
+{% endblock %}

@@ -691,6 +691,15 @@ mod fakes {
                 .filter_map(|p| p.update_date.or(p.createdon).or(p.publishedon))
                 .max())
         }
+
+        async fn set_tags_for_post(&self, post_id: i32, tag_ids: &[i32]) -> Result<(), RepoError> {
+            let mut store = self.store.lock().unwrap();
+            store.post_tags.retain(|(pid, _)| *pid != post_id);
+            for tag_id in tag_ids {
+                store.post_tags.push((post_id, *tag_id));
+            }
+            Ok(())
+        }
     }
 
     // -----------------------------------------------------------------------

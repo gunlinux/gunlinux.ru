@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Admin{% endblock %} — gunlinux.ru</title>
+<link rel="stylesheet" href="/static/dist/css/bundle.css">
+<link rel="stylesheet" href="/static/admin/admin.css">
+{% block styles %}{% endblock %}
+</head>
+<body class="admin">
+<div class="admin-shell">
+  {% block sidebar %}
+  <aside class="admin-sidebar">
+    <div class="admin-brand">@gunlinux <span>admin</span></div>
+    <nav class="admin-nav">
+      <a href="/admin" class="admin-nav__link">Dashboard</a>
+      {% for m in models %}
+      <a href="/admin/{{ m.slug }}/" class="admin-nav__link">{{ m.name_plural }}</a>
+      {% endfor %}
+    </nav>
+    <div class="admin-sidebar__footer">
+      <a href="/" class="admin-nav__link">← View site</a>
+      <a href="/admin/logout" class="admin-nav__link">Logout</a>
+    </div>
+  </aside>
+  {% endblock %}
+  <main class="admin-main">
+    {% block content %}{% endblock %}
+  </main>
+</div>
+<script src="/static/vendor/htmx.min.js"></script>
+{% block scripts %}{% endblock %}
+<script src="/static/admin/admin.js"></script>
+</body>
+</html>

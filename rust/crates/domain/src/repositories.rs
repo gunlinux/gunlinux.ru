@@ -33,6 +33,9 @@ pub trait PostRepository: Repository<Post, i32> {
     /// `update_date` (falling back to `createdon`/`publishedon` for legacy
     /// rows), or `None` when the table is empty.
     async fn latest_update(&self) -> Result<Option<DateTime<Utc>>, RepoError>;
+    /// Replace the `posts_tags` links for a post with the given tag ids
+    /// (delete-then-insert). Callers must pass ids that exist in `tags`.
+    async fn set_tags_for_post(&self, post_id: i32, tag_ids: &[i32]) -> Result<(), RepoError>;
 }
 
 #[async_trait]

@@ -65,8 +65,8 @@ pub static CATEGORY_MODEL: AdminModel = AdminModel {
     name_plural: "Categories",
     slug: "category",
     columns: &["id", "title", "alias", "page"],
-    searchable: &[],
-    sortable: &[],
+    searchable: &["title", "alias"],
+    sortable: &["id", "title"],
     form_excluded: &[],
 };
 
@@ -75,8 +75,8 @@ pub static TAG_MODEL: AdminModel = AdminModel {
     name_plural: "Tags",
     slug: "tag",
     columns: &["id", "title", "alias"],
-    searchable: &[],
-    sortable: &[],
+    searchable: &["title", "alias"],
+    sortable: &["id", "title"],
     form_excluded: &[],
 };
 
@@ -85,8 +85,8 @@ pub static USER_MODEL: AdminModel = AdminModel {
     name_plural: "Users",
     slug: "user",
     columns: &["id", "name", "createdon"],
-    searchable: &[],
-    sortable: &[],
+    searchable: &["name"],
+    sortable: &["id", "name"],
     form_excluded: &["password"],
 };
 
@@ -95,8 +95,8 @@ pub static ICON_MODEL: AdminModel = AdminModel {
     name_plural: "Icons",
     slug: "icon",
     columns: &["id", "title", "url"],
-    searchable: &[],
-    sortable: &[],
+    searchable: &["title"],
+    sortable: &["id", "title"],
     form_excluded: &[],
 };
 
@@ -115,6 +115,15 @@ pub enum InputKind {
     Text,
     Textarea,
     Checkbox,
+    Select,
+    CheckboxGroup,
+}
+
+/// One `<option>` / checkbox chip in a select or multi-select field.
+#[derive(Debug, Clone, Serialize)]
+pub struct FormOption {
+    pub value: String,
+    pub label: String,
 }
 
 /// A trait-object view over one entity's repository, exposing the operations
@@ -126,6 +135,12 @@ pub trait AdminStore: Send + Sync {
     fn descriptor(&self) -> &'static AdminModel;
     fn form_fields(&self) -> &'static [&'static str];
     fn input_kind(&self, field: &str) -> InputKind;
+
+    /// Option lists for select/checkbox fields (categories, tags, ...).
+    /// Defaults to nothing; only stores with relational fields override it.
+    async fn options(&self, _field: &str) -> Result<Vec<FormOption>, WebError> {
+        Ok(Vec::new())
+    }
 
     async fn list_rows(
         &self,
@@ -155,6 +170,7 @@ fn filter_and_sort_rows(
     model: &AdminModel,
     search: Option<&str>,
     sort: Option<&str>,
+    descending: bool,
 ) -> Vec<JsonValue> {
     let mut rows = rows;
     if let Some(q) = search.map(str::to_lowercase).filter(|q| !q.is_empty()) {
@@ -171,6 +187,9 @@ fn filter_and_sort_rows(
     match sort_field {
         Some(field) => rows.sort_by(|a, b| cmp_json(a.get(field), b.get(field))),
         None => rows.sort_by(|a, b| cmp_json(a.get("id"), b.get("id"))),
+    }
+    if descending {
+        rows.reverse();
     }
     rows
 }
@@ -212,6 +231,18 @@ fn checkbox_fields(store: &dyn AdminStore) -> Vec<&'static str> {
         .collect()
 }
 
+/// Option lists for every form field (only select/checkbox-group fields get
+/// entries).
+async fn collect_options(
+    store: &dyn AdminStore,
+) -> Result<HashMap<&'static str, Vec<FormOption>>, WebError> {
+    let mut map = HashMap::new();
+    for field in store.form_fields() {
+        map.insert(*field, store.options(field).await?);
+    }
+    Ok(map)
+}
+
 /// Parse a datetime from the form. Empty → None. Accepts RFC3339
 /// (`2026-01-01T12:00:00Z`) and naive `YYYY-MM-DDTHH:MM[:SS]` (assumed UTC).
 fn parse_datetime_field(s: &str) -> Option<DateTime<Utc>> {
@@ -241,6 +272,19 @@ fn hash_form_password(password: &str) -> Result<String, WebError> {
 
 pub struct PostStore {
     repo: Arc<dyn PostRepository>,
+    tags: Arc<dyn TagRepository>,
+    categories: Arc<dyn CategoryRepository>,
+}
+
+impl PostStore {
+    /// Parse the comma-joined tag ids submitted by the hidden `tags` input
+    /// (maintained by admin.js from the checkbox chips).
+    fn tag_ids(form: &HashMap<String, String>) -> Vec<i32> {
+        get(form, "tags")
+            .split(',')
+            .filter_map(|s| s.trim().parse::<i32>().ok())
+            .collect()
+    }
 }
 
 pub struct CategoryStore {
@@ -271,14 +315,43 @@ impl AdminStore for PostStore {
             "content",
             "publishedon",
             "category_id",
+            "tags",
             "is_page",
         ]
     }
     fn input_kind(&self, field: &str) -> InputKind {
         match field {
             "content" => InputKind::Textarea,
+            "category_id" => InputKind::Select,
+            "tags" => InputKind::CheckboxGroup,
             "is_page" => InputKind::Checkbox,
             _ => InputKind::Text,
+        }
+    }
+
+    async fn options(&self, field: &str) -> Result<Vec<FormOption>, WebError> {
+        match field {
+            "category_id" => {
+                let cats = self.categories.get_all().await?;
+                Ok(cats
+                    .iter()
+                    .map(|c| FormOption {
+                        value: c.id.map(|i| i.to_string()).unwrap_or_default(),
+                        label: format!("{} ({})", c.title, c.alias),
+                    })
+                    .collect())
+            }
+            "tags" => {
+                let tags = self.tags.get_all().await?;
+                Ok(tags
+                    .iter()
+                    .map(|t| FormOption {
+                        value: t.id.map(|i| i.to_string()).unwrap_or_default(),
+                        label: t.title.clone(),
+                    })
+                    .collect())
+            }
+            _ => Ok(Vec::new()),
         }
     }
 
@@ -288,11 +361,35 @@ impl AdminStore for PostStore {
         sort: Option<&str>,
     ) -> Result<Vec<JsonValue>, WebError> {
         let rows = self.repo.get_all().await?.iter().map(to_json).collect();
-        Ok(filter_and_sort_rows(rows, self.descriptor(), search, sort))
+        Ok(filter_and_sort_rows(
+            rows,
+            self.descriptor(),
+            search,
+            sort,
+            false,
+        ))
     }
 
     async fn get_row(&self, id: i32) -> Result<Option<JsonValue>, WebError> {
-        Ok(self.repo.get_by_id(id).await?.map(|p| to_json(&p)))
+        let Some(post) = self.repo.get_by_id(id).await? else {
+            return Ok(None);
+        };
+        let mut row = to_json(&post);
+        // Normalize the relational fields to strings so the template can
+        // compare them against option values, and expose the post's tags.
+        if let Some(obj) = row.as_object_mut() {
+            if let Some(cid) = obj.get("category_id").and_then(JsonValue::as_i64) {
+                obj.insert("category_id".into(), JsonValue::String(cid.to_string()));
+            }
+            let tags = self.repo.get_tags_for_post(id).await?;
+            let ids: Vec<JsonValue> = tags
+                .iter()
+                .filter_map(|t| t.id)
+                .map(|i| JsonValue::String(i.to_string()))
+                .collect();
+            obj.insert("tags".into(), JsonValue::Array(ids));
+        }
+        Ok(Some(row))
     }
 
     async fn create_from_form(&self, form: &HashMap<String, String>) -> Result<(), WebError> {
@@ -309,7 +406,12 @@ impl AdminStore for PostStore {
             is_page: checkbox(form, "is_page"),
             user_id: None,
         };
-        self.repo.create(&post).await?;
+        let created = self.repo.create(&post).await?;
+        if let Some(id) = created.id {
+            self.repo
+                .set_tags_for_post(id, &Self::tag_ids(form))
+                .await?;
+        }
         Ok(())
     }
 
@@ -333,10 +435,16 @@ impl AdminStore for PostStore {
             user_id: existing.user_id,
         };
         self.repo.update(&post).await?;
+        self.repo
+            .set_tags_for_post(id, &Self::tag_ids(form))
+            .await?;
         Ok(())
     }
 
     async fn delete(&self, id: i32) -> Result<bool, WebError> {
+        // `posts_tags` FKs have no ON DELETE action; clear the links first or
+        // Postgres rejects the delete with an FK violation.
+        self.repo.set_tags_for_post(id, &[]).await?;
         Ok(self.repo.delete(id).await?)
     }
 }
@@ -362,7 +470,13 @@ impl AdminStore for CategoryStore {
         sort: Option<&str>,
     ) -> Result<Vec<JsonValue>, WebError> {
         let rows = self.repo.get_all().await?.iter().map(to_json).collect();
-        Ok(filter_and_sort_rows(rows, self.descriptor(), search, sort))
+        Ok(filter_and_sort_rows(
+            rows,
+            self.descriptor(),
+            search,
+            sort,
+            false,
+        ))
     }
 
     async fn get_row(&self, id: i32) -> Result<Option<JsonValue>, WebError> {
@@ -438,7 +552,13 @@ impl AdminStore for TagStore {
         sort: Option<&str>,
     ) -> Result<Vec<JsonValue>, WebError> {
         let rows = self.repo.get_all().await?.iter().map(to_json).collect();
-        Ok(filter_and_sort_rows(rows, self.descriptor(), search, sort))
+        Ok(filter_and_sort_rows(
+            rows,
+            self.descriptor(),
+            search,
+            sort,
+            false,
+        ))
     }
 
     async fn get_row(&self, id: i32) -> Result<Option<JsonValue>, WebError> {
@@ -496,7 +616,13 @@ impl AdminStore for UserStore {
         sort: Option<&str>,
     ) -> Result<Vec<JsonValue>, WebError> {
         let rows = self.repo.get_all().await?.iter().map(to_json).collect();
-        Ok(filter_and_sort_rows(rows, self.descriptor(), search, sort))
+        Ok(filter_and_sort_rows(
+            rows,
+            self.descriptor(),
+            search,
+            sort,
+            false,
+        ))
     }
 
     async fn get_row(&self, id: i32) -> Result<Option<JsonValue>, WebError> {
@@ -565,7 +691,13 @@ impl AdminStore for IconStore {
         sort: Option<&str>,
     ) -> Result<Vec<JsonValue>, WebError> {
         let rows = self.repo.get_all().await?.iter().map(to_json).collect();
-        Ok(filter_and_sort_rows(rows, self.descriptor(), search, sort))
+        Ok(filter_and_sort_rows(
+            rows,
+            self.descriptor(),
+            search,
+            sort,
+            false,
+        ))
     }
 
     async fn get_row(&self, id: i32) -> Result<Option<JsonValue>, WebError> {
@@ -618,6 +750,8 @@ pub fn admin_store_for(state: &AppState, model: &str) -> Option<Box<dyn AdminSto
     match model {
         "post" | "posts" => Some(Box::new(PostStore {
             repo: state.posts.clone(),
+            tags: state.tags.clone(),
+            categories: state.categories.clone(),
         })),
         "category" | "categories" => Some(Box::new(CategoryStore {
             repo: state.categories.clone(),
@@ -677,10 +811,19 @@ async fn dashboard(
     if admin_username(&state, &headers).is_none() {
         return Ok(redirect_to_login());
     }
+    let mut counts = HashMap::new();
+    counts.insert("post", state.posts.get_all().await?.len());
+    counts.insert("category", state.categories.get_all().await?.len());
+    counts.insert("tag", state.tags.get_all().await?.len());
+    counts.insert("user", state.users.get_all().await?.len());
+    counts.insert("icon", state.icons.get_all().await?.len());
     let body = render(
         &state.templates,
         "admin/dashboard.html",
-        context! { models => ALL_MODELS },
+        context! {
+            models => ALL_MODELS,
+            counts => counts,
+        },
     )?;
     Ok(html_response(body))
 }
@@ -726,6 +869,9 @@ async fn logout() -> Response {
     resp
 }
 
+/// Rows per list page.
+const PAGE_SIZE: usize = 25;
+
 async fn list(
     State(state): State<AppState>,
     Path(model): Path<String>,
@@ -740,16 +886,39 @@ async fn list(
     };
     let search = params.get("search").map(String::as_str);
     let sort = params.get("sort").map(String::as_str);
-    let rows = store.list_rows(search, sort).await?;
-    let body = render(
-        &state.templates,
-        "admin/list.html",
-        context! {
-            model => store.descriptor(),
-            rows => rows,
-            search => params.get("search").cloned().unwrap_or_default(),
-        },
-    )?;
+    let descending = params.get("dir").is_some_and(|d| d == "desc");
+    let mut rows = store.list_rows(search, sort).await?;
+    if descending {
+        rows.reverse();
+    }
+    let total = rows.len();
+    let pages = total.div_ceil(PAGE_SIZE).max(1);
+    let page = params
+        .get("page")
+        .and_then(|p| p.parse::<usize>().ok())
+        .unwrap_or(1)
+        .clamp(1, pages);
+    let start = (page - 1) * PAGE_SIZE;
+    let page_rows: Vec<JsonValue> = rows.into_iter().skip(start).take(PAGE_SIZE).collect();
+
+    let ctx = context! {
+        model => store.descriptor(),
+        models => ALL_MODELS,
+        rows => page_rows,
+        search => params.get("search").cloned().unwrap_or_default(),
+        sort => sort.unwrap_or(""),
+        dir => if descending { "desc" } else { "asc" },
+        page => page,
+        pages => pages,
+        total => total,
+    };
+    // htmx requests (search-as-you-type, pagination) swap only the table.
+    let template = if headers.contains_key(header::HeaderName::from_static("hx-request")) {
+        "admin/list_table.html"
+    } else {
+        "admin/list.html"
+    };
+    let body = render(&state.templates, template, ctx)?;
     Ok(html_response(body))
 }
 
@@ -764,14 +933,17 @@ async fn create_form(
     let Some(store) = admin_store_for(&state, &model) else {
         return Ok(crate::routes::not_found());
     };
+    let options = collect_options(store.as_ref()).await?;
     let body = render(
         &state.templates,
         "admin/form.html",
         context! {
             model => store.descriptor(),
+            models => ALL_MODELS,
             fields => store.form_fields(),
             textareas => textarea_fields(store.as_ref()),
             checkboxes => checkbox_fields(store.as_ref()),
+            options => options,
             values => JsonValue::Object(Default::default()),
             action => format!("/admin/{}/create", store.descriptor().slug),
             is_create => true,
@@ -798,7 +970,7 @@ async fn create(
             state.cache.clear_namespace(cache::NAMESPACE).await;
             Ok(redirect(&format!("/admin/{}/", store.descriptor().slug)))
         }
-        Err(e) => render_form_error(&state, store.as_ref(), &form, None, e),
+        Err(e) => render_form_error(&state, store.as_ref(), &form, None, e).await,
     }
 }
 
@@ -816,14 +988,17 @@ async fn edit_form(
     let Some(values) = store.get_row(id).await? else {
         return Ok(crate::routes::not_found());
     };
+    let options = collect_options(store.as_ref()).await?;
     let body = render(
         &state.templates,
         "admin/form.html",
         context! {
             model => store.descriptor(),
+            models => ALL_MODELS,
             fields => store.form_fields(),
             textareas => textarea_fields(store.as_ref()),
             checkboxes => checkbox_fields(store.as_ref()),
+            options => options,
             values => values,
             action => format!("/admin/{}/{id}/edit", store.descriptor().slug),
             is_create => false,
@@ -850,7 +1025,7 @@ async fn edit(
             state.cache.clear_namespace(cache::NAMESPACE).await;
             Ok(redirect(&format!("/admin/{}/", store.descriptor().slug)))
         }
-        Err(e) => render_form_error(&state, store.as_ref(), &form, Some(id), e),
+        Err(e) => render_form_error(&state, store.as_ref(), &form, Some(id), e).await,
     }
 }
 
@@ -873,7 +1048,7 @@ async fn delete(
 /// Re-render the create/edit form with the error message (like sqladmin's
 /// flash), preserving the submitted field values. `NotFound` maps to a plain
 /// 404 page.
-fn render_form_error(
+async fn render_form_error(
     state: &AppState,
     store: &dyn AdminStore,
     form: &HashMap<String, String>,
@@ -886,9 +1061,22 @@ fn render_form_error(
             let mut map = serde_json::Map::new();
             for field in store.form_fields() {
                 if let Some(v) = form.get(*field) {
-                    map.insert(field.to_string(), JsonValue::String(v.clone()));
+                    // The hidden `tags` input is comma-joined; split it back
+                    // into the array the checkbox chips expect.
+                    let value = if *field == "tags" {
+                        JsonValue::Array(
+                            v.split(',')
+                                .filter_map(|s| s.trim().parse::<i32>().ok())
+                                .map(|i| JsonValue::String(i.to_string()))
+                                .collect(),
+                        )
+                    } else {
+                        JsonValue::String(v.clone())
+                    };
+                    map.insert(field.to_string(), value);
                 }
             }
+            let options = collect_options(store).await?;
             let action = match id {
                 Some(id) => format!("/admin/{}/{id}/edit", store.descriptor().slug),
                 None => format!("/admin/{}/create", store.descriptor().slug),
@@ -898,9 +1086,11 @@ fn render_form_error(
                 "admin/form.html",
                 context! {
                     model => store.descriptor(),
+                    models => ALL_MODELS,
                     fields => store.form_fields(),
                     textareas => textarea_fields(store),
                     checkboxes => checkbox_fields(store),
+                    options => options,
                     values => JsonValue::Object(map),
                     action => action,
                     is_create => id.is_none(),

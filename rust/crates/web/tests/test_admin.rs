@@ -4,15 +4,27 @@
 mod common;
 
 use axum::http::StatusCode;
+use chrono::TimeZone;
 use common::{
     body_text, expect_status, get, get_with_cookie, login_cookie, post_form_with_cookie,
-    seed_published_post, seed_user, test_app,
+    seed_published_post, seed_tag, seed_user, test_app,
 };
 
 #[tokio::test]
 async fn test_admin_post_list() {
     let (store, app) = test_app();
     seed_user(&store, "admin", "pw");
+    let published = chrono::Utc.with_ymd_and_hms(2024, 12, 4, 13, 1, 0).unwrap();
+    seed_published_post(&store, "Dated", "dated", "x");
+    {
+        let mut store = store.lock().unwrap();
+        store
+            .posts
+            .iter_mut()
+            .find(|p| p.alias == "dated")
+            .unwrap()
+            .publishedon = Some(published);
+    }
     let cookie = login_cookie(&app, "admin", "pw").await;
 
     let body = expect_status(
@@ -21,6 +33,10 @@ async fn test_admin_post_list() {
     )
     .await;
     assert!(body.contains("pagetitle"));
+    // publishedon goes through the strftime filter; the %m directive must be
+    // substituted, never leaked literally.
+    assert!(body.contains("2024-12-04 13:01"), "got: {body}");
+    assert!(!body.contains("%m"));
 }
 
 #[tokio::test]
@@ -250,6 +266,256 @@ async fn test_markdown_multipart() {
     let text = body_text(resp).await;
     let json: serde_json::Value = serde_json::from_str(&text).unwrap();
     assert!(json["data"].as_str().unwrap().contains("<h1>Multi</h1>"));
+}
+
+#[tokio::test]
+async fn test_admin_create_post_sets_tags() {
+    let (store, app) = test_app();
+    seed_user(&store, "admin", "pw");
+    seed_tag(&store, "Ops", "ops");
+    let cookie = login_cookie(&app, "admin", "pw").await;
+
+    let form =
+        "pagetitle=Tagged&alias=tagged&content=%23+Hi&publishedon=&category_id=&tags=2&is_page=";
+    let resp = post_form_with_cookie(&app, "/admin/post/create", form, &cookie).await;
+    assert_eq!(resp.status(), StatusCode::SEE_OTHER);
+
+    let post_id = {
+        let store = store.lock().unwrap();
+        store
+            .posts
+            .iter()
+            .find(|p| p.alias == "tagged")
+            .unwrap()
+            .id
+            .unwrap()
+    };
+    let links = {
+        let store = store.lock().unwrap();
+        store.post_tags.clone()
+    };
+    assert_eq!(links, vec![(post_id, 2)]);
+}
+
+#[tokio::test]
+async fn test_admin_edit_post_replaces_tags() {
+    let (store, app) = test_app();
+    seed_user(&store, "admin", "pw");
+    seed_published_post(&store, "Tagged", "tagged", "x");
+    seed_tag(&store, "Old", "old");
+    seed_tag(&store, "New", "new");
+    let post_id = {
+        let mut store = store.lock().unwrap();
+        let id = store
+            .posts
+            .iter()
+            .find(|p| p.alias == "tagged")
+            .unwrap()
+            .id
+            .unwrap();
+        // Old tag is linked (id 3), New is not (id 4).
+        store.post_tags.push((id, 3));
+        id
+    };
+    let cookie = login_cookie(&app, "admin", "pw").await;
+
+    let form =
+        "pagetitle=Tagged&alias=tagged&content=updated&publishedon=&category_id=&tags=4&is_page=";
+    let resp =
+        post_form_with_cookie(&app, &format!("/admin/post/{post_id}/edit"), form, &cookie).await;
+    assert_eq!(resp.status(), StatusCode::SEE_OTHER);
+
+    let links = {
+        let store = store.lock().unwrap();
+        store.post_tags.clone()
+    };
+    assert_eq!(links, vec![(post_id, 4)]);
+}
+
+#[tokio::test]
+async fn test_admin_delete_post_clears_tag_links() {
+    let (store, app) = test_app();
+    seed_user(&store, "admin", "pw");
+    seed_published_post(&store, "Doomed", "doomed-tags", "x");
+    seed_tag(&store, "T", "t");
+    let post_id = {
+        let mut store = store.lock().unwrap();
+        let id = store
+            .posts
+            .iter()
+            .find(|p| p.alias == "doomed-tags")
+            .unwrap()
+            .id
+            .unwrap();
+        store.post_tags.push((id, 3));
+        id
+    };
+    let cookie = login_cookie(&app, "admin", "pw").await;
+
+    let resp =
+        post_form_with_cookie(&app, &format!("/admin/post/{post_id}/delete"), "", &cookie).await;
+    assert_eq!(resp.status(), StatusCode::SEE_OTHER);
+
+    let store = store.lock().unwrap();
+    assert!(store.posts.iter().all(|p| p.alias != "doomed-tags"));
+    assert!(store.post_tags.is_empty(), "join rows must be cleared");
+}
+
+#[tokio::test]
+async fn test_admin_list_pagination() {
+    let (store, app) = test_app();
+    seed_user(&store, "admin", "pw");
+    for i in 1..=30 {
+        seed_published_post(&store, &format!("Post {i}"), &format!("post-{i}"), "x");
+    }
+    let cookie = login_cookie(&app, "admin", "pw").await;
+
+    // Page 1: 25 rows, no "Next" page 2 content yet.
+    let page1 = expect_status(
+        get_with_cookie(&app, "/admin/post/", &cookie).await,
+        StatusCode::OK,
+    )
+    .await;
+    assert!(page1.contains("Page 1 of 2"));
+    assert!(page1.contains("· 30 rows"));
+    assert!(page1.contains("Post 1"));
+    assert!(!page1.contains("Post 26"));
+    assert!(page1.contains("page=2"));
+
+    // Page 2: the remaining 5 rows.
+    let page2 = expect_status(
+        get_with_cookie(&app, "/admin/post/?page=2", &cookie).await,
+        StatusCode::OK,
+    )
+    .await;
+    assert!(page2.contains("Page 2 of 2"));
+    assert!(page2.contains("Post 26"));
+    assert!(!page2.contains("Post 1"));
+}
+
+#[tokio::test]
+async fn test_admin_search_on_tags() {
+    let (store, app) = test_app();
+    seed_user(&store, "admin", "pw");
+    seed_tag(&store, "Ops", "ops");
+    seed_tag(&store, "Rust", "rust");
+    let cookie = login_cookie(&app, "admin", "pw").await;
+
+    let body = expect_status(
+        get_with_cookie(&app, "/admin/tag/?search=Ops", &cookie).await,
+        StatusCode::OK,
+    )
+    .await;
+    assert!(body.contains("Ops"));
+    assert!(!body.contains("Rust"));
+}
+
+#[tokio::test]
+async fn test_admin_post_form_widgets() {
+    let (store, app) = test_app();
+    seed_user(&store, "admin", "pw");
+    seed_tag(&store, "Ops", "ops");
+    seed_tag(&store, "Rust", "rust");
+    let mut store = store.lock().unwrap();
+    store.categories.push(domain::Category {
+        id: Some(1),
+        title: "Pages".into(),
+        alias: "pages".into(),
+        template: None,
+        page: Some(true),
+    });
+    drop(store);
+    let cookie = login_cookie(&app, "admin", "pw").await;
+
+    let body = expect_status(
+        get_with_cookie(&app, "/admin/post/create", &cookie).await,
+        StatusCode::OK,
+    )
+    .await;
+    assert!(body.contains("type=\"datetime-local\""));
+    assert!(body.contains("<select id=\"field-category_id\""));
+    assert!(body.contains(">Pages (pages)</option>"));
+    assert!(body.contains("data-tag"));
+    assert!(body.contains("name=\"tags\""));
+    assert!(body.contains("/static/vendor/easymde/easymde.min.css"));
+    assert!(
+        body.contains("/static/vendor/easymde/easymde.min.js"),
+        "markdown editor must be loaded on the post form"
+    );
+    assert!(body.contains("/static/admin/admin.js"));
+
+    // Posts-only: the icon model also has a content textarea but no editor.
+    let body = expect_status(
+        get_with_cookie(&app, "/admin/icon/create", &cookie).await,
+        StatusCode::OK,
+    )
+    .await;
+    assert!(!body.contains("easymde"));
+}
+
+#[tokio::test]
+async fn test_admin_edit_form_checks_linked_tags() {
+    let (store, app) = test_app();
+    seed_user(&store, "admin", "pw");
+    seed_published_post(&store, "Tagged", "tagged", "x");
+    seed_tag(&store, "Old", "old");
+    seed_tag(&store, "New", "new");
+    let post_id = {
+        let mut store = store.lock().unwrap();
+        let id = store
+            .posts
+            .iter()
+            .find(|p| p.alias == "tagged")
+            .unwrap()
+            .id
+            .unwrap();
+        // Tag "Old" (id 3) is linked; "New" (id 4) is not.
+        store.post_tags.push((id, 3));
+        id
+    };
+    let cookie = login_cookie(&app, "admin", "pw").await;
+
+    let body = expect_status(
+        get_with_cookie(&app, &format!("/admin/post/{post_id}/edit"), &cookie).await,
+        StatusCode::OK,
+    )
+    .await;
+    assert!(
+        body.contains("value=\"3\" data-tag checked"),
+        "linked tag checked"
+    );
+    assert!(
+        body.contains("value=\"4\" data-tag >"),
+        "unlinked tag unchecked"
+    );
+}
+
+#[tokio::test]
+async fn test_admin_list_htmx_returns_fragment() {
+    let (store, app) = test_app();
+    seed_user(&store, "admin", "pw");
+    seed_published_post(&store, "Frag", "frag", "x");
+    let cookie = login_cookie(&app, "admin", "pw").await;
+
+    let resp = app
+        .clone()
+        .oneshot(
+            axum::http::Request::builder()
+                .uri("/admin/post/")
+                .header("hx-request", "true")
+                .header("cookie", cookie)
+                .body(axum::body::Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+    let body = body_text(resp).await;
+    assert!(
+        body.starts_with("<div id=\"list-table\""),
+        "fragment only, got: {body}"
+    );
+    assert!(!body.contains("<!DOCTYPE"));
 }
 
 use tower::ServiceExt;

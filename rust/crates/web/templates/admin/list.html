@@ -1,34 +1,17 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{{ model.name_plural }} — Admin</title>
-<link rel="stylesheet" href="/static/dist/css/bundle.css">
-</head>
-<body>
-<h1>{{ model.name_plural }}</h1>
-<p><a href="/admin">← Dashboard</a> | <a href="/admin/{{ model.slug }}/create">Create {{ model.name }}</a></p>
-<form method="get" action="/admin/{{ model.slug }}/">
-  <input type="text" name="search" value="{{ search }}">
-  <button type="submit">Search</button>
+{% extends "admin/layout.html" %}
+
+{% block title %}{{ model.name_plural }}{% endblock %}
+
+{% block content %}
+<div class="admin-page-head">
+  <h1 class="admin-title">{{ model.name_plural }} <span class="admin-title__count">{{ total }}</span></h1>
+  <a class="admin-btn admin-btn--primary" href="/admin/{{ model.slug }}/create">Create {{ model.name }}</a>
+</div>
+<form class="admin-search" method="get" action="/admin/{{ model.slug }}/"
+      hx-get="/admin/{{ model.slug }}/" hx-target="#list-table" hx-swap="outerHTML"
+      hx-push-url="true" hx-trigger="input changed delay:300ms, submit">
+  <input type="search" name="search" value="{{ search }}" placeholder="Search {{ model.name_plural }}…" aria-label="Search">
+  <button type="submit" class="admin-btn">Search</button>
 </form>
-<table border="1" cellpadding="4" cellspacing="0">
-<tr>
-{% for col in model.columns %}<th>{{ col }}</th>{% endfor %}
-<th>Actions</th>
-</tr>
-{% for row in rows %}
-<tr>
-{% for col in model.columns %}<td>{{ row[col] }}</td>{% endfor %}
-<td>
-<a href="/admin/{{ model.slug }}/{{ row.id }}/edit">Edit</a>
-<form method="post" action="/admin/{{ model.slug }}/{{ row.id }}/delete" style="display:inline" onsubmit="return confirm('Delete this row?')">
-<button type="submit">Delete</button>
-</form>
-</td>
-</tr>
-{% endfor %}
-</table>
-</body>
-</html>
+{% include "admin/list_table.html" %}
+{% endblock %}
