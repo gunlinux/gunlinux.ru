@@ -9,6 +9,8 @@
 //            to innerHTML exactly as htmx does; "none" skips the swap)
 //   hx-push-url (true pushes the request URL; a literal value is pushed
 //                verbatim — the logo fetches /posts but pushes "/")
+//   scroll-to-top on click-triggered swaps (load-triggered swaps skip it —
+//                they only fill in the initial render)
 //   htmx:afterSwap event, fired on the swap target (bubbles)
 //   HX-Request / HX-Current-URL request headers — the server keys its
 //   dual-mode rendering (full page vs fragment) off HX-Request
@@ -111,6 +113,13 @@
         // Fire any hx-trigger="load" elements that arrived inside the swap
         // (htmx processes newly-swapped-in content the same way).
         fireLoadRequests(target)
+        // Click-triggered swaps navigate to a new page; open it at the top
+        // instead of carrying the previous page's scroll position over (the
+        // fragment swap otherwise preserves it). Load-triggered swaps only
+        // fill in the initial render and must not scroll.
+        if (parseTriggers(getAttr(elt, 'hx-trigger')).indexOf('load') === -1) {
+          window.scrollTo(0, 0)
+        }
         dispatchAfterSwap(target, elt, url)
       })
       .catch(function (err) {

@@ -10,6 +10,7 @@
             <h3 class="page__title">Посты c тэгом: {{tag.title}}</h3>
         {% endif %}
       <div id="posts" class="posts">
+        {% include 'posts.htmx' %}
       </div>
     </article>
 {% endblock %}

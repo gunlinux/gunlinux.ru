@@ -39,11 +39,14 @@
 //! # What is asserted
 //!
 //! An init script registers a `htmx:afterSwap` listener before any page code
-//! runs, counting swaps whose target is `.page__content`. Each test waits for
-//! that counter (or a DOM condition) instead of sleeping, so htmx's async
-//! requests are always settled before assertions. Dual-mode consistency is
-//! checked by comparing the swapped-in DOM against the fragment the same
-//! endpoint returns for an `HX-Request` at the HTTP level.
+//! runs, counting swaps whose target is `.page__content`, and records the
+//! footer's position at DOMContentLoaded. Each test waits for that counter
+//! (or a DOM condition) instead of sleeping, so htmx's async requests are
+//! always settled before assertions. Dual-mode consistency is checked by
+//! comparing the swapped-in DOM against the fragment the same endpoint
+//! returns for an `HX-Request` at the HTTP level. The footer recording backs
+//! the CLS regression test (the load-triggered swaps must never move the
+//! footer), and the scroll regression test pins the click-to-top behavior.
 
 #![cfg(feature = "browser-tests")]
 
@@ -184,6 +187,7 @@ async fn browser_config(user_data_dir: &Path) -> BrowserConfig {
         .no_sandbox()
         .new_headless_mode()
         .user_data_dir(user_data_dir)
+        .window_size(1280, 720) // deterministic viewport — the scroll test needs a page that overflows
         .arg("--disable-gpu")
         .arg("--disable-dev-shm-usage")
         .arg("--disable-crash-reporter")
@@ -231,7 +235,9 @@ async fn browser_config(user_data_dir: &Path) -> BrowserConfig {
 
 /// Inject a swap counter before ANY page code runs, so load-triggered htmx
 /// requests (`hx-trigger="load"`) are observed too. `htmx:afterSwap` fires
-/// with `event.detail.target` set to the swap target element.
+/// with `event.detail.target` set to the swap target element. The footer's
+/// position is also recorded at DOMContentLoaded — before any load-triggered
+/// fetch can land — so tests can assert that the swaps never move it (CLS).
 const INSTRUMENT: &str = r#"
     window.__htmxSwaps = 0;
     window.__pageContentSwaps = 0;
@@ -241,6 +247,11 @@ const INSTRUMENT: &str = r#"
         if (t && t.classList && t.classList.contains('page__content')) {
             window.__pageContentSwaps += 1;
         }
+    });
+    window.__footerTopAtStart = -1;
+    document.addEventListener('DOMContentLoaded', function () {
+        var f = document.querySelector('.footer');
+        if (f) window.__footerTopAtStart = Math.round(f.getBoundingClientRect().top);
     });
 "#;
 
@@ -343,15 +354,17 @@ async fn index_load_triggers_real_htmx_swaps() {
         "unexpected page title: {title:?}"
     );
 
-    // htmx must have swapped the posts listing into the initially-empty
-    // `.page__content` div (index.html only contains an empty #posts div).
+    // The listing is server-rendered into `.page__content` (index.html
+    // includes the posts inside its `#posts` div — no-JS clients see it too),
+    // and htmx re-swaps the same fragment on load. The swap must still fire
+    // so both load-triggered requests are exercised.
     wait_for(
         &page,
         "document.querySelector('.page__content .minipost__title') !== null",
         SWAP_TIMEOUT,
     )
     .await
-    .expect("posts listing should be swapped into .page__content on load");
+    .expect("posts listing should be present in .page__content");
 
     let swaps = eval_int(&page, "window.__pageContentSwaps")
         .await
@@ -608,6 +621,181 @@ async fn post_page_self_load_swap_matches_fragment() {
     assert!(
         dom.contains("<h2>Self loaded</h2>"),
         "swapped post body should render markdown, got: {dom}"
+    );
+
+    browser.close().await;
+    server.abort();
+}
+
+/// The load-triggered swaps (posts listing + footer icons) must never move
+/// the footer after first paint: the listing is server-rendered into `/` and
+/// the icon row reserves its height, so the fragment re-swaps are no-ops
+/// layout-wise. Regression for the footer CLS (layout shift score ~0.026).
+///
+/// The footer's position is pinned at DOMContentLoaded — before any
+/// load-triggered htmx fetch can land — and must be identical once both swaps
+/// have settled. (Headless Chrome coalesces the load into a single render, so
+/// `layout-shift` entries are unreliable there; comparing the footer's
+/// geometry before/after the swaps is deterministic instead.)
+#[tokio::test(flavor = "multi_thread")]
+async fn load_swaps_do_not_shift_the_footer() {
+    let (store, app) = test_app();
+    seed_published_post(&store, "CLS Post", "cls-post", "Body text.");
+    seed_icon(&store, "github", "https://github.com/example", "gh");
+
+    let (base_url, server) = serve(app.clone()).await;
+    wait_for_server(&base_url).await;
+    let mut browser = TestBrowser::launch().await;
+    let page = browser.new_page().await;
+    page.add_init_script(INSTRUMENT)
+        .await
+        .expect("install instrumentation");
+    page.goto(format!("{base_url}/"))
+        .await
+        .expect("navigate to /");
+    wait_for_htmx(&page).await;
+
+    // The init script must have recorded the footer position at
+    // DOMContentLoaded (before any async fetch could swap content).
+    wait_for(&page, "window.__footerTopAtStart !== -1", SWAP_TIMEOUT)
+        .await
+        .expect("footer position should be recorded at DOMContentLoaded");
+    let footer_top_at_start = eval_int(&page, "window.__footerTopAtStart")
+        .await
+        .expect("footer top at DOMContentLoaded");
+
+    // Both load-triggered swaps must settle before judging: the posts swap
+    // into `.page__content` and the icons swap into `.footer__links`.
+    wait_for(&page, "window.__htmxSwaps === 2", SWAP_TIMEOUT)
+        .await
+        .expect("both load-triggered swaps (posts + icons) should fire");
+    wait_for(
+        &page,
+        "document.querySelector('.footer__links a') !== null",
+        SWAP_TIMEOUT,
+    )
+    .await
+    .expect("footer links should be populated by /hx/icons");
+    wait_for(
+        &page,
+        "document.querySelector('.page__content .minipost__title') !== null",
+        SWAP_TIMEOUT,
+    )
+    .await
+    .expect("posts listing should be present in .page__content");
+
+    let footer_top_now = eval_int(
+        &page,
+        "document.querySelector('.footer') ? Math.round(document.querySelector('.footer').getBoundingClientRect().top) : -1",
+    )
+    .await
+    .unwrap_or(-1);
+    assert_eq!(
+        footer_top_now, footer_top_at_start,
+        "the footer moved after the load-triggered swaps (CLS regression): \
+         at DOMContentLoaded {footer_top_at_start}px, now {footer_top_now}px"
+    );
+
+    browser.close().await;
+    server.abort();
+}
+
+/// Clicking a post link deep in the listing must open the post at the top of
+/// the page, not at the listing's scroll position (the fragment swap would
+/// otherwise carry it over — the reported "opens at previous scroll position"
+/// bug). Regression test for the mini-htmx scroll-to-top behavior.
+#[tokio::test(flavor = "multi_thread")]
+async fn clicking_a_post_link_opens_the_post_at_the_top() {
+    let (store, app) = test_app();
+    // A long post pinned to the oldest publishedon: it sits at the bottom of
+    // the publishedon DESC listing, so clicking it requires scrolling down.
+    // Its page is far taller than any scroll offset the listing can produce,
+    // so a stale scroll position would survive the swap (no clamping).
+    let long_body = "## Long post\n\n".repeat(200);
+    seed_published_post(&store, "Long Post", "long-post", &long_body);
+    {
+        let mut s = store.lock().unwrap();
+        let long = s
+            .posts
+            .iter_mut()
+            .find(|p| p.alias == "long-post")
+            .expect("long post seeded");
+        let old = chrono::DateTime::from_timestamp(0, 0).unwrap();
+        long.publishedon = Some(old);
+        long.update_date = Some(old);
+    }
+    // Enough posts to make the listing itself scrollable.
+    for i in 0..30 {
+        seed_published_post(
+            &store,
+            &format!("Post {i}"),
+            &format!("post-{i}"),
+            "Short body.",
+        );
+    }
+
+    let (base_url, server) = serve(app.clone()).await;
+    wait_for_server(&base_url).await;
+    let mut browser = TestBrowser::launch().await;
+    let page = browser.new_page().await;
+    page.add_init_script(INSTRUMENT)
+        .await
+        .expect("install instrumentation");
+    page.goto(format!("{base_url}/"))
+        .await
+        .expect("navigate to /");
+    wait_for_htmx(&page).await;
+
+    // Wait for the load-triggered listing swap, then scroll to the long post
+    // at the bottom and click it, remembering the scroll offset.
+    wait_for(&page, "window.__pageContentSwaps >= 1", SWAP_TIMEOUT)
+        .await
+        .expect("listing should be swapped into .page__content on load");
+    let scroll_before = eval_int(
+        &page,
+        r#"(function () {
+            var link = document.querySelector('a[href="/long-post"]');
+            if (!link) return -1;
+            link.scrollIntoView();
+            var y = Math.round(window.scrollY);
+            link.click();
+            return y;
+        })()"#,
+    )
+    .await
+    .expect("scroll + click the long post link");
+    assert!(
+        scroll_before > 0,
+        "listing should be scrollable so the click lands below the fold (got scrollY {scroll_before})"
+    );
+
+    // The swap must complete and push the post URL.
+    wait_for(&page, "location.pathname === '/long-post'", SWAP_TIMEOUT)
+        .await
+        .expect("hx-push-url should update the address bar");
+    wait_for(
+        &page,
+        "document.querySelector('.page__content .post__title') !== null",
+        SWAP_TIMEOUT,
+    )
+    .await
+    .expect("post fragment should be swapped in");
+
+    // The post page is tall; a carried-over scroll position would survive.
+    let doc_height = eval_int(&page, "document.documentElement.scrollHeight")
+        .await
+        .unwrap_or(0);
+    assert!(
+        doc_height > scroll_before,
+        "post page should be tall enough to retain a stale scroll (height {doc_height}, offset {scroll_before})"
+    );
+
+    let scroll_after = eval_int(&page, "Math.round(window.scrollY)")
+        .await
+        .unwrap_or(-1);
+    assert_eq!(
+        scroll_after, 0,
+        "post page should open at the top, not at the listing scroll position (scrollY {scroll_after}, was {scroll_before})"
     );
 
     browser.close().await;
