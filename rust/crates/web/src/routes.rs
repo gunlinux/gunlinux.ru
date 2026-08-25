@@ -1,8 +1,10 @@
 //! Route handlers — a port of `app/api/posts.py` + `app/api/tags.py`.
 //!
 //! Behavior contract (frozen from the Python app):
-//! - cacheable GET routes use the moka response cache (TTL 50s, namespace
-//!   `"blog"`); `/sitemap.xml`, `/tags*` and `POST /md/` are NOT cached;
+//! - cacheable GET routes use the response cache (Redis when `REDIS_URL` is
+//!   set, in-memory moka otherwise; namespace `"blog"`); keys carry a content
+//!   version from `posts.update_date` so new/edited posts invalidate cached
+//!   pages instantly. `/sitemap.xml`, `/tags*` and `POST /md/` are NOT cached;
 //! - htmx dual-mode: if the `HX-Request` header is present the htmx fragment
 //!   template is rendered instead of the full page;
 //! - the catch-all `GET /{alias}` returns 404 for missing posts and for
@@ -125,7 +127,10 @@ pub async fn index(
     headers: HeaderMap,
     uri: Uri,
 ) -> Result<Response, WebError> {
-    let key = htmx_key_builder(&path_query(&uri), &headers);
+    let version = PostService::new(state.posts.clone())
+        .latest_update()
+        .await?;
+    let key = htmx_key_builder(&path_query(&uri), &headers, version);
     with_cache(&state.cache, key, || async {
         let pages = nav_pages(&state, &headers).await?;
         let body = render(&state.templates, "index.html", context! { pages => pages })?;
@@ -140,7 +145,10 @@ pub async fn posts(
     headers: HeaderMap,
     uri: Uri,
 ) -> Result<Response, WebError> {
-    let key = htmx_key_builder(&path_query(&uri), &headers);
+    let version = PostService::new(state.posts.clone())
+        .latest_update()
+        .await?;
+    let key = htmx_key_builder(&path_query(&uri), &headers, version);
     with_cache(&state.cache, key, || async {
         let post_service = PostService::new(state.posts.clone());
         let all_posts = post_service.get_all_published_content().await?;
@@ -167,7 +175,10 @@ pub async fn icons_hx(
     headers: HeaderMap,
     uri: Uri,
 ) -> Result<Response, WebError> {
-    let key = htmx_key_builder(&path_query(&uri), &headers);
+    let version = PostService::new(state.posts.clone())
+        .latest_update()
+        .await?;
+    let key = htmx_key_builder(&path_query(&uri), &headers, version);
     with_cache(&state.cache, key, || async {
         let icon_service = IconService::new(state.icons.clone());
         let icons = icon_service.get_all_icons().await?;
@@ -187,7 +198,10 @@ pub async fn robots(
     headers: HeaderMap,
     uri: Uri,
 ) -> Result<Response, WebError> {
-    let key = static_key_builder(&path_query(&uri));
+    let version = PostService::new(state.posts.clone())
+        .latest_update()
+        .await?;
+    let key = static_key_builder(&path_query(&uri), version);
     with_cache(&state.cache, key, || async {
         let content =
             "\nUser-agent: *\nCrawl-delay: 2\nDisallow: /tags/*\nHost: gunlinux.ru\n".to_string();
@@ -218,7 +232,10 @@ pub async fn rss(
     headers: HeaderMap,
     uri: Uri,
 ) -> Result<Response, WebError> {
-    let key = static_key_builder(&path_query(&uri));
+    let version = PostService::new(state.posts.clone())
+        .latest_update()
+        .await?;
+    let key = static_key_builder(&path_query(&uri), version);
     with_cache(&state.cache, key, || async {
         let post_service = PostService::new(state.posts.clone());
         let posts_list = post_service.get_published_posts().await?;
@@ -325,7 +342,10 @@ pub async fn post_view(
     headers: HeaderMap,
     uri: Uri,
 ) -> Result<Response, WebError> {
-    let key = htmx_key_builder(&path_query(&uri), &headers);
+    let version = PostService::new(state.posts.clone())
+        .latest_update()
+        .await?;
+    let key = htmx_key_builder(&path_query(&uri), &headers, version);
     with_cache(&state.cache, key, || async {
         let post_service = PostService::new(state.posts.clone());
         let Some(post) = post_service.get_post_by_alias(&alias).await? else {

@@ -65,7 +65,12 @@ line.
   `/tags`, `/admin`, `/static` are never shadowed. Preserve this.
 - **htmx dual-mode:** `HX-Request` header present → render the `*.htmx`
   fragment, else the full `*.html` page. Cache keys are htmx-aware.
-- **Cache:** moka, 50s TTL, `"blog"` namespace. Admin writes clear the
+- **Cache:** dual backend — Redis when `REDIS_URL` is set (`.env`), in-memory
+  moka otherwise (connect failure falls back with a warning). Keys are
+  content-versioned (`blog:v{max-update}:{uri}:{hx}`, version from
+  `MAX(COALESCE(update_date, createdon, publishedon))`), so new/edited posts
+  invalidate cached pages instantly; 600s TTL is only a safety net. Admin
+  writes clear the
   namespace. `/sitemap.xml`, `/tags*`, `POST /md/` are NOT cached.
 - **404 body:** every 404 returns FastAPI's exact `{"detail":"Not Found"}`
   with `application/json` (parity-pinned; `routes::not_found()`).

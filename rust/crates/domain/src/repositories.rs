@@ -6,6 +6,7 @@
 //! database-platform independent. Tests inject in-memory fakes.
 
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 
 use crate::error::RepoError;
 use crate::{Category, Icon, Post, Tag, User};
@@ -28,6 +29,10 @@ pub trait PostRepository: Repository<Post, i32> {
     async fn get_page_posts(&self) -> Result<Vec<Post>, RepoError>;
     async fn get_posts_by_tag(&self, tag_id: i32) -> Result<Vec<Post>, RepoError>;
     async fn get_tags_for_post(&self, post_id: i32) -> Result<Vec<Tag>, RepoError>;
+    /// Content version for the response cache: the most recent
+    /// `update_date` (falling back to `createdon`/`publishedon` for legacy
+    /// rows), or `None` when the table is empty.
+    async fn latest_update(&self) -> Result<Option<DateTime<Utc>>, RepoError>;
 }
 
 #[async_trait]

@@ -203,3 +203,30 @@ async fn test_cache_serves_cached_body() {
     let second = body_text(get(&app, "/cached-post").await).await;
     assert!(second.contains("First Title"));
 }
+
+#[tokio::test]
+async fn test_cache_revalidates_when_update_date_bumps() {
+    let (store, app) = test_app();
+    seed_published_post(&store, "First Title", "smart-post", "x");
+
+    let first = body_text(get(&app, "/smart-post").await).await;
+    assert!(first.contains("First Title"));
+
+    // A title edit that bumps update_date (as the admin layer does) must
+    // invalidate the cached page on the very next request. Bump by a whole
+    // second: the version key has millisecond resolution and a same-ms bump
+    // would collide with the seed timestamp.
+    {
+        let mut store = store.lock().unwrap();
+        let post = store
+            .posts
+            .iter_mut()
+            .find(|p| p.alias == "smart-post")
+            .unwrap();
+        post.pagetitle = "Changed Title".to_string();
+        post.update_date = Some(chrono::Utc::now() + chrono::Duration::seconds(1));
+    }
+
+    let second = body_text(get(&app, "/smart-post").await).await;
+    assert!(second.contains("Changed Title"));
+}

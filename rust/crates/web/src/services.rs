@@ -3,6 +3,7 @@
 
 use std::sync::Arc;
 
+use chrono::{DateTime, Utc};
 use domain::{
     Category, CategoryRepository, Icon, IconRepository, Post, PostRepository, RepoError, Tag,
     TagRepository, User, UserRepository,
@@ -72,6 +73,11 @@ impl PostService {
 
     pub async fn get_tags_for_post(&self, post_id: i32) -> Result<Vec<Tag>, WebError> {
         Ok(self.repo.get_tags_for_post(post_id).await?)
+    }
+
+    /// Content version for the response cache (see `PostRepository::latest_update`).
+    pub async fn latest_update(&self) -> Result<Option<DateTime<Utc>>, WebError> {
+        Ok(self.repo.latest_update().await?)
     }
 
     pub async fn create_post(&self, post: &Post) -> Result<Post, WebError> {

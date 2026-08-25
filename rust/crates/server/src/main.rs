@@ -13,6 +13,7 @@ use persistence::repositories::{
     UserRepository as SeaUserRepository,
 };
 use web::app::AppState;
+use web::cache::Cache;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -47,7 +48,10 @@ async fn main() -> anyhow::Result<()> {
     let categories: Arc<dyn CategoryRepository> = Arc::new(SeaCategoryRepository::new(db.clone()));
     let icons: Arc<dyn IconRepository> = Arc::new(SeaIconRepository::new(db.clone()));
 
-    let state = AppState::new(posts, tags, users, categories, icons, settings);
+    let mut state = AppState::new(posts, tags, users, categories, icons, settings.clone());
+    // Redis backend when REDIS_URL is set (in `.env` or the environment);
+    // falls back to the in-memory cache otherwise or on connect failure.
+    state.cache = Cache::connect(settings.redis_url.as_deref()).await;
 
     let addr: SocketAddr = std::env::var("BIND_ADDR")
         .unwrap_or_else(|_| "0.0.0.0:8000".to_string())

@@ -524,6 +524,7 @@ mod fakes {
     use std::sync::{Arc, Mutex};
 
     use async_trait::async_trait;
+    use chrono::{DateTime, Utc};
     use domain::{
         Category, CategoryRepository, Icon, IconRepository, Post, PostRepository, RepoError,
         Repository, Tag, TagRepository, User, UserRepository,
@@ -680,6 +681,15 @@ mod fakes {
                 .filter(|t| t.id.is_some_and(|tid| tag_ids.contains(&tid)))
                 .cloned()
                 .collect())
+        }
+
+        async fn latest_update(&self) -> Result<Option<DateTime<Utc>>, RepoError> {
+            let store = self.store.lock().unwrap();
+            Ok(store
+                .posts
+                .iter()
+                .filter_map(|p| p.update_date.or(p.createdon).or(p.publishedon))
+                .max())
         }
     }
 
