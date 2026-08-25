@@ -51,13 +51,7 @@ async fn main() -> anyhow::Result<()> {
     let mut state = AppState::new(posts, tags, users, categories, icons, settings.clone());
     // Redis backend when REDIS_URL is set (in `.env` or the environment);
     // falls back to the in-memory cache otherwise or on connect failure.
-    // CACHE_DISABLED=1 turns the cache off entirely (full render per request).
-    state.cache = if settings.cache_disabled {
-        tracing::info!("response cache disabled (CACHE_DISABLED)");
-        Cache::disabled()
-    } else {
-        Cache::connect(settings.redis_url.as_deref()).await
-    };
+    state.cache = Cache::connect(settings.redis_url.as_deref()).await;
 
     let addr: SocketAddr = std::env::var("BIND_ADDR")
         .unwrap_or_else(|_| "0.0.0.0:8000".to_string())
