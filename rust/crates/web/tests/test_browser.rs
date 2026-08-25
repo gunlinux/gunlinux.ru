@@ -502,6 +502,67 @@ async fn click_post_link_swaps_fragment_and_pushes_url() {
     server.abort();
 }
 
+/// Click the header logo from a post page and prove htmx swaps the home
+/// listing back into `.page__content` and pushes `/` into the address bar
+/// (the logo fetches `/posts` but `hx-push-url="/"` must win).
+#[tokio::test(flavor = "multi_thread")]
+async fn click_logo_returns_home_and_pushes_root_url() {
+    let (store, app) = test_app();
+    seed_published_post(&store, "Logo Post", "logo-post", "## Logo target");
+
+    let (base_url, server) = serve(app.clone()).await;
+    wait_for_server(&base_url).await;
+    let mut browser = TestBrowser::launch().await;
+    let page = browser.new_page().await;
+    page.add_init_script(INSTRUMENT)
+        .await
+        .expect("install instrumentation");
+    page.goto(format!("{base_url}/"))
+        .await
+        .expect("navigate to /");
+    wait_for_htmx(&page).await;
+
+    // Open a post first so the address bar is no longer `/`.
+    wait_for(
+        &page,
+        "document.querySelector('.minipost__title') !== null",
+        SWAP_TIMEOUT,
+    )
+    .await
+    .expect("posts listing should load on /");
+    page.find_element(".minipost__title")
+        .await
+        .expect("find post link")
+        .click()
+        .await
+        .expect("click post link");
+    wait_for(&page, "location.pathname === '/logo-post'", SWAP_TIMEOUT)
+        .await
+        .expect("post link should push its URL");
+
+    // Click the logo: content returns to the home listing and the address
+    // bar must follow.
+    page.find_element(".header__logo")
+        .await
+        .expect("find logo link")
+        .click()
+        .await
+        .expect("click logo");
+    wait_for(&page, "location.pathname === '/'", SWAP_TIMEOUT)
+        .await
+        .expect("logo should push / into the address bar");
+    wait_for(
+        &page,
+        "document.querySelector('.page__content .minipost__title') !== null",
+        SWAP_TIMEOUT,
+    )
+    .await
+    .expect("home listing should be swapped back in");
+
+    browser.close().await;
+    server.abort();
+}
+
 /// Navigate directly to a post page and prove its load-triggered self-load
 /// swap (`hx-get="/{alias}"` with `hx-trigger="load"`) replaces
 /// `.page__content` with the htmx fragment.
