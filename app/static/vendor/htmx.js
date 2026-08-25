@@ -9,19 +9,22 @@
 //            to innerHTML exactly as htmx does; "none" skips the swap)
 //   hx-push-url (true pushes the request URL; a literal value is pushed
 //                verbatim — the logo fetches /posts but pushes "/")
+//   back/forward history restore from an in-memory snapshot cache (htmx
+//                style); URLs without a snapshot fall back to a full load
 //   scroll-to-top on click-triggered swaps (load-triggered swaps skip it —
 //                they only fill in the initial render)
 //   htmx:afterSwap event, fired on the swap target (bubbles)
 //   HX-Request / HX-Current-URL request headers — the server keys its
 //   dual-mode rendering (full page vs fragment) off HX-Request
 //
-// Everything else — forms, hx-boost, history restore, out-of-band swaps,
-// indicators, morphdom, SSE/WS, extensions, the htmx.* JS API — is
-// intentionally absent.
+// Everything else — forms, hx-boost, out-of-band swaps, indicators,
+// morphdom, SSE/WS, extensions, the htmx.* JS API — is intentionally absent.
 //
 // Known deviations from stock htmx:
-//   * hx-push-url pushes into history, but back/forward performs a full page
-//     load (htmx's history-restore cache is not implemented).
+//   * History restore is a session-only in-memory snapshot of
+//     `.page__content` (htmx caches whole pages across sessions); a URL with
+//     no snapshot — e.g. an admin page, whose htmx swaps target `#list-table`
+//     — performs a full page load on back/forward.
 //   * hx-trigger modifiers (once/delay/throttle/...), non-load/click triggers,
 //     extended hx-target selectors (closest/find/next/...), and the
 //     htmx.ajax() API are not supported.
@@ -81,6 +84,47 @@
     }))
   }
 
+  // History restore. Click navigations push a URL via hx-push-url; pressing
+  // back/forward then only fires `popstate` (no reload), so the page must
+  // restore itself. Save a snapshot of `.page__content` per URL (htmx-style,
+  // minus the network round-trip). A URL without a snapshot means the entry
+  // was never htmx-navigated to this session (e.g. an admin page — its swaps
+  // target `#list-table`, not `.page__content`): a full page load is the
+  // correct restore then.
+  var HISTORY_CACHE_SIZE = 20
+  var historyCache = {}
+
+  function isMainTarget(elt) {
+    return elt.classList && elt.classList.contains('page__content')
+  }
+
+  function saveSnapshot(url, target) {
+    historyCache[url] = {
+      html: target.innerHTML,
+      title: document.title,
+      scrollY: window.scrollY,
+    }
+    var keys = Object.keys(historyCache)
+    if (keys.length > HISTORY_CACHE_SIZE) delete historyCache[keys[0]]
+  }
+
+  function restoreSnapshot(url) {
+    var snap = historyCache[url]
+    if (!snap) return false
+    var target = document.querySelector('.page__content')
+    if (!target) return false
+    target.innerHTML = snap.html
+    document.title = snap.title
+    window.scrollTo(0, snap.scrollY)
+    return true
+  }
+
+  window.addEventListener('popstate', function () {
+    if (!restoreSnapshot(window.location.href)) {
+      window.location.reload()
+    }
+  })
+
   // Fire the request and, on success, swap the fragment into the target.
   function issueRequest(elt) {
     var url = getAttr(elt, 'hx-get')
@@ -94,14 +138,25 @@
       .then(function (content) {
         var target = resolveTarget(elt, getAttr(elt, 'hx-target'))
         var swapStyle = getAttr(elt, 'hx-swap') || htmx.config.defaultSwapStyle
+        var pushUrl = getAttr(elt, 'hx-push-url')
+        // Only `.page__content` navigations (the public site's pattern) take
+        // part in snapshot restore; admin swaps target other elements and
+        // fall back to a full page load on back/forward.
+        var mainTarget = pushUrl && isMainTarget(target)
 
-        if (getAttr(elt, 'hx-push-url') === 'true') {
+        if (mainTarget) {
+          // Snapshot the page being left — its URL is still current until
+          // pushState below — so Back can restore it verbatim.
+          saveSnapshot(window.location.href, target)
+        }
+
+        if (pushUrl === 'true') {
           history.pushState({}, '', url)
-        } else if (getAttr(elt, 'hx-push-url')) {
+        } else if (pushUrl) {
           // Literal hx-push-url value (e.g. "/") wins over the request URL,
           // matching stock htmx — the logo fetches /posts but the address
           // bar must read /.
-          history.pushState({}, '', getAttr(elt, 'hx-push-url'))
+          history.pushState({}, '', pushUrl)
         }
 
         if (swapStyle === 'none') {
@@ -119,6 +174,11 @@
         // fill in the initial render and must not scroll.
         if (parseTriggers(getAttr(elt, 'hx-trigger')).indexOf('load') === -1) {
           window.scrollTo(0, 0)
+        }
+        if (mainTarget) {
+          // The pushed URL is current now; remember what it renders so
+          // Forward restores it too.
+          saveSnapshot(window.location.href, target)
         }
         dispatchAfterSwap(target, elt, url)
       })

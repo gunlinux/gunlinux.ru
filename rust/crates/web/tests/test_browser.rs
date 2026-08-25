@@ -515,6 +515,88 @@ async fn click_post_link_swaps_fragment_and_pushes_url() {
     server.abort();
 }
 
+/// Open a post from the listing, then press the browser Back button: the
+/// previous `.page__content` snapshot must be restored (htmx-style history
+/// restore) instead of leaving the post on screen while the address bar
+/// reverts to `/` — pushState entries never reload the page, so a missing
+/// popstate handler makes Back a no-op. Forward must restore the post the
+/// same way. Regression for the broken back button after htmx navigation.
+#[tokio::test(flavor = "multi_thread")]
+async fn browser_back_restores_the_previous_page() {
+    let (store, app) = test_app();
+    seed_published_post(&store, "Back Me Post", "back-me-post", "## Back target");
+
+    let (base_url, server) = serve(app.clone()).await;
+    wait_for_server(&base_url).await;
+    let mut browser = TestBrowser::launch().await;
+    let page = browser.new_page().await;
+    page.add_init_script(INSTRUMENT)
+        .await
+        .expect("install instrumentation");
+    page.goto(format!("{base_url}/"))
+        .await
+        .expect("navigate to /");
+    wait_for_htmx(&page).await;
+
+    wait_for(
+        &page,
+        "document.querySelector('.minipost__title') !== null",
+        SWAP_TIMEOUT,
+    )
+    .await
+    .expect("posts listing should load on /");
+    page.find_element(".minipost__title")
+        .await
+        .expect("find post link")
+        .click()
+        .await
+        .expect("click post link");
+    wait_for(&page, "location.pathname === '/back-me-post'", SWAP_TIMEOUT)
+        .await
+        .expect("post link should push its URL");
+    wait_for(
+        &page,
+        "document.querySelector('.page__content .post__title') !== null",
+        SWAP_TIMEOUT,
+    )
+    .await
+    .expect("post fragment should be swapped in");
+
+    // Back: the URL reverts immediately; the snapshot restore must bring the
+    // listing back into `.page__content` (and drop the post).
+    page.evaluate("history.back()")
+        .await
+        .expect("press the browser back button");
+    wait_for(&page, "location.pathname === '/'", SWAP_TIMEOUT)
+        .await
+        .expect("back should restore the previous URL");
+    wait_for(
+        &page,
+        "document.querySelector('.page__content .minipost__title') !== null && document.querySelector('.page__content .post__title') === null",
+        SWAP_TIMEOUT,
+    )
+    .await
+    .expect("back should restore the home listing into .page__content");
+
+    // Forward: the post must come back the same way.
+    page.evaluate("history.forward()")
+        .await
+        .expect("press the browser forward button");
+    wait_for(&page, "location.pathname === '/back-me-post'", SWAP_TIMEOUT)
+        .await
+        .expect("forward should restore the post URL");
+    wait_for(
+        &page,
+        "document.querySelector('.page__content .post__title') !== null",
+        SWAP_TIMEOUT,
+    )
+    .await
+    .expect("forward should restore the post into .page__content");
+
+    browser.close().await;
+    server.abort();
+}
+
 /// Click the header logo from a post page and prove htmx swaps the home
 /// listing back into `.page__content` and pushes `/` into the address bar
 /// (the logo fetches `/posts` but `hx-push-url="/"` must win).
