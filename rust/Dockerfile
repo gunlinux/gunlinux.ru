@@ -17,9 +17,9 @@
 # fully static musl binary for the build platform with no cross-compilation or
 # target flags (x86_64 in CI, arm64 on Apple Silicon — buildx drives the arch).
 # gcc + musl-dev are needed only for `ring` (C/asm sources, pulled in by
-# jsonwebtoken and rustls); SQLite removal means no bundled-C toolchain beyond
-# that (aws-lc-rs/cmake lives only in the browser-test lockfile closure, never
-# compiled here).
+# rustls via sqlx/Postgres TLS); SQLite removal means no bundled-C toolchain
+# beyond that (aws-lc-rs/cmake lives only in the browser-test lockfile closure,
+# never compiled here).
 FROM rust:1.96-alpine AS builder
 
 WORKDIR /build
