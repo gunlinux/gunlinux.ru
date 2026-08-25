@@ -85,3 +85,10 @@ async fn test_icon_crud() {
     suite::icon_crud(&test_db.db).await;
     common::postgres::cleanup(test_db).await;
 }
+
+#[tokio::test]
+async fn test_visit_repo() {
+    let test_db = common::postgres::provision().await;
+    suite::visit_repo(&test_db.db).await;
+    common::postgres::cleanup(test_db).await;
+}

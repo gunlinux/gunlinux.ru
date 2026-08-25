@@ -11,5 +11,9 @@
   <span class="admin-card__count">{{ counts[m.slug] }}</span>
 </a>
 {% endfor %}
+<a class="admin-card" href="/admin/stats">
+  <span class="admin-card__name">Statistics</span>
+  <span class="admin-card__count">{{ views_total }}</span>
+</a>
 </div>
 {% endblock %}

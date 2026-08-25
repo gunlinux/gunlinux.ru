@@ -3,14 +3,16 @@
 //! call, so tests never share cache or repository state).
 #![allow(dead_code)] // each test binary compiles this module and uses a subset
 
+use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
 use axum::Router;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, NaiveDate, Utc};
 use domain::{
-    Category, CategoryRepository, Icon, IconRepository, Post, PostRepository, RepoError,
-    Repository, Tag, TagRepository, User, UserRepository,
+    Category, CategoryRepository, DailyCount, Icon, IconRepository, PathCount, Post,
+    PostRepository, RepoError, Repository, SourceCount, Tag, TagRepository, User, UserRepository,
+    Visit, VisitRepository,
 };
 use web::settings;
 use web::{build_app_with_static, AppState};
@@ -25,6 +27,7 @@ pub struct Store {
     pub users: Vec<User>,
     pub categories: Vec<Category>,
     pub icons: Vec<Icon>,
+    pub visits: Vec<Visit>,
     pub next_id: i32,
 }
 
@@ -445,6 +448,112 @@ impl IconRepository for FakeIconRepo {
 }
 
 // ---------------------------------------------------------------------------
+// Visits
+// ---------------------------------------------------------------------------
+
+pub struct FakeVisitRepo {
+    store: SharedStore,
+}
+
+impl FakeVisitRepo {
+    pub fn new(store: SharedStore) -> Self {
+        Self { store }
+    }
+}
+
+#[async_trait]
+impl VisitRepository for FakeVisitRepo {
+    async fn record(&self, visit: &Visit) -> Result<(), RepoError> {
+        let mut store = self.store.lock().unwrap();
+        let mut visit = visit.clone();
+        visit.id = Some(next_id(&mut store));
+        store.visits.push(visit);
+        Ok(())
+    }
+
+    async fn total_views(&self, since: Option<DateTime<Utc>>) -> Result<i64, RepoError> {
+        let store = self.store.lock().unwrap();
+        Ok(store
+            .visits
+            .iter()
+            .filter(|v| since.is_none_or(|s| v.visited_at >= s))
+            .count() as i64)
+    }
+
+    async fn unique_visitors(&self, since: Option<DateTime<Utc>>) -> Result<i64, RepoError> {
+        let store = self.store.lock().unwrap();
+        let distinct: HashSet<&str> = store
+            .visits
+            .iter()
+            .filter(|v| since.is_none_or(|s| v.visited_at >= s))
+            .filter_map(|v| v.ip_hash.as_deref())
+            .collect();
+        Ok(distinct.len() as i64)
+    }
+
+    async fn referrer_counts(
+        &self,
+        since: Option<DateTime<Utc>>,
+        limit: i32,
+    ) -> Result<Vec<SourceCount>, RepoError> {
+        let store = self.store.lock().unwrap();
+        let mut counts: HashMap<Option<String>, i64> = HashMap::new();
+        for v in store
+            .visits
+            .iter()
+            .filter(|v| since.is_none_or(|s| v.visited_at >= s))
+        {
+            *counts.entry(v.referrer.clone()).or_default() += 1;
+        }
+        let mut rows: Vec<SourceCount> = counts
+            .into_iter()
+            .map(|(referrer, count)| SourceCount { referrer, count })
+            .collect();
+        rows.sort_by_key(|r| std::cmp::Reverse(r.count));
+        rows.truncate(limit as usize);
+        Ok(rows)
+    }
+
+    async fn top_paths(
+        &self,
+        since: Option<DateTime<Utc>>,
+        limit: i32,
+    ) -> Result<Vec<PathCount>, RepoError> {
+        let store = self.store.lock().unwrap();
+        let mut counts: HashMap<String, i64> = HashMap::new();
+        for v in store
+            .visits
+            .iter()
+            .filter(|v| since.is_none_or(|s| v.visited_at >= s))
+        {
+            *counts.entry(v.path.clone()).or_default() += 1;
+        }
+        let mut rows: Vec<PathCount> = counts
+            .into_iter()
+            .map(|(path, count)| PathCount { path, count })
+            .collect();
+        rows.sort_by_key(|r| std::cmp::Reverse(r.count));
+        rows.truncate(limit as usize);
+        Ok(rows)
+    }
+
+    async fn daily_counts(&self, days: i32) -> Result<Vec<DailyCount>, RepoError> {
+        let store = self.store.lock().unwrap();
+        let since = Utc::now() - Duration::days(days as i64);
+        let mut by_day: HashMap<NaiveDate, i64> = HashMap::new();
+        for v in store.visits.iter().filter(|v| v.visited_at >= since) {
+            *by_day.entry(v.visited_at.date_naive()).or_default() += 1;
+        }
+        let mut rows: Vec<DailyCount> = by_day
+            .into_iter()
+            .map(|(day, count)| DailyCount { day, count })
+            .collect();
+        rows.sort_by_key(|c| c.day);
+        Ok(rows)
+    }
+}
+
+// ---------------------------------------------------------------------------
 // App construction
 // ---------------------------------------------------------------------------
 
@@ -466,6 +575,7 @@ pub fn build_test_app(store: SharedStore) -> Router {
         Arc::new(FakeUserRepo::new(store.clone())),
         Arc::new(FakeCategoryRepo::new(store.clone())),
         Arc::new(FakeIconRepo::new(store.clone())),
+        Arc::new(FakeVisitRepo::new(store.clone())),
         settings,
     );
     // Point /static at the repo's real static dir: the layout loads htmx from
@@ -621,6 +731,19 @@ pub fn seed_user(store: &SharedStore, name: &str, password: &str) {
         password: hashed,
         authenticated: false,
         createdon: Some(chrono::Utc::now()),
+    });
+}
+
+/// Seed a visit with the given landing path / referrer host / salted IP hash.
+pub fn seed_visit(store: &SharedStore, path: &str, referrer: Option<&str>, ip_hash: Option<&str>) {
+    let mut store = store.lock().unwrap();
+    let id = next_id(&mut store);
+    store.visits.push(Visit {
+        id: Some(id),
+        visited_at: chrono::Utc::now(),
+        referrer: referrer.map(str::to_string),
+        path: path.to_string(),
+        ip_hash: ip_hash.map(str::to_string),
     });
 }
 

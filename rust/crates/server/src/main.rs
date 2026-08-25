@@ -5,12 +5,15 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 
 use anyhow::Context;
-use domain::{CategoryRepository, IconRepository, PostRepository, TagRepository, UserRepository};
+use domain::{
+    CategoryRepository, IconRepository, PostRepository, TagRepository, UserRepository,
+    VisitRepository,
+};
 use persistence::migrator::{Migrator, MigratorTrait};
 use persistence::repositories::{
     CategoryRepository as SeaCategoryRepository, IconRepository as SeaIconRepository,
     PostRepository as SeaPostRepository, TagRepository as SeaTagRepository,
-    UserRepository as SeaUserRepository,
+    UserRepository as SeaUserRepository, VisitRepository as SeaVisitRepository,
 };
 use web::app::AppState;
 use web::cache::Cache;
@@ -47,8 +50,17 @@ async fn main() -> anyhow::Result<()> {
     let users: Arc<dyn UserRepository> = Arc::new(SeaUserRepository::new(db.clone()));
     let categories: Arc<dyn CategoryRepository> = Arc::new(SeaCategoryRepository::new(db.clone()));
     let icons: Arc<dyn IconRepository> = Arc::new(SeaIconRepository::new(db.clone()));
+    let visits: Arc<dyn VisitRepository> = Arc::new(SeaVisitRepository::new(db.clone()));
 
-    let mut state = AppState::new(posts, tags, users, categories, icons, settings.clone());
+    let mut state = AppState::new(
+        posts,
+        tags,
+        users,
+        categories,
+        icons,
+        visits,
+        settings.clone(),
+    );
     // Redis backend when REDIS_URL is set (in `.env` or the environment);
     // falls back to the in-memory cache otherwise or on connect failure.
     state.cache = Cache::connect(settings.redis_url.as_deref()).await;

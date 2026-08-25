@@ -3,6 +3,7 @@
 //! through `AppState` (the `server` binary wires them).
 
 pub mod admin;
+pub mod analytics;
 pub mod app;
 pub mod auth;
 pub mod cache;

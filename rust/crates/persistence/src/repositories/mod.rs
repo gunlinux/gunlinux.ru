@@ -8,12 +8,14 @@ mod icon_repository;
 mod post_repository;
 mod tag_repository;
 mod user_repository;
+mod visit_repository;
 
 pub use category_repository::CategoryRepository;
 pub use icon_repository::IconRepository;
 pub use post_repository::PostRepository;
 pub use tag_repository::TagRepository;
 pub use user_repository::UserRepository;
+pub use visit_repository::VisitRepository;
 
 use domain::RepoError;
 use sea_orm::DbErr;

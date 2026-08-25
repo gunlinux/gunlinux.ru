@@ -68,3 +68,9 @@ async fn test_icon_crud() {
     let (db, _file) = common::sqlite_db().await;
     suite::icon_crud(&db).await;
 }
+
+#[tokio::test]
+async fn test_visit_repo() {
+    let (db, _file) = common::sqlite_db().await;
+    suite::visit_repo(&db).await;
+}
