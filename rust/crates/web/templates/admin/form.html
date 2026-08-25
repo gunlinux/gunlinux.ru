@@ -3,7 +3,15 @@
 {% block title %}{% if is_create %}Create{% else %}Edit{% endif %} {{ model.name }}{% endblock %}
 
 {% block styles %}
+{% if model.slug == "post" %}
 <link rel="stylesheet" href="/static/vendor/easymde/easymde.min.css">
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if model.slug == "post" %}
+<script src="/static/vendor/easymde/easymde.min.js"></script>
+{% endif %}
 {% endblock %}
 
 {% block content %}

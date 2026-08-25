@@ -4,6 +4,7 @@
 mod common;
 
 use axum::http::StatusCode;
+use chrono::TimeZone;
 use common::{
     body_text, expect_status, get, get_with_cookie, login_cookie, post_form_with_cookie,
     seed_published_post, seed_tag, seed_user, test_app,
@@ -13,6 +14,17 @@ use common::{
 async fn test_admin_post_list() {
     let (store, app) = test_app();
     seed_user(&store, "admin", "pw");
+    let published = chrono::Utc.with_ymd_and_hms(2024, 12, 4, 13, 1, 0).unwrap();
+    seed_published_post(&store, "Dated", "dated", "x");
+    {
+        let mut store = store.lock().unwrap();
+        store
+            .posts
+            .iter_mut()
+            .find(|p| p.alias == "dated")
+            .unwrap()
+            .publishedon = Some(published);
+    }
     let cookie = login_cookie(&app, "admin", "pw").await;
 
     let body = expect_status(
@@ -21,6 +33,10 @@ async fn test_admin_post_list() {
     )
     .await;
     assert!(body.contains("pagetitle"));
+    // publishedon goes through the strftime filter; the %m directive must be
+    // substituted, never leaked literally.
+    assert!(body.contains("2024-12-04 13:01"), "got: {body}");
+    assert!(!body.contains("%m"));
 }
 
 #[tokio::test]
@@ -422,7 +438,19 @@ async fn test_admin_post_form_widgets() {
     assert!(body.contains("data-tag"));
     assert!(body.contains("name=\"tags\""));
     assert!(body.contains("/static/vendor/easymde/easymde.min.css"));
+    assert!(
+        body.contains("/static/vendor/easymde/easymde.min.js"),
+        "markdown editor must be loaded on the post form"
+    );
     assert!(body.contains("/static/admin/admin.js"));
+
+    // Posts-only: the icon model also has a content textarea but no editor.
+    let body = expect_status(
+        get_with_cookie(&app, "/admin/icon/create", &cookie).await,
+        StatusCode::OK,
+    )
+    .await;
+    assert!(!body.contains("easymde"));
 }
 
 #[tokio::test]

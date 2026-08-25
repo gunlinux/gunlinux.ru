@@ -85,9 +85,9 @@ const MONTHS_FULL: [&str; 12] = [
 ];
 
 /// Minimal Python-style `strftime` supporting the directives the templates use:
-/// `%a %b %B %d %Y %H %M %S %z`. Dates are normalized to UTC before formatting
-/// and `%z` always renders the RFC822-style `+0000` (matching the expected
-/// `Thu, 01 Jan 2026 00:00:00 +0000` output).
+/// `%a %b %B %d %m %Y %H %M %S %z`. Dates are normalized to UTC before
+/// formatting and `%z` always renders the RFC822-style `+0000` (matching the
+/// expected `Thu, 01 Jan 2026 00:00:00 +0000` output).
 fn python_strftime(dt: &DateTime<Utc>, fmt: &str) -> String {
     let mut out = String::new();
     let mut chars = fmt.chars().peekable();
@@ -101,6 +101,7 @@ fn python_strftime(dt: &DateTime<Utc>, fmt: &str) -> String {
             Some('b') => out.push_str(MONTHS_SHORT[(dt.month() - 1) as usize]),
             Some('B') => out.push_str(MONTHS_FULL[(dt.month() - 1) as usize]),
             Some('d') => out.push_str(&format!("{:02}", dt.day())),
+            Some('m') => out.push_str(&format!("{:02}", dt.month())),
             Some('Y') => out.push_str(&format!("{}", dt.year())),
             Some('H') => out.push_str(&format!("{:02}", dt.hour())),
             Some('M') => out.push_str(&format!("{:02}", dt.minute())),
@@ -205,6 +206,7 @@ mod tests {
             "Thu, 01 Jan 2026 00:00:00 +0000"
         );
         assert_eq!(python_strftime(&dt, "%B %d, %Y"), "January 01, 2026");
+        assert_eq!(python_strftime(&dt, "%Y-%m-%d %H:%M"), "2026-01-01 00:00");
     }
 
     #[test]

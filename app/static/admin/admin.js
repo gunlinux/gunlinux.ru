@@ -5,7 +5,7 @@
   // Wired to the app's POST /md/ endpoint, which returns python-markdown-
   // compatible HTML (the same contract the Python-era admin used).
   function initEditor() {
-    var ta = document.getElementById('content');
+    var ta = document.getElementById('field-content');
     if (!ta || typeof EasyMDE === 'undefined') return;
     new EasyMDE({
       element: ta,
