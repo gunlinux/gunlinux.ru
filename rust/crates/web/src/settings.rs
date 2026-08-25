@@ -26,6 +26,9 @@ pub struct Settings {
     pub jwt_expire_minutes: i64,
     /// Response-cache backend: Redis URL when set, in-memory cache otherwise.
     pub redis_url: Option<String>,
+    /// Set to 1/true to disable the response cache entirely (every request
+    /// renders fully) — useful for benchmarking the cache's value.
+    pub cache_disabled: bool,
 }
 
 impl Default for Settings {
@@ -38,6 +41,7 @@ impl Default for Settings {
             jwt_algorithm: "HS256".to_string(),
             jwt_expire_minutes: 60 * 24,
             redis_url: None,
+            cache_disabled: false,
         }
     }
 }
@@ -81,5 +85,6 @@ mod tests {
         assert_eq!(s.jwt_algorithm, "HS256");
         assert_eq!(s.jwt_expire_minutes, 1440);
         assert_eq!(s.redis_url, None);
+        assert!(!s.cache_disabled);
     }
 }

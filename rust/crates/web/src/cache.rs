@@ -77,11 +77,12 @@ impl TryFrom<WireEntry> for CachedResponse {
     }
 }
 
-/// The two cache backends.
+/// The two cache backends, plus the disabled (no-cache) mode.
 #[derive(Clone)]
 enum Inner {
     Memory(MokaCache<String, CachedResponse>),
     Redis(ConnectionManager),
+    Disabled,
 }
 
 /// The response cache: Redis when configured, in-memory moka otherwise.
@@ -107,6 +108,14 @@ impl Cache {
                     .max_capacity(4096)
                     .build(),
             ),
+        }
+    }
+
+    /// No-op backend: every request is a full render, nothing is stored.
+    /// Used to benchmark the cache's value (`CACHE_DISABLED=1`).
+    pub fn disabled() -> Self {
+        Self {
+            inner: Inner::Disabled,
         }
     }
 
@@ -150,6 +159,7 @@ impl Cache {
                 let wire: WireEntry = serde_json::from_str(&raw?).ok()?;
                 wire.try_into().ok()
             }
+            Inner::Disabled => None,
         }
     }
 
@@ -164,6 +174,7 @@ impl Cache {
                 let _: Result<(), _> =
                     redis::AsyncCommands::set_ex(&mut conn, key, json, TTL_SECS).await;
             }
+            Inner::Disabled => {}
         }
     }
 
@@ -194,6 +205,7 @@ impl Cache {
                     let _: Result<(), _> = redis::AsyncCommands::del(&mut conn, keys).await;
                 }
             }
+            Inner::Disabled => {}
         }
     }
 }
@@ -285,5 +297,22 @@ mod tests {
             cache.get(&key).await.is_none(),
             "clear_namespace must evict the entry"
         );
+    }
+
+    #[tokio::test]
+    async fn disabled_backend_never_caches() {
+        let cache = Cache::disabled();
+        let key = format!("{NAMESPACE}:test:{}", Utc::now().timestamp_millis());
+        let entry = CachedResponse {
+            status: StatusCode::OK,
+            body: Bytes::from_static(b"<html>hi</html>"),
+            content_type: "text/html; charset=utf-8".to_string(),
+        };
+        cache.insert(key.clone(), entry).await;
+        assert!(
+            cache.get(&key).await.is_none(),
+            "disabled cache must never serve"
+        );
+        cache.clear_namespace(NAMESPACE).await; // must be a no-op, not panic
     }
 }
