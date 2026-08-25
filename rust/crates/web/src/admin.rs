@@ -296,13 +296,15 @@ impl AdminStore for PostStore {
     }
 
     async fn create_from_form(&self, form: &HashMap<String, String>) -> Result<(), WebError> {
+        let now = Utc::now();
         let post = Post {
             id: None,
             pagetitle: get(form, "pagetitle"),
             alias: get(form, "alias"),
             content: get(form, "content"),
-            createdon: Some(Utc::now()),
+            createdon: Some(now),
             publishedon: parse_datetime_field(&get(form, "publishedon")),
+            update_date: Some(now),
             category_id: get(form, "category_id").trim().parse().ok(),
             is_page: checkbox(form, "is_page"),
             user_id: None,
@@ -324,6 +326,8 @@ impl AdminStore for PostStore {
             content: get(form, "content"),
             createdon: existing.createdon,
             publishedon: parse_datetime_field(&get(form, "publishedon")),
+            // Bump the content version so cached pages re-render immediately.
+            update_date: Some(Utc::now()),
             category_id: get(form, "category_id").trim().parse().ok(),
             is_page: checkbox(form, "is_page"),
             user_id: existing.user_id,
@@ -791,7 +795,7 @@ async fn create(
     };
     match store.create_from_form(&form).await {
         Ok(()) => {
-            state.cache.clear_namespace(cache::NAMESPACE);
+            state.cache.clear_namespace(cache::NAMESPACE).await;
             Ok(redirect(&format!("/admin/{}/", store.descriptor().slug)))
         }
         Err(e) => render_form_error(&state, store.as_ref(), &form, None, e),
@@ -843,7 +847,7 @@ async fn edit(
     };
     match store.update_from_form(id, &form).await {
         Ok(()) => {
-            state.cache.clear_namespace(cache::NAMESPACE);
+            state.cache.clear_namespace(cache::NAMESPACE).await;
             Ok(redirect(&format!("/admin/{}/", store.descriptor().slug)))
         }
         Err(e) => render_form_error(&state, store.as_ref(), &form, Some(id), e),
@@ -862,7 +866,7 @@ async fn delete(
         return Ok(crate::routes::not_found());
     };
     store.delete(id).await?;
-    state.cache.clear_namespace(cache::NAMESPACE);
+    state.cache.clear_namespace(cache::NAMESPACE).await;
     Ok(redirect(&format!("/admin/{}/", store.descriptor().slug)))
 }
 

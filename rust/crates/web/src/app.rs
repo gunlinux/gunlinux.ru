@@ -35,8 +35,10 @@ pub struct AppState {
 }
 
 impl AppState {
-    /// Convenience constructor used by tests: fresh response cache (no shared
-    /// state between tests) and a template environment for `settings`.
+    /// Convenience constructor used by tests: fresh in-memory response cache
+    /// (no shared state between tests) and a template environment for
+    /// `settings`. The `server` binary swaps in a Redis-backed cache via
+    /// [`Cache::connect`] when `REDIS_URL` is configured.
     pub fn new(
         posts: Arc<dyn PostRepository>,
         tags: Arc<dyn TagRepository>,
@@ -52,7 +54,7 @@ impl AppState {
             categories,
             icons,
             templates: Arc::new(build_env(settings.clone())),
-            cache: Cache::new(),
+            cache: Cache::memory(),
             settings,
         }
     }

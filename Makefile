@@ -29,3 +29,16 @@ rust-run:
 
 rust-docker:
 	docker build -f rust/Dockerfile -t gunlinux-rust:$(VERSION) .
+
+# ---------------------------------------------------------------------------
+# Performance / load testing (k6 — https://k6.io; scripts in scripts/perf/).
+# Requires: brew install k6
+# ---------------------------------------------------------------------------
+
+PERF_BASE_URL ?= http://localhost:8000
+
+perf:
+	BASE_URL=$(PERF_BASE_URL) k6 run scripts/perf/load-test.js
+
+perf-smoke:
+	BASE_URL=$(PERF_BASE_URL) k6 run --stage 2s:2,10s:10,3s:0 scripts/perf/load-test.js

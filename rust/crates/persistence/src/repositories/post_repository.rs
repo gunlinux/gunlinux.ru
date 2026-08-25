@@ -1,10 +1,11 @@
 //! `PostRepository` — ports `app/repositories/post.py`.
 
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use sea_orm::sea_query::{Expr, JoinType};
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder,
-    QuerySelect, RelationTrait, Set,
+    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, FromQueryResult, QueryFilter,
+    QueryOrder, QuerySelect, RelationTrait, Set,
 };
 
 use domain::repositories::{PostRepository as PostRepoTrait, Repository};
@@ -36,6 +37,7 @@ pub(crate) fn to_domain(post: post::Model, category: Option<category::Model>) ->
         content: post.content.unwrap_or_default(),
         createdon: post.createdon,
         publishedon: post.publishedon,
+        update_date: post.update_date,
         category_id: post.category_id,
         is_page: post.category_id.is_some()
             && category.as_ref().and_then(|c| c.page).unwrap_or(false),
@@ -78,6 +80,9 @@ impl Repository<Post, i32> for PostRepository {
         if let Some(publishedon) = entity.publishedon {
             active.publishedon = Set(Some(publishedon));
         }
+        if let Some(update_date) = entity.update_date {
+            active.update_date = Set(Some(update_date));
+        }
         if let Some(category_id) = entity.category_id {
             active.category_id = Set(Some(category_id));
         }
@@ -111,6 +116,9 @@ impl Repository<Post, i32> for PostRepository {
         }
         if let Some(publishedon) = entity.publishedon {
             active.publishedon = Set(Some(publishedon));
+        }
+        if let Some(update_date) = entity.update_date {
+            active.update_date = Set(Some(update_date));
         }
         if let Some(category_id) = entity.category_id {
             active.category_id = Set(Some(category_id));
@@ -233,5 +241,33 @@ impl PostRepoTrait for PostRepository {
             .await
             .map_err(translate_err)?;
         Ok(rows.into_iter().map(tag_repository::to_domain).collect())
+    }
+
+    /// The most recent post timestamp across `update_date`, `createdon` and
+    /// `publishedon` — the cache content version. Three aggregate columns in
+    /// one query (no raw SQL, works on SQLite and Postgres); legacy rows with
+    /// `update_date IS NULL` still bump the version when they are published.
+    async fn latest_update(&self) -> Result<Option<DateTime<Utc>>, RepoError> {
+        #[derive(FromQueryResult)]
+        struct LatestUpdateRow {
+            max_update: Option<DateTime<Utc>>,
+            max_created: Option<DateTime<Utc>>,
+            max_published: Option<DateTime<Utc>>,
+        }
+        let row = post::Entity::find()
+            .select_only()
+            .column_as(Expr::col(post::Column::UpdateDate).max(), "max_update")
+            .column_as(Expr::col(post::Column::Createdon).max(), "max_created")
+            .column_as(Expr::col(post::Column::Publishedon).max(), "max_published")
+            .into_model::<LatestUpdateRow>()
+            .one(&self.db)
+            .await
+            .map_err(translate_err)?;
+        Ok(row.and_then(|r| {
+            [r.max_update, r.max_created, r.max_published]
+                .into_iter()
+                .flatten()
+                .max()
+        }))
     }
 }

@@ -95,7 +95,9 @@ fn python_md_code_spans(html: &str) -> String {
     out
 }
 
-/// Mirrors `app/domain/post.py` `Post` dataclass.
+/// Mirrors `app/domain/post.py` `Post` dataclass. `update_date` is a
+/// post-migration addition (cache content versioning): set on create/update
+/// by the admin layer, `NULL` for legacy rows.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Post {
     pub id: Option<i32>,
@@ -104,6 +106,8 @@ pub struct Post {
     pub content: String,
     pub createdon: Option<DateTime<Utc>>,
     pub publishedon: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub update_date: Option<DateTime<Utc>>,
     pub category_id: Option<i32>,
     pub is_page: bool,
     pub user_id: Option<i32>,
@@ -122,6 +126,7 @@ impl Post {
             content: content.into(),
             createdon: Some(Utc::now()),
             publishedon: None,
+            update_date: Some(Utc::now()),
             category_id: None,
             is_page: false,
             user_id: None,

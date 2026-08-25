@@ -62,6 +62,7 @@ only works because the file already exists).
 | `SECRET_KEY`         | *(dev default in code)*        | Signs JWT tokens / session cookies                   |
 | `STATIC_DIR`         | `app/static` (code); `/app/static` (Docker image) | Directory served at `/static`                        |
 | `YANDEX_VERIFICATION`| *(empty)*                      | Yandex site-verification meta tag content            |
+| `REDIS_URL`          | *(unset)*                     | Response-cache backend: Redis/Valkey URL when set (e.g. `redis://:pass@127.0.0.1:6379`); in-memory cache otherwise |
 | `JWT_ALGORITHM`      | `HS256`                        | JWT signing algorithm                                |
 | `JWT_EXPIRE_MINUTES` | `1440`                         | JWT lifetime in minutes                              |
 

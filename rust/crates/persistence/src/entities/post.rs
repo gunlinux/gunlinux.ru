@@ -15,6 +15,9 @@ pub struct Model {
     pub content: Option<String>,
     pub createdon: Option<DateTimeUtc>,
     pub publishedon: Option<DateTimeUtc>,
+    /// Set on create/update by the admin layer; NULL for legacy rows. Drives
+    /// the response cache's content version.
+    pub update_date: Option<DateTimeUtc>,
     pub category_id: Option<i32>,
     pub user_id: Option<i32>,
 }

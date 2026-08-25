@@ -7,6 +7,7 @@ use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
 use axum::Router;
+use chrono::{DateTime, Utc};
 use domain::{
     Category, CategoryRepository, Icon, IconRepository, Post, PostRepository, RepoError,
     Repository, Tag, TagRepository, User, UserRepository,
@@ -152,6 +153,17 @@ impl PostRepository for FakePostRepo {
             .filter(|t| t.id.is_some_and(|tid| tag_ids.contains(&tid)))
             .cloned()
             .collect())
+    }
+
+    /// Mirrors the persistence query: most recent per-post timestamp
+    /// (`update_date` → `createdon` → `publishedon`) across all posts.
+    async fn latest_update(&self) -> Result<Option<DateTime<Utc>>, RepoError> {
+        let store = self.store.lock().unwrap();
+        Ok(store
+            .posts
+            .iter()
+            .filter_map(|p| p.update_date.or(p.createdon).or(p.publishedon))
+            .max())
     }
 }
 
@@ -545,13 +557,15 @@ pub async fn expect_status(resp: Response, expected: StatusCode) -> String {
 pub fn seed_published_post(store: &SharedStore, pagetitle: &str, alias: &str, content: &str) {
     let mut store = store.lock().unwrap();
     let id = next_id(&mut store);
+    let now = chrono::Utc::now();
     let post = Post {
         id: Some(id),
         pagetitle: pagetitle.to_string(),
         alias: alias.to_string(),
         content: content.to_string(),
-        createdon: Some(chrono::Utc::now()),
-        publishedon: Some(chrono::Utc::now()),
+        createdon: Some(now),
+        publishedon: Some(now),
+        update_date: Some(now),
         category_id: None,
         is_page: false,
         user_id: None,
@@ -562,13 +576,15 @@ pub fn seed_published_post(store: &SharedStore, pagetitle: &str, alias: &str, co
 pub fn seed_page(store: &SharedStore, pagetitle: &str, alias: &str) {
     let mut store = store.lock().unwrap();
     let id = next_id(&mut store);
+    let now = chrono::Utc::now();
     let post = Post {
         id: Some(id),
         pagetitle: pagetitle.to_string(),
         alias: alias.to_string(),
         content: "page content".to_string(),
-        createdon: Some(chrono::Utc::now()),
-        publishedon: Some(chrono::Utc::now()),
+        createdon: Some(now),
+        publishedon: Some(now),
+        update_date: Some(now),
         category_id: Some(1),
         is_page: true,
         user_id: None,
