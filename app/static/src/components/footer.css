@@ -17,6 +17,10 @@
 .footer__links {
   display: flex;
   gap: 1.5rem;
+  /* The links row is empty in the server-rendered HTML — the /hx/icons
+     load-swap fills it after first paint. Reserving its height (icons are
+     32x32) keeps the footer from growing once the icons land. */
+  min-height: 32px;
 }
 
 .footer__icon {

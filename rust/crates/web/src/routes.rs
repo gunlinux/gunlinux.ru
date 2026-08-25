@@ -122,6 +122,11 @@ where
 }
 
 /// `GET /` — index page (cached, htmx-aware key; no htmx variant exists).
+///
+/// The listing is server-rendered into `index.html` so the load-triggered
+/// `/posts` swap is a no-op re-render instead of an after-first-paint content
+/// injection (which pushed the footer down — CLS). No-JS clients and crawlers
+/// also get the posts without waiting for htmx.
 pub async fn index(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -132,8 +137,15 @@ pub async fn index(
         .await?;
     let key = htmx_key_builder(&path_query(&uri), &headers, version);
     with_cache(&state.cache, key, || async {
+        let post_service = PostService::new(state.posts.clone());
+        let all_posts = post_service.get_all_published_content().await?;
+        let posts_by_year = group_posts_by_year(all_posts);
         let pages = nav_pages(&state, &headers).await?;
-        let body = render(&state.templates, "index.html", context! { pages => pages })?;
+        let body = render(
+            &state.templates,
+            "index.html",
+            context! { posts_by_year => posts_by_year, pages => pages },
+        )?;
         Ok(html_response(body))
     })
     .await
