@@ -7,7 +7,8 @@
 //   hx-target (plain CSS selectors)
 //   hx-swap (innerHTML; unknown values such as the site's "posts" fall back
 //            to innerHTML exactly as htmx does; "none" skips the swap)
-//   hx-push-url="true" (history.pushState)
+//   hx-push-url (true pushes the request URL; a literal value is pushed
+//                verbatim — the logo fetches /posts but pushes "/")
 //   htmx:afterSwap event, fired on the swap target (bubbles)
 //   HX-Request / HX-Current-URL request headers — the server keys its
 //   dual-mode rendering (full page vs fragment) off HX-Request
@@ -94,6 +95,11 @@
 
         if (getAttr(elt, 'hx-push-url') === 'true') {
           history.pushState({}, '', url)
+        } else if (getAttr(elt, 'hx-push-url')) {
+          // Literal hx-push-url value (e.g. "/") wins over the request URL,
+          // matching stock htmx — the logo fetches /posts but the address
+          // bar must read /.
+          history.pushState({}, '', getAttr(elt, 'hx-push-url'))
         }
 
         if (swapStyle === 'none') {
