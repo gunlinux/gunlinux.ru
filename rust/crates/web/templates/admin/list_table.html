@@ -1,0 +1,54 @@
+<div id="list-table" class="admin-table-wrap">
+<table class="admin-table">
+<thead>
+<tr>
+{% for col in model.columns %}
+<th>
+  {% if col in model.sortable %}
+    <a class="admin-th-link" href="/admin/{{ model.slug }}/?search={{ search }}&sort={{ col }}&dir={% if sort == col and dir == "asc" %}desc{% else %}asc{% endif %}&page=1">
+      {{ col }}{% if sort == col %}{% if dir == "asc" %} ▲{% else %} ▼{% endif %}{% else %} ⇅{% endif %}
+    </a>
+  {% else %}
+    {{ col }}
+  {% endif %}
+</th>
+{% endfor %}
+<th>Actions</th>
+</tr>
+</thead>
+<tbody>
+{% for row in rows %}
+<tr>
+{% for col in model.columns %}
+  <td>
+    {% if row[col] is boolean %}
+      <span class="admin-badge {{ "admin-badge--on" if row[col] else "admin-badge--off" }}">{{ "yes" if row[col] else "no" }}</span>
+    {% elif col == "publishedon" or col == "createdon" %}
+      {{ row[col]|strftime("%Y-%m-%d %H:%M") }}
+    {% else %}
+      {{ row[col]|default("") }}
+    {% endif %}
+  </td>
+{% endfor %}
+<td class="admin-actions">
+  <a class="admin-btn admin-btn--small" href="/admin/{{ model.slug }}/{{ row.id }}/edit">Edit</a>
+  <form method="post" action="/admin/{{ model.slug }}/{{ row.id }}/delete" onsubmit="return confirm('Delete this {{ model.name }}?')">
+    <button type="submit" class="admin-btn admin-btn--small admin-btn--danger">Delete</button>
+  </form>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% if pages > 1 %}
+<div class="admin-pagination">
+  {% if page > 1 %}
+  <a class="admin-btn admin-btn--small" hx-get="/admin/{{ model.slug }}/?page={{ page - 1 }}&search={{ search }}&sort={{ sort }}&dir={{ dir }}" hx-target="#list-table" hx-swap="outerHTML" hx-push-url="true">← Prev</a>
+  {% endif %}
+  <span class="admin-pagination__info">Page {{ page }} of {{ pages }} · {{ total }} rows</span>
+  {% if page < pages %}
+  <a class="admin-btn admin-btn--small" hx-get="/admin/{{ model.slug }}/?page={{ page + 1 }}&search={{ search }}&sort={{ sort }}&dir={{ dir }}" hx-target="#list-table" hx-swap="outerHTML" hx-push-url="true">Next →</a>
+  {% endif %}
+</div>
+{% endif %}
+</div>

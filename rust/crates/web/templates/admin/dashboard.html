@@ -1,19 +1,15 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin — gunlinux.ru</title>
-<link rel="stylesheet" href="/static/dist/css/bundle.css">
-</head>
-<body>
-<h1>Admin</h1>
-<ul>
+{% extends "admin/layout.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="admin-title">Dashboard</h1>
+<div class="admin-cards">
 {% for m in models %}
-  <li><a href="/admin/{{ m.slug }}/">{{ m.name_plural }}</a></li>
+<a class="admin-card" href="/admin/{{ m.slug }}/">
+  <span class="admin-card__name">{{ m.name_plural }}</span>
+  <span class="admin-card__count">{{ counts[m.slug] }}</span>
+</a>
 {% endfor %}
-</ul>
-<p><a href="/admin/logout">Logout</a></p>
-<p><a href="/">← back to site</a></p>
-</body>
-</html>
+</div>
+{% endblock %}
