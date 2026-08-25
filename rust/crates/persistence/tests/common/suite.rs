@@ -4,14 +4,15 @@
 //! `&DatabaseConnection` and is invoked by both the SQLite and the Postgres
 //! parity test files, so behavior is pinned identically on both backends.
 
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use domain::repositories::{
     CategoryRepository as _, IconRepository as _, PostRepository as _, Repository,
     TagRepository as _, UserRepository as _,
 };
-use domain::{Category, Icon, Post, Tag, User};
+use domain::{Category, Icon, Post, Tag, User, Visit, VisitRepository as _};
 use persistence::repositories::{
     CategoryRepository, IconRepository, PostRepository, TagRepository, UserRepository,
+    VisitRepository,
 };
 use sea_orm::DatabaseConnection;
 
@@ -260,4 +261,65 @@ pub async fn icon_crud(db: &DatabaseConnection) {
     assert!(created.id.is_some());
     assert!(repo.get_by_title("GitHub-repo").await.unwrap().is_some());
     assert!(!repo.get_all().await.unwrap().is_empty());
+}
+
+pub async fn visit_repo(db: &DatabaseConnection) {
+    let repo = VisitRepository::new(db.clone());
+
+    let now = Utc::now();
+    let old = now - chrono::Duration::days(40);
+    let visit = |at: DateTime<Utc>, path: &str, referrer: Option<&str>, ip: Option<&str>| Visit {
+        id: None,
+        visited_at: at,
+        referrer: referrer.map(String::from),
+        path: path.to_string(),
+        ip_hash: ip.map(String::from),
+    };
+
+    repo.record(&visit(now, "/", Some("habr.com"), Some("h1")))
+        .await
+        .unwrap();
+    repo.record(&visit(now, "/rust", Some("habr.com"), Some("h2")))
+        .await
+        .unwrap();
+    repo.record(&visit(now, "/rust", None, Some("h1")))
+        .await
+        .unwrap();
+    // Outside the 30-day window used below — must be excluded everywhere.
+    repo.record(&visit(old, "/", Some("google.com"), Some("h9")))
+        .await
+        .unwrap();
+
+    // Totals: all time vs the last 30 days.
+    assert_eq!(repo.total_views(None).await.unwrap(), 4);
+    let since_30d = Some(now - chrono::Duration::days(30));
+    assert_eq!(repo.total_views(since_30d).await.unwrap(), 3);
+    assert_eq!(repo.unique_visitors(since_30d).await.unwrap(), 2);
+
+    // Sources: habr.com (2) first, then direct (1); google.com fell out of
+    // the window.
+    let sources = repo.referrer_counts(since_30d, 10).await.unwrap();
+    assert_eq!(sources.len(), 2);
+    assert_eq!(sources[0].referrer.as_deref(), Some("habr.com"));
+    assert_eq!(sources[0].count, 2);
+    assert_eq!(sources[1].referrer, None);
+    assert_eq!(sources[1].count, 1);
+
+    // Landing pages: /rust (2) beats / (1).
+    let paths = repo.top_paths(since_30d, 10).await.unwrap();
+    assert_eq!(paths.len(), 2);
+    assert_eq!(paths[0].path, "/rust");
+    assert_eq!(paths[0].count, 2);
+    assert_eq!(paths[1].path, "/");
+    assert_eq!(paths[1].count, 1);
+
+    // Daily counts: only today has rows within the 14-day window.
+    let daily = repo.daily_counts(14).await.unwrap();
+    assert_eq!(daily.len(), 1);
+    assert_eq!(daily[0].day, now.date_naive());
+    assert_eq!(daily[0].count, 3);
+
+    // The limit truncates the result set.
+    let sources = repo.referrer_counts(since_30d, 1).await.unwrap();
+    assert_eq!(sources.len(), 1);
 }

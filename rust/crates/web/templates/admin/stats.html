@@ -1,0 +1,83 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Statistics{% endblock %}
+
+{% block content %}
+<h1 class="admin-title">Statistics</h1>
+
+<div class="admin-cards">
+  <div class="admin-card">
+    <span class="admin-card__name">Views, all time</span>
+    <span class="admin-card__count">{{ total_views }}</span>
+  </div>
+  <div class="admin-card">
+    <span class="admin-card__name">Views, 30 days</span>
+    <span class="admin-card__count">{{ views_30d }}</span>
+  </div>
+  <div class="admin-card">
+    <span class="admin-card__name">Unique visitors, 30 days</span>
+    <span class="admin-card__count">{{ unique_30d }}</span>
+  </div>
+</div>
+
+<section class="stats-section">
+  <h2 class="admin-title admin-title--section">Views per day, last 14 days</h2>
+  <div class="stats-chart" role="img" aria-label="Views per day for the last 14 days">
+    {% for bar in daily %}
+    <div class="stats-bar" title="{{ bar.label }}: {{ bar.count }} views">
+      <span class="stats-bar__count">{{ bar.count }}</span>
+      <div class="stats-bar__fill" style="height: {{ bar.pct }}%"></div>
+      <span class="stats-bar__label">{{ bar.label }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<div class="stats-cols">
+  <section class="stats-section">
+    <h2 class="admin-title admin-title--section">Top sources, 30 days</h2>
+    <div class="admin-table-wrap">
+      {% if sources %}
+      <table class="admin-table">
+        <thead>
+          <tr><th>Source</th><th>Views</th></tr>
+        </thead>
+        <tbody>
+          {% for s in sources %}
+          <tr>
+            <td>{{ s.label }}</td>
+            <td>{{ s.count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="stats-empty">No visits recorded yet.</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="stats-section">
+    <h2 class="admin-title admin-title--section">Top pages, 30 days</h2>
+    <div class="admin-table-wrap">
+      {% if paths %}
+      <table class="admin-table">
+        <thead>
+          <tr><th>Page</th><th>Views</th></tr>
+        </thead>
+        <tbody>
+          {% for p in paths %}
+          <tr>
+            <td>{{ p.path }}</td>
+            <td>{{ p.count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="stats-empty">No visits recorded yet.</p>
+      {% endif %}
+    </div>
+  </section>
+</div>
+{% endblock %}

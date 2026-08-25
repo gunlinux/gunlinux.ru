@@ -14,11 +14,15 @@ use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 
 use crate::admin;
+use crate::analytics;
 use crate::cache::Cache;
 use crate::routes;
 use crate::settings::Settings;
 use crate::templates::build_env;
-use domain::{CategoryRepository, IconRepository, PostRepository, TagRepository, UserRepository};
+use domain::{
+    CategoryRepository, IconRepository, PostRepository, TagRepository, UserRepository,
+    VisitRepository,
+};
 
 /// Everything the HTTP layer needs, injected by the `server` binary.
 /// All data access goes through the domain repository trait objects.
@@ -29,6 +33,7 @@ pub struct AppState {
     pub users: Arc<dyn UserRepository>,
     pub categories: Arc<dyn CategoryRepository>,
     pub icons: Arc<dyn IconRepository>,
+    pub visits: Arc<dyn VisitRepository>,
     pub settings: Arc<Settings>,
     pub cache: Cache,
     pub templates: Arc<Environment<'static>>,
@@ -45,6 +50,7 @@ impl AppState {
         users: Arc<dyn UserRepository>,
         categories: Arc<dyn CategoryRepository>,
         icons: Arc<dyn IconRepository>,
+        visits: Arc<dyn VisitRepository>,
         settings: Arc<Settings>,
     ) -> Self {
         Self {
@@ -53,6 +59,7 @@ impl AppState {
             users,
             categories,
             icons,
+            visits,
             templates: Arc::new(build_env(settings.clone())),
             cache: Cache::memory(),
             settings,
@@ -108,13 +115,20 @@ pub fn build_app_with_static(state: AppState, static_dir: &str) -> Router {
         .merge(admin::router())
         // Catch-all must stay last.
         .route("/{alias}", get(routes::post_view))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            analytics::track_visit,
+        ))
         .layer(TraceLayer::new_for_http())
         .with_state(state)
 }
 
-/// Bind `addr` and serve the app (used by the `server` binary).
+/// Bind `addr` and serve the app (used by the `server` binary). Connect info
+/// is exposed so the visit-tracking middleware can capture the client IP
+/// (salted-hashed) when no `X-Forwarded-For` header is present.
 pub async fn run(state: AppState, addr: SocketAddr) -> std::io::Result<()> {
     let listener = tokio::net::TcpListener::bind(addr).await?;
     tracing::info!("listening on {addr}");
-    axum::serve(listener, build_app(state)).await
+    let app = build_app(state).into_make_service_with_connect_info::<SocketAddr>();
+    axum::serve(listener, app).await
 }

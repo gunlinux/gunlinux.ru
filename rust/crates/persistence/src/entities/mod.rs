@@ -4,6 +4,7 @@
 
 pub mod category;
 pub mod icon;
+pub mod page_view;
 pub mod post;
 pub mod posts_tag;
 pub mod tag;

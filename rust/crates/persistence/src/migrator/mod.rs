@@ -7,6 +7,7 @@
 
 mod m20260101_000001_create_schema;
 mod m20260825_000002_add_post_update_date;
+mod m20260825_000003_create_page_views;
 
 use sea_orm_migration::prelude::*;
 
@@ -23,6 +24,7 @@ impl MigratorTrait for Migrator {
         vec![
             Box::new(m20260101_000001_create_schema::Migration),
             Box::new(m20260825_000002_add_post_update_date::Migration),
+            Box::new(m20260825_000003_create_page_views::Migration),
         ]
     }
 }

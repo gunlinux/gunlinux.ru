@@ -20,7 +20,7 @@ use axum::extract::{Path, Query, State};
 use axum::http::{header, HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::Router;
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{DateTime, Duration, NaiveDate, NaiveDateTime, Utc};
 use domain::{
     Category, CategoryRepository, Icon, IconRepository, Post, PostRepository, Tag, TagRepository,
     User, UserRepository,
@@ -823,6 +823,90 @@ async fn dashboard(
         context! {
             models => ALL_MODELS,
             counts => counts,
+            views_total => state.visits.total_views(None).await?,
+        },
+    )?;
+    Ok(html_response(body))
+}
+
+/// Days of daily-chart data shown on the stats page.
+const STATS_DAILY_DAYS: i64 = 14;
+/// View-count rows shown per table on the stats page.
+const STATS_TOP_LIMIT: i32 = 10;
+
+/// A source row for the stats template: `None` referrer rendered as "direct".
+#[derive(Debug, Clone, Serialize)]
+struct SourceView {
+    label: String,
+    count: i64,
+}
+
+/// One bar of the daily views chart.
+#[derive(Debug, Clone, Serialize)]
+struct DayBar {
+    label: String,
+    count: i64,
+    /// Bar height as a percentage of the busiest day (0 when empty).
+    pct: u32,
+}
+
+/// Pad the repository's daily counts to a contiguous `days`-long range ending
+/// today (days without views get a zero bar).
+fn pad_daily_counts(counts: Vec<domain::DailyCount>, days: i64) -> Vec<DayBar> {
+    let today = Utc::now().date_naive();
+    let by_day: std::collections::HashMap<NaiveDate, i64> =
+        counts.into_iter().map(|c| (c.day, c.count)).collect();
+    let mut bars: Vec<DayBar> = (0..days)
+        .map(|offset| {
+            let day = today - Duration::days(days - 1 - offset);
+            let count = by_day.get(&day).copied().unwrap_or(0);
+            DayBar {
+                label: day.format("%d.%m").to_string(),
+                count,
+                pct: 0,
+            }
+        })
+        .collect();
+    let max = bars.iter().map(|b| b.count).max().unwrap_or(0).max(1);
+    for bar in &mut bars {
+        bar.pct = ((bar.count as f64 / max as f64) * 100.0).round() as u32;
+    }
+    bars
+}
+
+/// `GET /admin/stats` — server-side visit analytics: totals, unique visitors,
+/// a daily bar chart, top referrer sources and top landing pages.
+async fn stats(State(state): State<AppState>, headers: HeaderMap) -> Result<Response, WebError> {
+    if admin_username(&state, &headers).is_none() {
+        return Ok(redirect_to_login());
+    }
+    let since_30d = Some(Utc::now() - Duration::days(30));
+    let sources: Vec<SourceView> = state
+        .visits
+        .referrer_counts(since_30d, STATS_TOP_LIMIT)
+        .await?
+        .into_iter()
+        .map(|s| SourceView {
+            label: s.referrer.unwrap_or_else(|| "direct".to_string()),
+            count: s.count,
+        })
+        .collect();
+    let paths = state.visits.top_paths(since_30d, STATS_TOP_LIMIT).await?;
+    let daily = pad_daily_counts(
+        state.visits.daily_counts(STATS_DAILY_DAYS as i32).await?,
+        STATS_DAILY_DAYS,
+    );
+    let body = render(
+        &state.templates,
+        "admin/stats.html",
+        context! {
+            models => ALL_MODELS,
+            total_views => state.visits.total_views(None).await?,
+            views_30d => state.visits.total_views(since_30d).await?,
+            unique_30d => state.visits.unique_visitors(since_30d).await?,
+            sources => sources,
+            paths => paths,
+            daily => daily,
         },
     )?;
     Ok(html_response(body))
@@ -1110,6 +1194,7 @@ pub fn router() -> Router<AppState> {
         .route("/admin/", get(dashboard)) // sqladmin serves the index at /admin/
         .route("/admin/login", get(login_get).post(login_post))
         .route("/admin/logout", get(logout))
+        .route("/admin/stats", get(stats))
         .route("/admin/{model}", get(list))
         .route("/admin/{model}/", get(list))
         .route("/admin/{model}/create", get(create_form).post(create))

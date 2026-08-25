@@ -437,6 +437,73 @@ body.admin {
   font-weight: 600;
 }
 
+/* --- Statistics -------------------------------------------------------- */
+
+.admin-title--section {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 12px;
+  color: var(--admin-muted);
+}
+
+.stats-section {
+  margin-bottom: 28px;
+}
+
+.stats-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 220px;
+  padding: 12px 8px 0;
+  background: var(--admin-panel);
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+}
+
+.stats-bar {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.stats-bar__count {
+  font-size: 11px;
+  color: var(--admin-muted);
+  margin-bottom: 4px;
+}
+
+.stats-bar__fill {
+  width: 100%;
+  max-width: 30px;
+  min-height: 2px;
+  background: var(--admin-accent);
+  border-radius: 3px 3px 0 0;
+}
+
+.stats-bar__label {
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--admin-faint);
+}
+
+.stats-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  align-items: start;
+}
+
+.stats-empty {
+  color: var(--admin-faint);
+  font-size: 13px;
+  padding: 12px 0;
+}
+
 /* --- Login ------------------------------------------------------------- */
 
 .admin-login {

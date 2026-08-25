@@ -12,6 +12,7 @@ pub mod repositories;
 pub mod security;
 pub mod tag;
 pub mod user;
+pub mod visit;
 
 pub use category::Category;
 pub use error::RepoError;
@@ -22,3 +23,4 @@ pub use repositories::{
 };
 pub use tag::Tag;
 pub use user::User;
+pub use visit::{DailyCount, PathCount, SourceCount, Visit, VisitRepository};
