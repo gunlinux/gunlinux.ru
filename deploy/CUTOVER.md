@@ -175,9 +175,10 @@ ssh gunlinux 'docker exec -i db pg_restore -U gunlinux -d gunlinux --clean --if-
 
 1. **bcrypt hashes are preserved** — the Rust app verifies existing user
    hashes; the §5 login is the end-to-end proof.
-2. **Markdown drift** — `comrak` vs python-markdown rendering differs
-   slightly (raw-HTML pass-through, fenced_code). Parity is pinned by the
-   test suites; judge any drift on `/` and `/posts` acceptable.
+2. **Markdown drift** — the two renderers (comrak for post pages, the
+   legacy preview renderer for `/md/`) differ slightly (raw-HTML
+   pass-through, fenced code). The output contract is pinned by the test
+   suites; judge any drift on `/` and `/posts` acceptable.
 3. **Postgres-only** — SQLite support was removed; the persistence suite runs
    against scratch PostgreSQL 16 databases (testcontainers or
    `TEST_DATABASE_URL`), pinning the schema and repository behavior.

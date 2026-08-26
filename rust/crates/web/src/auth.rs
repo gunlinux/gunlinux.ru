@@ -1,15 +1,13 @@
-//! Auth: JWT (HS256) + Starlette-style signed session cookie.
-//!
-//! Ports `app/auth/jwt.py` and the relevant slice of Starlette's
-//! `SessionMiddleware` semantics:
+//! Auth: JWT (HS256) + signed session cookie.
 //!
 //! - JWT claims `{sub, exp}` where `exp = now + jwt_expire_minutes`, HS256
 //!   signed with `settings.secret_key`; `decode_token` returns `None` on *any*
-//!   error (mirrors the python-jose catch-all).
+//!   error (bad signature, expired, malformed — the caller treats all as
+//!   "not authenticated").
 //! - The browser cookie is named `session` and its value is
 //!   `base64url(json) + "." + hex(hmac_sha256(base64url(json), secret_key))`
-//!   where `json` is `{"access_token": "<jwt>"}` (the Python app stores the JWT
-//!   under the `access_token` key of the Starlette session).
+//!   where `json` is `{"access_token": "<jwt>"}` (the JWT lives under the
+//!   `access_token` key of the session).
 
 use std::collections::HashMap;
 
@@ -21,12 +19,11 @@ use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, 
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 
-use crate::settings;
+use crate::settings::Settings;
 
-/// The signed session cookie name (Starlette's default).
+/// The signed session cookie name.
 pub const SESSION_COOKIE_NAME: &str = "session";
-/// The JSON key under which the JWT lives inside the session (the Python
-/// `COOKIE_NAME = "access_token"`).
+/// The JSON key under which the JWT lives inside the session.
 pub const ACCESS_TOKEN_KEY: &str = "access_token";
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -37,9 +34,11 @@ struct Claims {
 
 /// Create a JWT for `subject` (the user name), valid for
 /// `settings.jwt_expire_minutes`.
-pub fn create_access_token(subject: &str) -> Result<String, jsonwebtoken::errors::Error> {
-    let s = settings::get_settings();
-    let exp = (Utc::now().timestamp() + s.jwt_expire_minutes * 60) as usize;
+pub fn create_access_token(
+    subject: &str,
+    settings: &Settings,
+) -> Result<String, jsonwebtoken::errors::Error> {
+    let exp = (Utc::now().timestamp() + settings.jwt_expire_minutes * 60) as usize;
     let claims = Claims {
         sub: subject.to_string(),
         exp,
@@ -47,17 +46,16 @@ pub fn create_access_token(subject: &str) -> Result<String, jsonwebtoken::errors
     encode(
         &Header::new(Algorithm::HS256),
         &claims,
-        &EncodingKey::from_secret(s.secret_key.as_bytes()),
+        &EncodingKey::from_secret(settings.secret_key.as_bytes()),
     )
 }
 
 /// Decode a JWT and return the `sub` claim. `None` on any error (bad signature,
-/// expired, malformed) — exactly like the Python `decode_token`.
-pub fn decode_token(token: &str) -> Option<String> {
-    let s = settings::get_settings();
+/// expired, malformed).
+pub fn decode_token(token: &str, settings: &Settings) -> Option<String> {
     let data = decode::<Claims>(
         token,
-        &DecodingKey::from_secret(s.secret_key.as_bytes()),
+        &DecodingKey::from_secret(settings.secret_key.as_bytes()),
         &Validation::new(Algorithm::HS256),
     )
     .ok()?;
@@ -85,7 +83,7 @@ pub fn set_access_token(token: &str, secret: &[u8]) -> String {
 /// under `access_token` — or `None` if missing, tampered, or malformed.
 pub fn read_access_token(cookie_value: &str, secret: &[u8]) -> Option<String> {
     let (data, signature) = cookie_value.split_once('.')?;
-    // Constant-time comparison, like hmac.compare_digest in Python.
+    // Constant-time comparison to avoid timing side channels.
     let expected = sign(data, secret);
     let ok = constant_time_eq(&expected, signature);
     if !ok {
@@ -103,7 +101,7 @@ pub fn clear_access_token() -> String {
 }
 
 /// Build a `Set-Cookie` header that installs a signed session cookie carrying
-/// `token` (Starlette defaults: HttpOnly, SameSite=lax, 14 day max-age).
+/// `token` (HttpOnly, SameSite=lax, 14 day max-age).
 pub fn set_cookie_header(token: &str, secret: &[u8]) -> String {
     let value = set_access_token(token, secret);
     format!("{SESSION_COOKIE_NAME}={value}; Path=/; HttpOnly; SameSite=lax; Max-Age=1209600")
@@ -139,17 +137,46 @@ fn constant_time_eq(a: &str, b: &str) -> bool {
 mod tests {
     use super::*;
 
+    fn settings_with(secret: &str, expire_minutes: i64) -> Settings {
+        Settings {
+            secret_key: secret.to_string(),
+            jwt_expire_minutes: expire_minutes,
+            ..Settings::default()
+        }
+    }
+
     #[test]
     fn jwt_roundtrip() {
-        let token = create_access_token("testuser").unwrap();
+        let s = Settings::default();
+        let token = create_access_token("testuser", &s).unwrap();
         assert!(token.contains('.'));
-        assert_eq!(decode_token(&token).as_deref(), Some("testuser"));
+        assert_eq!(decode_token(&token, &s).as_deref(), Some("testuser"));
     }
 
     #[test]
     fn jwt_invalid_returns_none() {
-        assert_eq!(decode_token("not-a-valid-token"), None);
-        assert_eq!(decode_token(""), None);
+        let s = Settings::default();
+        assert_eq!(decode_token("not-a-valid-token", &s), None);
+        assert_eq!(decode_token("", &s), None);
+    }
+
+    #[test]
+    fn jwt_secret_comes_from_injected_settings() {
+        let a = settings_with("secret-a", 60);
+        let b = settings_with("secret-b", 60);
+        let token = create_access_token("testuser", &a).unwrap();
+        assert_eq!(decode_token(&token, &a).as_deref(), Some("testuser"));
+        assert_eq!(decode_token(&token, &b), None);
+    }
+
+    #[test]
+    fn jwt_respects_expiry_from_injected_settings() {
+        // A token issued with a negative expiry window is already expired and
+        // must not decode (jsonwebtoken default leeway is 60 s; -2 minutes
+        // keeps the assertion deterministic).
+        let s = settings_with("secret-a", -2);
+        let token = create_access_token("testuser", &s).unwrap();
+        assert_eq!(decode_token(&token, &s), None);
     }
 
     #[test]

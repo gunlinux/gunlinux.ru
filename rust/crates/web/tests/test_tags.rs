@@ -1,5 +1,4 @@
-//! Tag route behaviors (`tests/test_tags.py` is "migrated — covered by new
-//! test files", so this file is the Rust coverage for the tag endpoints).
+//! Tag route behaviors (tag cloud, tag view, 404s).
 
 mod common;
 

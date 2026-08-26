@@ -1,5 +1,5 @@
-//! Port of `tests/test_repositories.py` — repository CRUD/finder tests run
-//! against a real PostgreSQL 16 with the baseline migration applied.
+//! Repository CRUD/finder tests run against a real PostgreSQL 16 with the
+//! baseline migration applied.
 //!
 //! Postgres is resolved from `TEST_DATABASE_URL` when set (CI service
 //! container), otherwise via a `postgres:16` testcontainer. Every test gets a

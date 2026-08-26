@@ -1,10 +1,8 @@
 # gunlinux.ru — Rust server
 
-Rust (axum) port of the gunlinux.ru blog, built as a cargo workspace under
-`rust/`. See `plan.md` (repo root) for the staged migration strategy; the
-Python source was removed in Stage 9 — the **production server still runs the
-pre-Rust app** until the operator executes the Stage 8 cutover
-(`deploy/CUTOVER.md`).
+Rust (axum) implementation of the gunlinux.ru blog, built as a cargo workspace
+under `rust/`. Deployment and rollback are covered in `deploy/CUTOVER.md` (repo
+root).
 
 ## Workspace layout
 

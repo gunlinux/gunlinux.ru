@@ -1,4 +1,4 @@
-//! Port of `tests/test_basics.py`.
+//! Basic route tests (robots, 404, static).
 
 mod common;
 
@@ -29,7 +29,7 @@ async fn test_robots() {
     let (_store, app) = test_app();
     let body = expect_status(get(&app, "/robots.txt").await, StatusCode::OK).await;
     assert!(body.contains("User-agent"));
-    // Exact body from the Python route.
+    // Exact body contract.
     assert_eq!(
         body,
         "\nUser-agent: *\nCrawl-delay: 2\nDisallow: /tags/*\nHost: gunlinux.ru\n"
@@ -63,7 +63,7 @@ async fn test_404() {
     let (_store, app) = test_app();
     let resp = get(&app, "/nonexistent-alias-xyz").await;
     assert_eq!(resp.status(), StatusCode::NOT_FOUND);
-    // Body matches FastAPI's default HTTPException handler exactly.
+    // The pinned 404 contract.
     let body = body_text(resp).await;
     assert_eq!(body, "{\"detail\":\"Not Found\"}");
     assert_eq!(

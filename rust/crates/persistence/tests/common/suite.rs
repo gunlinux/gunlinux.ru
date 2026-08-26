@@ -1,6 +1,6 @@
 //! The repository CRUD/finder suite — backend-agnostic test bodies.
 //!
-//! Port of `tests/test_repositories.py`. Each `pub async fn` takes a migrated
+//! Each `pub async fn` takes a migrated
 //! `&DatabaseConnection`; `tests/repositories.rs` wires each body to a fresh
 //! scratch PostgreSQL database (per-test `provision` + `cleanup`).
 
@@ -184,14 +184,14 @@ pub async fn tag_crud(db: &DatabaseConnection) {
 
     let tag = Tag {
         id: None,
-        title: "Python".into(),
-        alias: "python-repo".into(),
+        title: "Rust".into(),
+        alias: "rust-repo".into(),
     };
     let created = repo.create(&tag).await.unwrap();
     assert!(created.id.is_some());
 
     assert!(repo.get_by_id(created.id.unwrap()).await.unwrap().is_some());
-    assert!(repo.get_by_alias("python-repo").await.unwrap().is_some());
+    assert!(repo.get_by_alias("rust-repo").await.unwrap().is_some());
     assert!(repo.delete(created.id.unwrap()).await.unwrap());
 }
 

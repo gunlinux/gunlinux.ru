@@ -1,5 +1,5 @@
-//! Visit tracking (server-side analytics, port of the Yandex.Metrika role the
-//! Python app never had).
+//! Visit tracking (server-side analytics, added in the rewrite to replace
+//! third-party metrika scripts).
 //!
 //! Every full-page HTML load is recorded once: where the visitor came from
 //! (normalized referrer host), which page they landed on, and a salted hash of

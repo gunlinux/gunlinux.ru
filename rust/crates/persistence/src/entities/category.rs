@@ -23,7 +23,7 @@ pub struct Model {
         nullable
     )]
     pub template: Option<String>,
-    /// Python: `Column("page", Boolean(), nullable=True, default=False)`.
+    /// Nullable BOOLEAN, no server default; `NULL` reads as `false`.
     pub page: Option<bool>,
 }
 

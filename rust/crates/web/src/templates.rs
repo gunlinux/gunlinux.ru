@@ -1,8 +1,8 @@
 //! Minijinja template environment, built from the templates embedded at
-//! compile time via `include_dir` (mirrors `app/core/templates.py`).
+//! compile time via `include_dir`.
 //!
-//! All 16 templates from `app/templates/` are vendored under `templates/`
-//! (same directory structure). The `settings` global is registered so
+//! All templates are vendored under `templates/` (same directory structure
+//! as the pre-rewrite admin). The `settings` global is registered so
 //! templates can access `settings.yandex_verification`.
 
 use std::sync::Arc;
@@ -19,7 +19,7 @@ static TEMPLATES_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/templates");
 
 /// View wrapper around `Post` that exposes the pre-rendered `markdown` HTML as
 /// a template field, so `{{ post.markdown|safe }}` works without Minijinja
-/// calling methods (Jinja2 calls the `markdown` property).
+/// calling methods.
 #[derive(Debug, Clone, Serialize)]
 pub struct PostView {
     #[serde(flatten)]
@@ -34,36 +34,9 @@ impl PostView {
     }
 }
 
-/// A year group for the posts listing. Replaces the Jinja2
-/// `posts|selectattr('publishedon')|groupby('publishedon.year')|sort(reverse=True)`
-/// chain, which Minijinja cannot evaluate — the handler precomputes the groups.
-#[derive(Debug, Clone, Serialize)]
-pub struct YearGroup {
-    pub year: i32,
-    pub posts: Vec<Post>,
-}
-
-/// Group published posts by publication year, years descending (posts keep
-/// their input order inside each group — the repository already returns them
-/// `publishedon DESC`).
-pub fn group_posts_by_year(posts: Vec<Post>) -> Vec<YearGroup> {
-    let mut groups: Vec<YearGroup> = Vec::new();
-    for post in posts {
-        let Some(publishedon) = post.publishedon else {
-            continue;
-        };
-        let year = publishedon.year();
-        match groups.iter_mut().find(|g| g.year == year) {
-            Some(g) => g.posts.push(post),
-            None => groups.push(YearGroup {
-                year,
-                posts: vec![post],
-            }),
-        }
-    }
-    groups.sort_by_key(|g| std::cmp::Reverse(g.year));
-    groups
-}
+// The posts-listing year grouping lives in the domain layer (pure logic over
+// `Post`); re-exported here for the templates that consume it.
+pub use domain::post::{group_posts_by_year, YearGroup};
 
 const WEEKDAYS_SHORT: [&str; 7] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const MONTHS_SHORT: [&str; 12] = [
@@ -84,11 +57,11 @@ const MONTHS_FULL: [&str; 12] = [
     "December",
 ];
 
-/// Minimal Python-style `strftime` supporting the directives the templates use:
+/// Minimal `strftime` formatter supporting the directives the templates use:
 /// `%a %b %B %d %m %Y %H %M %S %z`. Dates are normalized to UTC before
 /// formatting and `%z` always renders the RFC822-style `+0000` (matching the
 /// expected `Thu, 01 Jan 2026 00:00:00 +0000` output).
-fn python_strftime(dt: &DateTime<Utc>, fmt: &str) -> String {
+fn strftime_utc(dt: &DateTime<Utc>, fmt: &str) -> String {
     let mut out = String::new();
     let mut chars = fmt.chars().peekable();
     while let Some(c) = chars.next() {
@@ -135,7 +108,7 @@ fn strftime_filter(value: Value, fmt: Option<&str>) -> Result<String, minijinja:
             format!("strftime: cannot parse datetime {s:?}: {e}"),
         )
     })?;
-    Ok(python_strftime(&dt.to_utc(), fmt))
+    Ok(strftime_utc(&dt.to_utc(), fmt))
 }
 
 /// Minijinja filter: `{{ post.content|teaser }}` — the first paragraph of the
@@ -169,7 +142,7 @@ pub fn build_env(settings: Arc<Settings>) -> Environment<'static> {
 }
 
 /// `include_dir::Dir::files()` is non-recursive — collect every file across
-/// the subdirectories (`snippets/`, `icons/`, `sqladmin/`, `admin/`).
+/// the subdirectories (`snippets/`, `icons/`, `admin/`).
 fn template_files<'a>(dir: &'a Dir<'a>) -> Vec<&'a include_dir::File<'a>> {
     let mut out: Vec<&include_dir::File> = dir.files().collect();
     for sub in dir.dirs() {
@@ -199,37 +172,14 @@ mod tests {
     use minijinja::context;
 
     #[test]
-    fn strftime_formats_like_python() {
+    fn strftime_formats_directives() {
         let dt = Utc.with_ymd_and_hms(2026, 1, 1, 0, 0, 0).unwrap();
         assert_eq!(
-            python_strftime(&dt, "%a, %d %b %Y %H:%M:%S %z"),
+            strftime_utc(&dt, "%a, %d %b %Y %H:%M:%S %z"),
             "Thu, 01 Jan 2026 00:00:00 +0000"
         );
-        assert_eq!(python_strftime(&dt, "%B %d, %Y"), "January 01, 2026");
-        assert_eq!(python_strftime(&dt, "%Y-%m-%d %H:%M"), "2026-01-01 00:00");
-    }
-
-    #[test]
-    fn groups_posts_by_year_desc() {
-        let now = Utc::now();
-        let p2024 = Post {
-            publishedon: Some(now.with_year(2024).unwrap()),
-            ..Post::new("a", "a", "x")
-        };
-        let p2026a = Post {
-            publishedon: Some(now.with_year(2026).unwrap()),
-            ..Post::new("b", "b", "x")
-        };
-        let p2026b = Post {
-            publishedon: Some(now.with_year(2026).unwrap()),
-            ..Post::new("c", "c", "x")
-        };
-        let unpublished = Post::new("d", "d", "x");
-        let groups = group_posts_by_year(vec![p2026a, unpublished, p2024, p2026b]);
-        assert_eq!(groups.len(), 2);
-        assert_eq!(groups[0].year, 2026);
-        assert_eq!(groups[0].posts.len(), 2);
-        assert_eq!(groups[1].year, 2024);
+        assert_eq!(strftime_utc(&dt, "%B %d, %Y"), "January 01, 2026");
+        assert_eq!(strftime_utc(&dt, "%Y-%m-%d %H:%M"), "2026-01-01 00:00");
     }
 
     #[test]

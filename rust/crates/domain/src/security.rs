@@ -1,6 +1,5 @@
-//! Password hashing. Ported from `app/models/user.py` `_hash`/`_verify`:
-//! bcrypt, hashes stored in the existing DB must keep verifying, so the
-//! algorithm and cost are fixed.
+//! Password hashing. bcrypt; hashes stored in the existing DB must keep
+//! verifying, so the algorithm and cost are fixed.
 
 /// Hash a plaintext password with bcrypt.
 pub fn hash_password(plain: &str) -> Result<String, bcrypt::BcryptError> {
@@ -8,8 +7,7 @@ pub fn hash_password(plain: &str) -> Result<String, bcrypt::BcryptError> {
 }
 
 /// Verify a plaintext password against a bcrypt hash. Any error (malformed
-/// hash, etc.) is treated as a mismatch — never panics, mirroring the Python
-/// `_verify` which swallows exceptions and returns False.
+/// hash, etc.) is treated as a mismatch — never panics.
 pub fn verify_password(plain: &str, hashed: &str) -> bool {
     bcrypt::verify(plain, hashed).unwrap_or(false)
 }

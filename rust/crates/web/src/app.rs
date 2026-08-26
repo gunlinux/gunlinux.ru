@@ -1,8 +1,8 @@
-//! App factory — mirrors `app/core/application.py::create_app`.
+//! App factory.
 //!
-//! Critical ordering constraint (ported from the Python app): `/static`,
-//! `/tags` and `/admin` are registered BEFORE the catch-all `GET /{alias}`,
-//! which is registered last so it never shadows them.
+//! Critical ordering constraint: `/static`, `/tags` and `/admin` are
+//! registered BEFORE the catch-all `GET /{alias}`, which is registered last
+//! so it never shadows them.
 
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -71,7 +71,7 @@ impl AppState {
 /// unless provided (tests may pass their own).
 pub fn build_app(state: AppState) -> Router {
     // Static files: `app/static` (repo root) by default, overridable via
-    // STATIC_DIR (mirrors `app.mount("/static", StaticFiles(...))`).
+    // STATIC_DIR.
     let static_dir = std::env::var("STATIC_DIR").unwrap_or_else(|_| "app/static".to_string());
     build_app_with_static(state, &static_dir)
 }

@@ -17,7 +17,7 @@ pub mod visit;
 pub use category::Category;
 pub use error::RepoError;
 pub use icon::Icon;
-pub use post::{render_markdown, Post};
+pub use post::{group_posts_by_year, render_markdown, Post, YearGroup};
 pub use repositories::{
     CategoryRepository, IconRepository, PostRepository, Repository, TagRepository, UserRepository,
 };

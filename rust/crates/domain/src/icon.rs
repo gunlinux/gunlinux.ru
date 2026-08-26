@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-/// Mirrors `app/domain/icon.py` `Icon` dataclass.
+/// Icon entity (footer/social icons).
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Icon {
     pub id: Option<i32>,

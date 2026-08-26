@@ -1,8 +1,8 @@
 //! `posts_tags` join-table entity (many-to-many between `posts` and `tags`).
 //!
-//! The Python table declares no primary key; SeaORM requires one, so we use a
-//! composite `(post_id, tag_id)` primary key, which also prevents duplicate
-//! links.
+//! The table as originally created declares no primary key; SeaORM requires
+//! one, so we use a composite `(post_id, tag_id)` primary key, which also
+//! prevents duplicate links.
 
 use sea_orm::entity::prelude::*;
 

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-/// Mirrors `app/domain/tag.py` `Tag` dataclass.
+/// Blog tag entity.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Tag {
     pub id: Option<i32>,

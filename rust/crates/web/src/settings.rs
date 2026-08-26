@@ -1,6 +1,6 @@
-//! Application settings — a port of `app/core/settings.py` (pydantic-settings).
+//! Application settings.
 //!
-//! Semantics replicated from pydantic-settings:
+//! Semantics:
 //! - defaults below apply when neither `.env` nor the environment provides a value;
 //! - environment variables override the `.env` file (via `dotenvy`, which never
 //!   overwrites already-set variables) — the `config` `Environment` source then
@@ -54,7 +54,7 @@ pub fn get_settings() -> &'static Settings {
 
 fn load_settings() -> Settings {
     // Load `.env` into the process environment without overriding variables
-    // that are already set (pydantic-settings order: env vars > .env file).
+    // that are already set (precedence: env vars > .env file).
     let _ = dotenvy::dotenv();
 
     config::Config::builder()

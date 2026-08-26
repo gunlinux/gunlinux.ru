@@ -7,7 +7,8 @@ css-build:
 
 # ---------------------------------------------------------------------------
 # Rust — the deployed service (rust/ workspace: domain, persistence, web,
-# server). The Python/FastAPI app was removed in Stage 9 (see plan.md).
+# server). The original implementation was replaced in a staged rewrite;
+# only the Rust workspace remains.
 # ---------------------------------------------------------------------------
 
 RUST_DIR := rust
@@ -17,6 +18,11 @@ check:
 
 rust-check:
 	cd $(RUST_DIR) && cargo fmt --check && cargo clippy --workspace -- -D warnings
+
+# Machine-checks the crate matrix (web must not reach persistence; only
+# `server` joins them) — see scripts/check-architecture.sh.
+check-arch:
+	bash scripts/check-architecture.sh
 
 rust-test:
 	cd $(RUST_DIR) && cargo test --workspace

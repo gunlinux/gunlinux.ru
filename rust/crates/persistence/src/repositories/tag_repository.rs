@@ -1,4 +1,4 @@
-//! `TagRepository` — ports `app/repositories/tag.py`.
+//! `TagRepository` — SeaORM-backed tag storage.
 
 use async_trait::async_trait;
 use sea_orm::sea_query::JoinType;
@@ -24,8 +24,7 @@ impl TagRepository {
     }
 }
 
-/// Map a tag row to the domain `Tag` — Python: `title=t.title or "",
-/// alias=t.alias or ""`.
+/// Map a tag row to the domain `Tag`: `title or ""`, `alias or ""`.
 pub(crate) fn to_domain(t: tag::Model) -> Tag {
     Tag {
         id: Some(t.id),

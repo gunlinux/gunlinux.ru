@@ -22,8 +22,7 @@ use moka::future::Cache as MokaCache;
 use redis::aio::ConnectionManager;
 use serde::{Deserialize, Serialize};
 
-/// The namespace used for the public response cache (matches fastapi-cache2's
-/// `@cache(namespace="blog", ...)` decorators).
+/// The namespace used for the public response cache.
 pub const NAMESPACE: &str = "blog";
 /// Safety-net TTL in seconds. Freshness comes from the content version in the
 /// key, not the TTL; this only bounds how long orphaned versions linger.
@@ -255,6 +254,79 @@ mod tests {
             "blog:v1787659200123:/posts:"
         );
         assert_eq!(static_key_builder("/rss.xml", None), "blog:v0:/rss.xml:");
+    }
+
+    #[test]
+    fn wire_entry_roundtrip_preserves_response() {
+        let entry = CachedResponse {
+            status: StatusCode::NOT_FOUND,
+            body: Bytes::from_static(b"<html>404</html>"),
+            content_type: "text/html; charset=utf-8".to_string(),
+        };
+        let back = CachedResponse::try_from(WireEntry::from(&entry)).unwrap();
+        assert_eq!(back.status, entry.status);
+        assert_eq!(back.body, entry.body);
+        assert_eq!(back.content_type, entry.content_type);
+    }
+
+    #[test]
+    fn wire_entry_invalid_status_rejected() {
+        // 1000 is outside the valid HTTP status range; the entry must fail
+        // conversion rather than produce a bogus response.
+        let wire = WireEntry {
+            status: 1000,
+            body: b"x".to_vec(),
+            content_type: "text/html".to_string(),
+        };
+        assert!(CachedResponse::try_from(wire).is_err());
+    }
+
+    #[test]
+    fn garbage_wire_entry_is_a_miss() {
+        // `Cache::get` deserializes with `serde_json::from_str(&raw?).ok()?` —
+        // a bad or stale wire entry must degrade to a cache miss, never an
+        // error (architecture review §4.6).
+        assert!(serde_json::from_str::<WireEntry>("not json").ok().is_none());
+        assert!(serde_json::from_str::<WireEntry>("{\"status\":\"nope\"}")
+            .ok()
+            .is_none());
+    }
+
+    #[tokio::test]
+    async fn memory_cache_roundtrip_and_clear_namespace() {
+        let cache = Cache::memory();
+        let key = "blog:v1:/:".to_string();
+        let entry = CachedResponse {
+            status: StatusCode::OK,
+            body: Bytes::from_static(b"<html>hi</html>"),
+            content_type: "text/html; charset=utf-8".to_string(),
+        };
+        assert!(cache.get(&key).await.is_none());
+        cache.insert(key.clone(), entry.clone()).await;
+        let hit = cache.get(&key).await.expect("entry readable back");
+        assert_eq!(hit.status, entry.status);
+        assert_eq!(hit.body, entry.body);
+        cache.clear_namespace(NAMESPACE).await;
+        assert!(
+            cache.get(&key).await.is_none(),
+            "clear_namespace must evict the entry"
+        );
+    }
+
+    #[tokio::test]
+    async fn connect_falls_back_to_memory_on_bad_url() {
+        // An unparseable REDIS_URL must not take the site down: the cache
+        // degrades to the in-memory backend and keeps serving.
+        let cache = Cache::connect(Some("not a valid redis url")).await;
+        let key = format!("{NAMESPACE}:test:{}", Utc::now().timestamp_millis());
+        let entry = CachedResponse {
+            status: StatusCode::OK,
+            body: Bytes::from_static(b"<html>hi</html>"),
+            content_type: "text/html; charset=utf-8".to_string(),
+        };
+        cache.insert(key.clone(), entry.clone()).await;
+        let hit = cache.get(&key).await.expect("memory fallback must serve");
+        assert_eq!(hit.body, entry.body);
     }
 
     /// Round-trip through whatever backend `REDIS_URL` points at. Skips (and

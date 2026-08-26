@@ -1,4 +1,4 @@
-//! `CategoryRepository` — ports `app/repositories/category.py`.
+//! `CategoryRepository` — SeaORM-backed category storage.
 
 use async_trait::async_trait;
 use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
@@ -20,7 +20,7 @@ impl CategoryRepository {
     }
 }
 
-/// Map a category row to the domain `Category` — Python: `title or ""`,
+/// Map a category row to the domain `Category`: `title or ""`,
 /// `alias or ""`; `template`/`page` pass through as-is.
 pub(crate) fn to_domain(c: category::Model) -> Category {
     Category {
@@ -81,7 +81,7 @@ impl Repository<Category, i32> for CategoryRepository {
         };
         active.title = Set(Some(entity.title.clone()));
         active.alias = Set(Some(entity.alias.clone()));
-        // Python update does not touch `page`; only template is updated when
+        // The update does not touch `page`; only template is updated when
         // present. Keep that behavior.
         if let Some(template) = &entity.template {
             active.template = Set(Some(template.clone()));

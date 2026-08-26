@@ -1,7 +1,6 @@
 //! SeaORM migrations.
 //!
-//! A single baseline migration reproduces the schema from
-//! `app/infrastructure/database.py` (the post-16-Alembic-migrations state).
+//! A single baseline migration reproduces the pre-rewrite schema state.
 //! Production cutover stamps this migration on the existing DB rather than
 //! re-running it.
 
