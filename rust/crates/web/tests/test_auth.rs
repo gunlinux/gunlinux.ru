@@ -1,4 +1,4 @@
-//! Port of `tests/test_auth.py` plus admin auth flow coverage.
+//! Auth flow coverage (login, session cookie, admin redirects).
 
 mod common;
 
@@ -8,14 +8,19 @@ use web::auth;
 
 #[test]
 fn test_jwt_roundtrip() {
-    let token = auth::create_access_token("testuser").unwrap();
+    let settings = web::settings::Settings::default();
+    let token = auth::create_access_token("testuser", &settings).unwrap();
     assert!(token.contains('.'));
-    assert_eq!(auth::decode_token(&token).as_deref(), Some("testuser"));
+    assert_eq!(
+        auth::decode_token(&token, &settings).as_deref(),
+        Some("testuser")
+    );
 }
 
 #[test]
 fn test_jwt_invalid() {
-    assert_eq!(auth::decode_token("not-a-valid-token"), None);
+    let settings = web::settings::Settings::default();
+    assert_eq!(auth::decode_token("not-a-valid-token", &settings), None);
 }
 
 #[tokio::test]
@@ -28,7 +33,7 @@ async fn test_admin_requires_login() {
 
 #[tokio::test]
 async fn test_admin_trailing_slash_requires_login() {
-    // sqladmin serves the index at /admin/ — both forms must redirect.
+    // The admin index lives at /admin/ — both forms must redirect.
     let (_store, app) = test_app();
     let resp = get(&app, "/admin/").await;
     assert_eq!(resp.status(), StatusCode::FOUND);

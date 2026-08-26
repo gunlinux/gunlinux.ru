@@ -1,13 +1,12 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Datelike, Utc};
 use serde::{Deserialize, Serialize};
 
-/// Render markdown to HTML, matching the Python app's behavior:
-/// `markdown.markdown(content, extensions=["markdown.extensions.fenced_code"])`.
-/// Raw HTML is passed through unsanitized (admin-authored content is trusted).
+/// Render markdown to HTML for post pages. Raw HTML is passed through
+/// unsanitized (admin-authored content is trusted).
 pub fn render_markdown(src: &str) -> String {
     let mut options = comrak::Options::default();
-    // Disable GFM extras that python-markdown (without extensions) would not
-    // produce, so existing content keeps its current rendering.
+    // Keep the renderer conservative: no GFM extras beyond CommonMark +
+    // fenced code, so existing content keeps its current rendering.
     options.extension.strikethrough = false;
     options.extension.table = false;
     options.extension.tasklist = false;
@@ -21,14 +20,13 @@ pub fn render_markdown(src: &str) -> String {
     comrak::markdown_to_html(src, &options)
 }
 
-/// Render markdown for the `POST /md/` admin preview, matching the Python
-/// route's plain `markdown.markdown(data)` call (NO extensions). python-markdown
-/// without `fenced_code` renders fenced blocks as inline `<code>` spans inside a
-/// `<p>` (language tag first, then a newline, then the content) instead of
-/// `<pre><code>`. comrak 0.30 always parses fences (core CommonMark), so the
-/// rendered `<pre><code>` blocks are converted back to that inline form. The
-/// residual difference vs python-markdown (blank line after raw-HTML blocks
-/// before lists) is documented in MIGRATION_CONTRACT.md.
+/// Render markdown for the `POST /md/` admin preview. The contract: NO
+/// fenced-code extension — fenced blocks render as inline `<code>` spans
+/// inside a `<p>` (language tag first, then a newline, then the content)
+/// instead of `<pre><code>`. comrak 0.30 always parses fences (core
+/// CommonMark), so the rendered `<pre><code>` blocks are converted back to
+/// that inline form. Residual difference (blank line after raw-HTML blocks
+/// before lists) is accepted and pinned by the tests.
 pub fn render_markdown_preview(src: &str) -> String {
     let mut options = comrak::Options::default();
     options.extension.strikethrough = false;
@@ -42,16 +40,17 @@ pub fn render_markdown_preview(src: &str) -> String {
     options.render.unsafe_ = true;
     options.render.hardbreaks = false;
     let html = comrak::markdown_to_html(src, &options);
-    let html = python_md_code_spans(&html);
-    // python-markdown never emits a trailing newline; comrak always does.
+    let html = legacy_md_code_spans(&html);
+    // The legacy preview renderer never emits a trailing newline; comrak
+    // always does.
     html.trim_end().to_string()
 }
 
 /// Convert comrak `<pre><code class="language-X">content\n</code></pre>` blocks
-/// into python-markdown's inline form `<p><code>X\ncontent</code></p>`, and
-/// unescape `&quot;` inside the code content (python-markdown does not escape
-/// quotes in code spans; comrak does).
-fn python_md_code_spans(html: &str) -> String {
+/// into the preview contract's inline form `<p><code>X\ncontent</code></p>`,
+/// and unescape `&quot;` inside the code content (quotes in code spans are
+/// left unescaped by the legacy renderer; comrak escapes them).
+fn legacy_md_code_spans(html: &str) -> String {
     const OPEN: &str = "<pre><code";
     const CLOSE: &str = "</code></pre>";
     let mut out = String::with_capacity(html.len());
@@ -95,9 +94,9 @@ fn python_md_code_spans(html: &str) -> String {
     out
 }
 
-/// Mirrors `app/domain/post.py` `Post` dataclass. `update_date` is a
-/// post-migration addition (cache content versioning): set on create/update
-/// by the admin layer, `NULL` for legacy rows.
+/// Blog post entity. `update_date` is a post-migration addition (cache
+/// content versioning): set on create/update by the admin layer, `NULL` for
+/// legacy rows.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Post {
     pub id: Option<i32>,
@@ -142,8 +141,7 @@ impl Post {
     }
 
     /// Short plain-text excerpt (first paragraph, capped at 300 chars) for RSS.
-    /// Ported 1:1 from the Python `Post.teaser` property — operates on raw
-    /// content, no markdown rendering or HTML stripping.
+    /// Operates on raw content — no markdown rendering or HTML stripping.
     pub fn teaser(&self) -> String {
         let first = self
             .content
@@ -169,9 +167,62 @@ impl Post {
     }
 }
 
+/// A year group for the posts listing. The template language cannot evaluate
+/// the grouping chain inline, so the handler precomputes the groups.
+#[derive(Debug, Clone, Serialize)]
+pub struct YearGroup {
+    pub year: i32,
+    pub posts: Vec<Post>,
+}
+
+/// Group published posts by publication year, years descending (posts keep
+/// their input order inside each group — the repository already returns them
+/// `publishedon DESC`).
+pub fn group_posts_by_year(posts: Vec<Post>) -> Vec<YearGroup> {
+    let mut groups: Vec<YearGroup> = Vec::new();
+    for post in posts {
+        let Some(publishedon) = post.publishedon else {
+            continue;
+        };
+        let year = publishedon.year();
+        match groups.iter_mut().find(|g| g.year == year) {
+            Some(g) => g.posts.push(post),
+            None => groups.push(YearGroup {
+                year,
+                posts: vec![post],
+            }),
+        }
+    }
+    groups.sort_by_key(|g| std::cmp::Reverse(g.year));
+    groups
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn groups_posts_by_year_desc() {
+        let now = Utc::now();
+        let p2024 = Post {
+            publishedon: Some(now.with_year(2024).unwrap()),
+            ..Post::new("a", "a", "x")
+        };
+        let p2026a = Post {
+            publishedon: Some(now.with_year(2026).unwrap()),
+            ..Post::new("b", "b", "x")
+        };
+        let p2026b = Post {
+            publishedon: Some(now.with_year(2026).unwrap()),
+            ..Post::new("c", "c", "x")
+        };
+        let unpublished = Post::new("d", "d", "x");
+        let groups = group_posts_by_year(vec![p2026a, unpublished, p2024, p2026b]);
+        assert_eq!(groups.len(), 2);
+        assert_eq!(groups[0].year, 2026);
+        assert_eq!(groups[0].posts.len(), 2);
+        assert_eq!(groups[1].year, 2024);
+    }
 
     #[test]
     fn markdown_renders_fenced_code() {
@@ -188,8 +239,8 @@ mod tests {
 
     #[test]
     fn preview_renders_fence_as_inline_code() {
-        // python-markdown without fenced_code: ```rust block becomes an inline
-        // <code> span in a <p>, language tag first, quotes left unescaped.
+        // Preview contract: fenced block becomes an inline <code> span in a
+        // <p>, language tag first, quotes left unescaped.
         let html = render_markdown_preview("```rust\nfn main() { println!(\"hi\"); }\n```");
         assert_eq!(
             html,

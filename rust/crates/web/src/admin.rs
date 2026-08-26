@@ -1,30 +1,28 @@
-//! Custom admin panel — replaces sqladmin. Built entirely on the repository
-//! traits (the same layer every other route uses; no ORM bypass like the
-//! Python sqladmin). Generic CRUD is driven by an `AdminModel` descriptor per
-//! entity plus a trait-object store over the repositories.
+//! Custom admin panel. Built entirely on the repository traits (the same
+//! layer every other route uses; no ORM bypass). Generic CRUD is driven by
+//! an `AdminModel` descriptor per entity plus a trait-object store over the
+//! repositories.
 //!
-//! Auth mirrors `app/admin/__init__.py` `AdminAuth`: login via
-//! `UserService.authenticate_user`, JWT stored in the signed `session` cookie,
-//! every non-auth `/admin` route redirects to `/admin/login` when
-//! unauthenticated. On every write the `"blog"` response cache is invalidated
-//! (port of `CacheClearingModelView`).
+//! Auth: login via `UserService.authenticate_user`, JWT stored in the signed
+//! `session` cookie, every non-auth `/admin` route redirects to
+//! `/admin/login` when unauthenticated. On every write the `"blog"` response
+//! cache is invalidated.
 //!
-//! The Python app throttles login attempts in-process; the Rust app is a
-//! single process so throttling there is moot — intentionally not ported.
+//! Login attempts are throttled in-process in the previous implementation;
+//! this app is a single process so throttling there is moot — intentionally
+//! not ported.
 
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use application::admin as commands;
 use async_trait::async_trait;
 use axum::extract::{Path, Query, State};
 use axum::http::{header, HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::Router;
-use chrono::{DateTime, Duration, NaiveDate, NaiveDateTime, Utc};
-use domain::{
-    Category, CategoryRepository, Icon, IconRepository, Post, PostRepository, Tag, TagRepository,
-    User, UserRepository,
-};
+use chrono::{Duration, NaiveDate, Utc};
+use domain::{CategoryRepository, IconRepository, PostRepository, TagRepository, UserRepository};
 use minijinja::context;
 use serde::Serialize;
 use serde_json::Value as JsonValue;
@@ -32,12 +30,11 @@ use serde_json::Value as JsonValue;
 use crate::app::AppState;
 use crate::auth;
 use crate::cache;
-use crate::services::{UserService, WebError};
+use crate::error::WebError;
 use crate::templates::render;
 
-/// Descriptor mirroring the sqladmin `ModelView` configuration in
-/// `app/admin/__init__.py` (column lists, searchable/sortable fields,
-/// form-excluded fields).
+/// Descriptor for one admin-managed model (column lists, searchable/sortable
+/// fields, form-excluded fields).
 #[derive(Debug, Clone, Serialize)]
 pub struct AdminModel {
     pub name: &'static str,
@@ -100,7 +97,7 @@ pub static ICON_MODEL: AdminModel = AdminModel {
     form_excluded: &[],
 };
 
-/// All model descriptors, in sqladmin registration order.
+/// All model descriptors, in admin registration order.
 pub static ALL_MODELS: &[&AdminModel] = &[
     &POST_MODEL,
     &CATEGORY_MODEL,
@@ -205,14 +202,6 @@ fn cmp_json(a: Option<&JsonValue>, b: Option<&JsonValue>) -> std::cmp::Ordering 
     }
 }
 
-fn get(form: &HashMap<String, String>, key: &str) -> String {
-    form.get(key).cloned().unwrap_or_default()
-}
-
-fn checkbox(form: &HashMap<String, String>, key: &str) -> bool {
-    form.get(key).map(|v| v == "on").unwrap_or(false)
-}
-
 fn textarea_fields(store: &dyn AdminStore) -> Vec<&'static str> {
     store
         .form_fields()
@@ -243,29 +232,6 @@ async fn collect_options(
     Ok(map)
 }
 
-/// Parse a datetime from the form. Empty → None. Accepts RFC3339
-/// (`2026-01-01T12:00:00Z`) and naive `YYYY-MM-DDTHH:MM[:SS]` (assumed UTC).
-fn parse_datetime_field(s: &str) -> Option<DateTime<Utc>> {
-    let s = s.trim();
-    if s.is_empty() {
-        return None;
-    }
-    if let Ok(dt) = DateTime::parse_from_rfc3339(s) {
-        return Some(dt.with_timezone(&Utc));
-    }
-    for fmt in ["%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M"] {
-        if let Ok(naive) = NaiveDateTime::parse_from_str(s, fmt) {
-            return Some(naive.and_utc());
-        }
-    }
-    None
-}
-
-fn hash_form_password(password: &str) -> Result<String, WebError> {
-    domain::security::hash_password(password)
-        .map_err(|e| WebError::Internal(format!("password hashing failed: {e}")))
-}
-
 // ---------------------------------------------------------------------------
 // Per-model stores
 // ---------------------------------------------------------------------------
@@ -274,17 +240,6 @@ pub struct PostStore {
     repo: Arc<dyn PostRepository>,
     tags: Arc<dyn TagRepository>,
     categories: Arc<dyn CategoryRepository>,
-}
-
-impl PostStore {
-    /// Parse the comma-joined tag ids submitted by the hidden `tags` input
-    /// (maintained by admin.js from the checkbox chips).
-    fn tag_ids(form: &HashMap<String, String>) -> Vec<i32> {
-        get(form, "tags")
-            .split(',')
-            .filter_map(|s| s.trim().parse::<i32>().ok())
-            .collect()
-    }
 }
 
 pub struct CategoryStore {
@@ -393,25 +348,7 @@ impl AdminStore for PostStore {
     }
 
     async fn create_from_form(&self, form: &HashMap<String, String>) -> Result<(), WebError> {
-        let now = Utc::now();
-        let post = Post {
-            id: None,
-            pagetitle: get(form, "pagetitle"),
-            alias: get(form, "alias"),
-            content: get(form, "content"),
-            createdon: Some(now),
-            publishedon: parse_datetime_field(&get(form, "publishedon")),
-            update_date: Some(now),
-            category_id: get(form, "category_id").trim().parse().ok(),
-            is_page: checkbox(form, "is_page"),
-            user_id: None,
-        };
-        let created = self.repo.create(&post).await?;
-        if let Some(id) = created.id {
-            self.repo
-                .set_tags_for_post(id, &Self::tag_ids(form))
-                .await?;
-        }
+        commands::create_post(&*self.repo, form).await?;
         Ok(())
     }
 
@@ -420,32 +357,12 @@ impl AdminStore for PostStore {
         id: i32,
         form: &HashMap<String, String>,
     ) -> Result<(), WebError> {
-        let existing = self.repo.get_by_id(id).await?.ok_or(WebError::NotFound)?;
-        let post = Post {
-            id: Some(id),
-            pagetitle: get(form, "pagetitle"),
-            alias: get(form, "alias"),
-            content: get(form, "content"),
-            createdon: existing.createdon,
-            publishedon: parse_datetime_field(&get(form, "publishedon")),
-            // Bump the content version so cached pages re-render immediately.
-            update_date: Some(Utc::now()),
-            category_id: get(form, "category_id").trim().parse().ok(),
-            is_page: checkbox(form, "is_page"),
-            user_id: existing.user_id,
-        };
-        self.repo.update(&post).await?;
-        self.repo
-            .set_tags_for_post(id, &Self::tag_ids(form))
-            .await?;
+        commands::update_post(&*self.repo, id, form).await?;
         Ok(())
     }
 
     async fn delete(&self, id: i32) -> Result<bool, WebError> {
-        // `posts_tags` FKs have no ON DELETE action; clear the links first or
-        // Postgres rejects the delete with an FK violation.
-        self.repo.set_tags_for_post(id, &[]).await?;
-        Ok(self.repo.delete(id).await?)
+        Ok(commands::delete_post(&*self.repo, id).await?)
     }
 }
 
@@ -484,22 +401,7 @@ impl AdminStore for CategoryStore {
     }
 
     async fn create_from_form(&self, form: &HashMap<String, String>) -> Result<(), WebError> {
-        let category = Category {
-            id: None,
-            title: get(form, "title"),
-            alias: get(form, "alias"),
-            template: if get(form, "template").is_empty() {
-                None
-            } else {
-                Some(get(form, "template"))
-            },
-            page: if checkbox(form, "page") {
-                Some(true)
-            } else {
-                None
-            },
-        };
-        self.repo.create(&category).await?;
+        commands::create_category(&*self.repo, form).await?;
         Ok(())
     }
 
@@ -508,24 +410,7 @@ impl AdminStore for CategoryStore {
         id: i32,
         form: &HashMap<String, String>,
     ) -> Result<(), WebError> {
-        let existing = self.repo.get_by_id(id).await?.ok_or(WebError::NotFound)?;
-        let category = Category {
-            id: Some(id),
-            title: get(form, "title"),
-            alias: get(form, "alias"),
-            template: if get(form, "template").is_empty() {
-                None
-            } else {
-                Some(get(form, "template"))
-            },
-            page: if checkbox(form, "page") {
-                Some(true)
-            } else {
-                None
-            },
-        };
-        let _ = existing;
-        self.repo.update(&category).await?;
+        commands::update_category(&*self.repo, id, form).await?;
         Ok(())
     }
 
@@ -566,12 +451,7 @@ impl AdminStore for TagStore {
     }
 
     async fn create_from_form(&self, form: &HashMap<String, String>) -> Result<(), WebError> {
-        let tag = Tag {
-            id: None,
-            title: get(form, "title"),
-            alias: get(form, "alias"),
-        };
-        self.repo.create(&tag).await?;
+        commands::create_tag(&*self.repo, form).await?;
         Ok(())
     }
 
@@ -580,13 +460,7 @@ impl AdminStore for TagStore {
         id: i32,
         form: &HashMap<String, String>,
     ) -> Result<(), WebError> {
-        self.repo.get_by_id(id).await?.ok_or(WebError::NotFound)?;
-        let tag = Tag {
-            id: Some(id),
-            title: get(form, "title"),
-            alias: get(form, "alias"),
-        };
-        self.repo.update(&tag).await?;
+        commands::update_tag(&*self.repo, id, form).await?;
         Ok(())
     }
 
@@ -630,15 +504,7 @@ impl AdminStore for UserStore {
     }
 
     async fn create_from_form(&self, form: &HashMap<String, String>) -> Result<(), WebError> {
-        let hashed = hash_form_password(&get(form, "password"))?;
-        let user = User {
-            id: None,
-            name: get(form, "name"),
-            password: hashed,
-            authenticated: checkbox(form, "authenticated"),
-            createdon: Some(Utc::now()),
-        };
-        self.repo.create(&user).await?;
+        commands::create_user(&*self.repo, form).await?;
         Ok(())
     }
 
@@ -647,21 +513,7 @@ impl AdminStore for UserStore {
         id: i32,
         form: &HashMap<String, String>,
     ) -> Result<(), WebError> {
-        let existing = self.repo.get_by_id(id).await?.ok_or(WebError::NotFound)?;
-        let password = if get(form, "password").is_empty() {
-            // Password field is form-excluded on edit; keep the stored hash.
-            existing.password.clone()
-        } else {
-            hash_form_password(&get(form, "password"))?
-        };
-        let user = User {
-            id: Some(id),
-            name: get(form, "name"),
-            password,
-            authenticated: checkbox(form, "authenticated"),
-            createdon: existing.createdon,
-        };
-        self.repo.update(&user).await?;
+        commands::update_user(&*self.repo, id, form).await?;
         Ok(())
     }
 
@@ -705,17 +557,7 @@ impl AdminStore for IconStore {
     }
 
     async fn create_from_form(&self, form: &HashMap<String, String>) -> Result<(), WebError> {
-        let icon = Icon {
-            id: None,
-            title: get(form, "title"),
-            url: get(form, "url"),
-            content: if get(form, "content").is_empty() {
-                None
-            } else {
-                Some(get(form, "content"))
-            },
-        };
-        self.repo.create(&icon).await?;
+        commands::create_icon(&*self.repo, form).await?;
         Ok(())
     }
 
@@ -724,18 +566,7 @@ impl AdminStore for IconStore {
         id: i32,
         form: &HashMap<String, String>,
     ) -> Result<(), WebError> {
-        self.repo.get_by_id(id).await?.ok_or(WebError::NotFound)?;
-        let icon = Icon {
-            id: Some(id),
-            title: get(form, "title"),
-            url: get(form, "url"),
-            content: if get(form, "content").is_empty() {
-                None
-            } else {
-                Some(get(form, "content"))
-            },
-        };
-        self.repo.update(&icon).await?;
+        commands::update_icon(&*self.repo, id, form).await?;
         Ok(())
     }
 
@@ -745,7 +576,7 @@ impl AdminStore for IconStore {
 }
 
 /// Build a store trait object for the given model name (accepts singular and
-/// plural URL segments, like sqladmin's `/admin/posts/...`).
+/// plural URL segments, e.g. `/admin/posts/...`).
 pub fn admin_store_for(state: &AppState, model: &str) -> Option<Box<dyn AdminStore>> {
     match model {
         "post" | "posts" => Some(Box::new(PostStore {
@@ -786,7 +617,7 @@ fn admin_username(state: &AppState, headers: &HeaderMap) -> Option<String> {
     let cookie_header = headers.get(header::COOKIE)?.to_str().ok()?;
     let cookie = auth::cookie_value(cookie_header, auth::SESSION_COOKIE_NAME)?;
     let token = auth::read_access_token(&cookie, state.settings.secret_key.as_bytes())?;
-    auth::decode_token(&token)
+    auth::decode_token(&token, &state.settings)
 }
 
 fn set_cookie_on(resp: &mut Response, header_value: String) {
@@ -925,11 +756,10 @@ async fn login_post(
     State(state): State<AppState>,
     axum::Form(form): axum::Form<HashMap<String, String>>,
 ) -> Result<Response, WebError> {
-    let username = get(&form, "username");
-    let password = get(&form, "password");
-    let user_service = UserService::new(state.users.clone());
-    if let Some(user) = user_service.authenticate_user(&username, &password).await? {
-        let token = auth::create_access_token(&user.name)
+    let username = form.get("username").cloned().unwrap_or_default();
+    let password = form.get("password").cloned().unwrap_or_default();
+    if let Some(user) = state.users.authenticate(&username, &password).await? {
+        let token = auth::create_access_token(&user.name, &state.settings)
             .map_err(|e| WebError::Internal(format!("jwt: {e}")))?;
         let mut resp = redirect("/admin");
         set_cookie_on(
@@ -1129,9 +959,8 @@ async fn delete(
     Ok(redirect(&format!("/admin/{}/", store.descriptor().slug)))
 }
 
-/// Re-render the create/edit form with the error message (like sqladmin's
-/// flash), preserving the submitted field values. `NotFound` maps to a plain
-/// 404 page.
+/// Re-render the create/edit form with the error message, preserving the
+/// submitted field values. `NotFound` maps to a plain 404 page.
 async fn render_form_error(
     state: &AppState,
     store: &dyn AdminStore,
@@ -1191,7 +1020,7 @@ pub fn router() -> Router<AppState> {
     use axum::routing::get;
     Router::new()
         .route("/admin", get(dashboard))
-        .route("/admin/", get(dashboard)) // sqladmin serves the index at /admin/
+        .route("/admin/", get(dashboard)) // the admin index is served at /admin/
         .route("/admin/login", get(login_get).post(login_post))
         .route("/admin/logout", get(logout))
         .route("/admin/stats", get(stats))

@@ -1,6 +1,6 @@
-//! Route handlers — a port of `app/api/posts.py` + `app/api/tags.py`.
+//! Route handlers.
 //!
-//! Behavior contract (frozen from the Python app):
+//! Behavior contract:
 //! - cacheable GET routes use the response cache (Redis when `REDIS_URL` is
 //!   set, in-memory moka otherwise; namespace `"blog"`); keys carry a content
 //!   version from `posts.update_date` so new/edited posts invalidate cached
@@ -21,12 +21,14 @@ use axum::Json;
 use chrono::Utc;
 use minijinja::context;
 
+use application::posts as use_cases;
+
 use crate::app::AppState;
 use crate::cache::{htmx_key_builder, static_key_builder, Cache, CachedResponse};
-use crate::services::{IconService, PostService, TagService, WebError};
-use crate::templates::{group_posts_by_year, render, PostView};
+use crate::error::WebError;
+use crate::templates::{render, PostView};
 
-/// `text/plain` with charset, matching Starlette's charset appending.
+/// `text/plain` with charset appended.
 const TEXT_PLAIN: &str = "text/plain; charset=utf-8";
 const TEXT_HTML: &str = "text/html; charset=utf-8";
 const APP_XML: &str = "application/xml";
@@ -40,9 +42,8 @@ fn text_response(body: String, content_type: &str) -> Response {
     ([(header::CONTENT_TYPE, content_type)], body).into_response()
 }
 
-/// 404 body matching FastAPI's default HTTPException handler:
-/// `{"detail":"Not Found"}` with `application/json` (Starlette compact
-/// separators, no charset).
+/// 404 body — the pinned contract: `{"detail":"Not Found"}` with
+/// `application/json` (compact separators, no charset).
 pub fn not_found() -> Response {
     (
         StatusCode::NOT_FOUND,
@@ -79,16 +80,14 @@ async fn nav_pages(state: &AppState, headers: &HeaderMap) -> Result<minijinja::V
     if is_htmx_request(headers) {
         return Ok(minijinja::Value::from_serialize(&[] as &[()]));
     }
-    let pages = PostService::new(state.posts.clone())
-        .get_page_posts()
-        .await?;
+    let pages = use_cases::nav_pages(&*state.posts).await?;
     Ok(minijinja::Value::from_serialize(&pages))
 }
 
 /// Serve a rendered (or otherwise produced) response through the cache:
 /// return a hit immediately; otherwise run `f`, cache the 200 response and
-/// return it. Non-200 responses are not cached (matches fastapi-cache, which
-/// never sees raised exceptions).
+/// return it. Non-200 responses are not cached (errors never enter the
+/// cache).
 async fn with_cache<F, Fut>(cache: &Cache, key: String, f: F) -> Result<Response, WebError>
 where
     F: FnOnce() -> Fut,
@@ -132,14 +131,10 @@ pub async fn index(
     headers: HeaderMap,
     uri: Uri,
 ) -> Result<Response, WebError> {
-    let version = PostService::new(state.posts.clone())
-        .latest_update()
-        .await?;
+    let version = state.posts.latest_update().await?;
     let key = htmx_key_builder(&path_query(&uri), &headers, version);
     with_cache(&state.cache, key, || async {
-        let post_service = PostService::new(state.posts.clone());
-        let all_posts = post_service.get_all_published_content().await?;
-        let posts_by_year = group_posts_by_year(all_posts);
+        let posts_by_year = use_cases::posts_by_year(&*state.posts).await?;
         let pages = nav_pages(&state, &headers).await?;
         let body = render(
             &state.templates,
@@ -157,14 +152,10 @@ pub async fn posts(
     headers: HeaderMap,
     uri: Uri,
 ) -> Result<Response, WebError> {
-    let version = PostService::new(state.posts.clone())
-        .latest_update()
-        .await?;
+    let version = state.posts.latest_update().await?;
     let key = htmx_key_builder(&path_query(&uri), &headers, version);
     with_cache(&state.cache, key, || async {
-        let post_service = PostService::new(state.posts.clone());
-        let all_posts = post_service.get_all_published_content().await?;
-        let posts_by_year = group_posts_by_year(all_posts);
+        let posts_by_year = use_cases::posts_by_year(&*state.posts).await?;
         let template = if is_htmx_request(&headers) {
             "posts.htmx"
         } else {
@@ -187,13 +178,10 @@ pub async fn icons_hx(
     headers: HeaderMap,
     uri: Uri,
 ) -> Result<Response, WebError> {
-    let version = PostService::new(state.posts.clone())
-        .latest_update()
-        .await?;
+    let version = state.posts.latest_update().await?;
     let key = htmx_key_builder(&path_query(&uri), &headers, version);
     with_cache(&state.cache, key, || async {
-        let icon_service = IconService::new(state.icons.clone());
-        let icons = icon_service.get_all_icons().await?;
+        let icons = state.icons.get_all().await?;
         let body = render(
             &state.templates,
             "icons/icons.htmx",
@@ -210,9 +198,7 @@ pub async fn robots(
     headers: HeaderMap,
     uri: Uri,
 ) -> Result<Response, WebError> {
-    let version = PostService::new(state.posts.clone())
-        .latest_update()
-        .await?;
+    let version = state.posts.latest_update().await?;
     let key = static_key_builder(&path_query(&uri), version);
     with_cache(&state.cache, key, || async {
         let content =
@@ -224,11 +210,10 @@ pub async fn robots(
 }
 
 /// `GET /sitemap.xml` — relative `<loc>/alias</loc>` entries for pages then
-/// published posts. NOT cached (the Python route has no `@cache` decorator).
+/// published posts. NOT cached.
 pub async fn sitemap(State(state): State<AppState>) -> Result<Response, WebError> {
-    let post_service = PostService::new(state.posts.clone());
-    let pages = post_service.get_page_posts().await?;
-    let posts_list = post_service.get_published_posts().await?;
+    let pages = use_cases::page_posts(&*state.posts).await?;
+    let posts_list = use_cases::published_posts(&*state.posts).await?;
     let mut xml = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
     xml.push_str("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">");
     for p in pages.iter().chain(posts_list.iter()) {
@@ -244,13 +229,10 @@ pub async fn rss(
     headers: HeaderMap,
     uri: Uri,
 ) -> Result<Response, WebError> {
-    let version = PostService::new(state.posts.clone())
-        .latest_update()
-        .await?;
+    let version = state.posts.latest_update().await?;
     let key = static_key_builder(&path_query(&uri), version);
     with_cache(&state.cache, key, || async {
-        let post_service = PostService::new(state.posts.clone());
-        let posts_list = post_service.get_published_posts().await?;
+        let posts_list = use_cases::published_posts(&*state.posts).await?;
         let date = Utc::now();
         let _ = &headers;
         let body = render(
@@ -265,7 +247,7 @@ pub async fn rss(
 
 /// `POST /md/` — markdown-to-HTML helper used by the admin WYSIWYG preview.
 /// Accepts urlencoded `data` (the EasyMDE client) and multipart/form-data.
-/// Public, no auth, no CSRF (no side effects) — same as the Python route.
+/// Public, no auth, no CSRF (no side effects).
 pub async fn getmd(
     State(_state): State<AppState>,
     headers: HeaderMap,
@@ -289,8 +271,8 @@ pub async fn getmd(
         form.get("data").cloned().unwrap_or_default()
     };
 
-    // python-markdown-compatible preview (no fenced_code extension) to match
-    // the Python `POST /md/` route byte-for-byte.
+    // Legacy preview renderer (no fenced_code): matches the `POST /md/`
+    // contract byte-for-byte.
     let html = domain::post::render_markdown_preview(&data);
     Ok(Json(serde_json::json!({ "data": html })).into_response())
 }
@@ -300,8 +282,7 @@ pub async fn tags_index(
     State(state): State<AppState>,
     headers: HeaderMap,
 ) -> Result<Response, WebError> {
-    let tag_service = TagService::new(state.tags.clone());
-    let tags = tag_service.get_all_tags().await?;
+    let tags = state.tags.get_all().await?;
     let template = if is_htmx_request(&headers) {
         "tags.htmx"
     } else {
@@ -322,16 +303,12 @@ pub async fn tag_view(
     Path(alias): Path<String>,
     headers: HeaderMap,
 ) -> Result<Response, WebError> {
-    let tag_service = TagService::new(state.tags.clone());
-    let Some(tag) = tag_service.get_tag_by_alias(&alias).await? else {
+    let Some((tag, posts)) =
+        use_cases::resolve_tag_view(&*state.tags, &*state.posts, &alias).await?
+    else {
         return Ok(not_found());
     };
-    let post_service = PostService::new(state.posts.clone());
-    let posts = match tag.id {
-        Some(id) => post_service.get_posts_by_tag(id).await?,
-        None => Vec::new(),
-    };
-    let posts_by_year = group_posts_by_year(posts);
+    let posts_by_year = domain::group_posts_by_year(posts);
     let template = if is_htmx_request(&headers) {
         "posts.htmx"
     } else {
@@ -354,22 +331,11 @@ pub async fn post_view(
     headers: HeaderMap,
     uri: Uri,
 ) -> Result<Response, WebError> {
-    let version = PostService::new(state.posts.clone())
-        .latest_update()
-        .await?;
+    let version = state.posts.latest_update().await?;
     let key = htmx_key_builder(&path_query(&uri), &headers, version);
     with_cache(&state.cache, key, || async {
-        let post_service = PostService::new(state.posts.clone());
-        let Some(post) = post_service.get_post_by_alias(&alias).await? else {
+        let Some((post, tags)) = use_cases::resolve_post_view(&*state.posts, &alias).await? else {
             return Ok(not_found());
-        };
-        let is_published = post.publishedon.is_some();
-        if !(is_published || post.is_page) {
-            return Ok(not_found());
-        }
-        let tags = match post.id {
-            Some(id) => post_service.get_tags_for_post(id).await?,
-            None => Vec::new(),
         };
         let view = PostView::new(post);
         let template = if is_htmx_request(&headers) {

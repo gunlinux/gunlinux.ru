@@ -118,6 +118,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
 
 [[package]]
+name = "application"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "domain",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
 name = "arc-swap"
 version = "1.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5198,6 +5209,7 @@ dependencies = [
 name = "web"
 version = "0.1.0"
 dependencies = [
+ "application",
  "async-trait",
  "axum",
  "base64 0.22.1",

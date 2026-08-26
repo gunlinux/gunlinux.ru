@@ -7,16 +7,10 @@ Guidance for AI coding assistants working in this repository.
 `gunlinux.ru` is a personal blog written in **Rust** (axum). Server-rendered
 HTML over **htmx** (dual-mode: full page vs fragment based on the `HX-Request`
 header), a custom admin panel built on repository traits, **PostgreSQL
-everywhere** (SQLite support was removed from the workspace). The
-Python/FastAPI implementation was migrated to Rust in a staged rewrite; the
-Python code is **removed** (Stage 9 complete). Key documents:
-
-- [`plan.md`](plan.md) — the migration plan (history, stages, risks, DoD).
-- [`MIGRATION_CONTRACT.md`](MIGRATION_CONTRACT.md) — the **frozen HTTP/htmx/
-  DB/admin contract**; read it before changing any public behavior.
-- [`TASKS.md`](TASKS.md) — remaining work (Stages 8–9 leftovers).
-- [`scripts/parity/results.md`](scripts/parity/results.md) — final Python-vs-
-  Rust parity comparison and the documented deviations.
+everywhere** (SQLite support was removed from the workspace). The original
+implementation was replaced in a staged rewrite; only the Rust workspace
+remains. Behavioral contracts that the rewrite preserved are pinned by the
+test suites — treat them as frozen.
 
 ## Commands
 
@@ -33,33 +27,39 @@ All through the Makefile (see `rust/README.md` for details):
 
 ## Workspace layout & layering (critical)
 
-`rust/` is a Cargo workspace: `domain`, `persistence`, `web`, `server`.
+`rust/` is a Cargo workspace: `domain`, `application`, `persistence`, `web`,
+`server`.
 
 ```
-route (axum handlers) → service (structs) → repository (async traits) → entity (SeaORM)
+route (axum handlers) → use case (application) → repository trait (domain) → impl (SeaORM)
                              ↑ domain (serde structs, pure logic) crosses boundaries
 ```
 
 - **`domain`** — pure types + logic (Post/Category/Tag/User/Icon, markdown
-  rendering, teaser, is_page, bcrypt, repository **traits**). It is a
-  **FROZEN contract**: do not change public APIs without care. It must never
-  depend on persistence/web.
+  rendering, teaser, is_page, year grouping, bcrypt, repository **traits**).
+  It is a **FROZEN contract**: do not change public APIs without care. It must
+  never depend on persistence/web.
+- **`application`** — use cases over the repository traits (read path:
+  `nav_pages`, `posts_by_year`, `resolve_post_view`; admin writes: form →
+  entity translation, validation). No HTTP types, no drivers — depends only on
+  `domain`. `web` translates between HTTP and these functions.
 - **`persistence`** — SeaORM entities, the baseline migration
   (`m20260101_000001_create_schema`), and the concrete repository impls.
   Backend is PostgreSQL (`sqlx-postgres`); repos are backend-agnostic over
   `DatabaseConnection`.
 - **`web`** — the axum app. **MUST NOT depend on `persistence`**: data access
   happens only through `Arc<dyn ...Repository>` trait objects in `AppState`
-  (see `web/src/app.rs`). Tests fake the traits with in-memory repos.
+  (see `web/src/app.rs`). Handlers are thin HTTP translators over the
+  `application` use cases. Tests fake the traits with in-memory repos.
 - **`server`** — the wiring binary: reads `DATABASE_URL` itself, connects,
   applies `Migrator::up`, builds `AppState`, serves.
 
-Services (`web/src/services.rs`) are deliberately thin pass-throughs — the
-seam where orchestration lands when it appears. Do not reflexively add
-pass-through methods; do not let SeaORM/entity types leak above the repository
-line.
+There is deliberately no pass-through service layer: thin reads go straight
+to the repository traits (via `WebError: From<RepoError>`); rules live in
+`application`. Do not reintroduce wrapper structs that add nothing; do not let
+SeaORM/entity types leak above the repository line.
 
-## Key invariants (pinned by tests + MIGRATION_CONTRACT.md)
+## Key invariants (pinned by tests)
 
 - **Route ordering:** the catch-all `GET /{alias}` is registered LAST so
   `/tags`, `/admin`, `/static` are never shadowed. Preserve this.
@@ -72,30 +72,31 @@ line.
   invalidate cached pages instantly; 600s TTL is only a safety net. Admin
   writes clear the
   namespace. `/sitemap.xml`, `/tags*`, `POST /md/` are NOT cached.
-- **404 body:** every 404 returns FastAPI's exact `{"detail":"Not Found"}`
-  with `application/json` (parity-pinned; `routes::not_found()`).
+- **404 body:** every 404 returns the pinned `{"detail":"Not Found"}`
+  with `application/json` (contract-pinned; `routes::not_found()`).
 - **`POST /md/`:** uses `domain::post::render_markdown_preview`
-  (python-markdown-compatible: fenced blocks render as inline `<code>` in a
-  `<p>`, language tag first). Post **pages** use `render_markdown` (comrak
-  with fenced code). Do not unify them — the parity contract depends on the
-  split. No CSRF by design (no side effects); do not add state-changing
-  cookie-authed POSTs without CSRF.
+  (fenced blocks render as inline `<code>` in a `<p>`, language tag first).
+  Post **pages** use `render_markdown` (comrak with fenced code). Do not
+  unify them — the preview contract depends on the split. No CSRF by design
+  (no side effects); do not add state-changing cookie-authed POSTs without
+  CSRF.
 - **Auth:** JWT (HS256, `{sub, exp}`) wrapped in a signed `session` cookie
   (`base64url(json).hex(hmac)`). Passwords are **bcrypt** — existing prod
   hashes must keep verifying; do not switch to argon2 without a re-hash
   migration.
-- **Admin:** custom, on repository traits (Thread B — the old sqladmin
-  bypassed the layers; this must not return). Driven by `AdminModel`
+- **Admin:** custom, on repository traits (the pre-rewrite admin bypassed the
+  layers; this must not return). Driven by `AdminModel`
   descriptors (5 models); `User.password` is form-excluded (blank keeps the
   hash). Registered at both `/admin` and `/admin/` (bare `/admin` → 302 login
-  is a deliberate, documented improvement over the Python 404). Every write
+  is a deliberate, documented improvement over the previous 404). Every write
   invalidates the cache.
-- **Markdown drift:** known risk (§5 of plan.md) — `MIGRATION_CONTRACT.md`
-  and the tests guard it.
-- **Known faithful quirks (do NOT "fix" them — they match the Python
-  reference):** drafts leak into `/tags/{alias}` listings; `users.authenticated`
-  is never enforced at login; some queries have no ORDER BY (DB-dependent
-  order, only published listings pin `publishedon DESC`).
+- **Markdown drift:** known risk — the two renderers (`render_markdown` vs
+  `render_markdown_preview`) are pinned by the test suites.
+- **Known faithful quirks (do NOT "fix" them — they reproduce the
+  pre-rewrite reference behavior, pinned by tests):** drafts leak into
+  `/tags/{alias}` listings; `users.authenticated` is never enforced at login;
+  some queries have no ORDER BY (DB-dependent order, only published listings
+  pin `publishedon DESC`).
 
 ## Testing conventions
 

@@ -40,6 +40,19 @@ jobs:
           components: rustfmt, clippy
       - run: cargo clippy --workspace -- -D warnings
 
+  arch:
+    name: Architecture
+    runs-on: ubuntu-latest
+    # The crate-matrix guard runs from the repo root (workflow default is rust/).
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+      # Machine-checks the Dependency Rule: web must not reach persistence;
+      # only `server` joins them (scripts/check-architecture.sh).
+      - run: bash scripts/check-architecture.sh
+
   test:
     name: Tests
     runs-on: ubuntu-latest
