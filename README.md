@@ -7,10 +7,9 @@ Personal blog, rewritten in **Rust** (axum). Server-rendered HTML with **htmx**
 for progressive enhancement, a repository-trait admin panel, **PostgreSQL
 everywhere** (SQLite support was removed from the workspace).
 
-The original FastAPI/Python implementation was migrated to Rust in a staged
-rewrite — see [`plan.md`](plan.md) for the migration plan and
-[`MIGRATION_CONTRACT.md`](MIGRATION_CONTRACT.md) for the frozen HTTP/DB/admin
-contract. [`TASKS.md`](TASKS.md) tracks the remaining work.
+The original implementation was replaced in a staged rewrite; the Rust
+workspace is the only implementation that ships. Behavioral contracts
+preserved from the rewrite are pinned by the test suites.
 
 ## Repository layout
 
@@ -23,7 +22,6 @@ rust/                Cargo workspace — the application
   crates/server/       Wiring binary: reads DATABASE_URL, applies migrations, serves
 app/static/          esbuild output + sources (CSS/img/upload) — served at /static
 deploy/              systemd unit + production cutover runbook (CUTOVER.md)
-scripts/parity/      Python-vs-Rust parity harness (archived; golden results in results.md)
 .github/workflows/   rust-ci.yaml (fmt/clippy/test incl. postgres suite/browser-e2e), deploy.yaml
 ```
 
@@ -36,15 +34,17 @@ route (axum handlers) → service (structs) → repository (async traits) → en
 
 - **Web:** Axum + tower-http (static files) on Tokio.
 - **ORM/DB:** SeaORM (SQLx underneath); PostgreSQL only.
-- **Templates:** Minijinja — 16 templates ported from Jinja2; htmx dual-mode
+- **Templates:** Minijinja — 16 templates; htmx dual-mode
   rendering (full page vs fragment based on the `HX-Request` header).
 - **Auth:** JWT in a signed `session` cookie; bcrypt password hashes (existing
   hashes keep verifying — do not switch to argon2 without a re-hash migration).
-- **Cache:** moka (in-memory TTL, 50s, `"blog"` namespace); admin writes
-  invalidate it. Single-process, so no cross-worker staleness.
-- **Markdown:** comrak for post pages; `POST /md/` uses a python-markdown-
-  compatible preview renderer (see MIGRATION_CONTRACT.md for the residual
-  differences).
+- **Cache:** dual backend — Redis when `REDIS_URL` is set, in-memory moka
+  otherwise. Keys are content-versioned (`blog:v{max-update}:{uri}:{hx}`) so
+  new/edited posts invalidate cached pages instantly; the 600 s TTL is only a
+  safety net. Admin writes clear the namespace.
+- **Markdown:** comrak for post pages; `POST /md/` uses the legacy preview
+  renderer (fenced blocks render as inline `<code>` in a `<p>`, language tag
+  first — pinned by the domain tests).
 - **Frontend:** esbuild CSS pipeline (single dep); output served from
   `app/static/dist`.
 
@@ -113,14 +113,14 @@ container when `TEST_DATABASE_URL` is set.
 ## Database
 
 6 tables: `users`, `posts`, `categories`, `tags`, `posts_tags` (m2m), `icons`.
-Single SeaORM baseline migration `m20260101_000001_create_schema` (the 16
-Alembic revisions it replaces); `CREATE TABLE IF NOT EXISTS` — non-destructive.
+Three SeaORM migrations: the non-destructive baseline
+`m20260101_000001_create_schema` (`CREATE TABLE IF NOT EXISTS`) plus two
+additive follow-ups (`posts.update_date`, `page_views`).
 
-## Contract & parity
+## Behavioral contract
 
-- [`MIGRATION_CONTRACT.md`](MIGRATION_CONTRACT.md) — the frozen HTTP/htmx/DB/
-  admin contract (routes, status codes, bodies, schema, auth).
-- [`scripts/parity/results.md`](scripts/parity/results.md) — final Python-vs-
-  Rust comparison: 18/19 status MATCH (one documented admin-root deviation),
-  16/19 normalized-body MATCH (remaining DIFFs are documented Thread-B admin
-  differences and a whitespace-only markdown quirk).
+Routes, status codes, bodies, schema and auth behavior are pinned by the
+test suites (`rust/crates/web/tests/`, `rust/crates/persistence/tests/`,
+`rust/crates/domain/src/`) — treat them as frozen. Deliberate deviations from
+the pre-rewrite behavior (e.g. bare `/admin` → 302 login, JSON 404 body) are
+documented in `AGENTS.md`.

@@ -2,8 +2,8 @@
   'use strict';
 
   // --- Markdown editor (post content textarea) ---
-  // Wired to the app's POST /md/ endpoint, which returns python-markdown-
-  // compatible HTML (the same contract the Python-era admin used).
+  // Wired to the app's POST /md/ endpoint, which returns the legacy preview
+  // renderer's HTML (the same contract the previous admin used).
   function initEditor() {
     var ta = document.getElementById('field-content');
     if (!ta || typeof EasyMDE === 'undefined') return;

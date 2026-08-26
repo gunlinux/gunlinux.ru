@@ -1,4 +1,4 @@
-//! Port of `tests/test_views.py`.
+//! View-layer route tests (full page + htmx fragment rendering).
 
 mod common;
 
@@ -34,7 +34,7 @@ async fn test_unpublished_post_is_404() {
     }
 
     expect_status(get(&app, "/draft-view-post").await, StatusCode::NOT_FOUND).await;
-    // 404 body matches FastAPI's default HTTPException JSON.
+    // The pinned 404 contract.
     let body = body_text(get(&app, "/draft-view-post").await).await;
     assert_eq!(body, "{\"detail\":\"Not Found\"}");
 }
@@ -55,12 +55,12 @@ async fn test_page_view() {
 #[tokio::test]
 async fn test_tag_view() {
     let (store, app) = test_app();
-    seed_tag(&store, "Python", "python-view");
+    seed_tag(&store, "Rust", "rust-view");
 
-    let resp = get(&app, "/tags/python-view").await;
+    let resp = get(&app, "/tags/rust-view").await;
     assert_eq!(resp.status(), StatusCode::OK);
     let body = body_text(resp).await;
-    assert!(body.contains("Python"));
+    assert!(body.contains("Rust"));
 }
 
 #[tokio::test]
@@ -71,7 +71,7 @@ async fn test_tag_not_found() {
         StatusCode::NOT_FOUND,
     )
     .await;
-    // 404 body matches FastAPI's default HTTPException JSON.
+    // The pinned 404 contract.
     let body = body_text(get(&app, "/tags/nonexistent-xyz").await).await;
     assert_eq!(body, "{\"detail\":\"Not Found\"}");
 }
@@ -101,8 +101,8 @@ async fn test_markdown_endpoint() {
 
 #[tokio::test]
 async fn test_markdown_endpoint_renders_fence_as_inline_code() {
-    // Matches python-markdown without fenced_code (the Python /md/ route):
-    // the fence becomes an inline <code> span, language tag first.
+    // Preview contract (no fenced_code): the fence becomes an inline <code>
+    // span, language tag first.
     let (_store, app) = test_app();
     let resp = post_form(
         &app,
@@ -155,7 +155,7 @@ async fn test_htmx_dual_mode_posts() {
     seed_published_post(&store, "Htmx Post", "htmx-post", "body");
 
     // Both the full page (posts.html) and the fragment (posts.htmx) are bare
-    // listings in the Python app — posts.html has no {% extends layout %}.
+    // listings — posts.html has no {% extends layout %}.
     let full = body_text(get(&app, "/posts").await).await;
     assert!(!full.contains("<!DOCTYPE"));
     assert!(full.contains("postGroup"));

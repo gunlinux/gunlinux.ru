@@ -1,5 +1,5 @@
 //! Repository traits — the port seam between persistence and the rest of the
-//! app (mirrors `app/repositories/base.py` + the per-model finders).
+//! app.
 //!
 //! `persistence` implements these for real databases; `web` depends only on the
 //! traits (via `Arc<dyn ...>`) so routes, services and the admin panel are

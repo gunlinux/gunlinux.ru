@@ -1,5 +1,5 @@
 //! Server binary — wires persistence repositories into the web layer and
-//! serves the axum application on port 8000 (mirrors `main.py` + granian).
+//! serves the axum application on port 8000.
 
 use std::net::SocketAddr;
 use std::sync::Arc;

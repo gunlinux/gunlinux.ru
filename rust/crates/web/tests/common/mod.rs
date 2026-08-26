@@ -558,7 +558,7 @@ impl VisitRepository for FakeVisitRepo {
 // ---------------------------------------------------------------------------
 
 /// Build a fresh app + shared store. Each call is fully isolated (fresh cache,
-/// fresh repositories), matching the Python `client` fixture.
+/// fresh repositories).
 pub fn test_app() -> (SharedStore, Router) {
     let store = SharedStore::default();
     let app = build_test_app(store.clone());

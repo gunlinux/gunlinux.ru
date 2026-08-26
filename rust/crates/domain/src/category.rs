@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-/// Mirrors `app/domain/category.py` `Category` dataclass.
+/// Blog category entity.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Category {
     pub id: Option<i32>,

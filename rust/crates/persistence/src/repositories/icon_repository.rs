@@ -1,4 +1,4 @@
-//! `IconRepository` — ports `app/repositories/icon.py`.
+//! `IconRepository` — SeaORM-backed icon storage.
 
 use async_trait::async_trait;
 use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
@@ -20,7 +20,7 @@ impl IconRepository {
     }
 }
 
-/// Map an icon row to the domain `Icon` — Python passes all fields through
+/// Map an icon row to the domain `Icon` — all fields pass through
 /// unchanged.
 pub(crate) fn to_domain(i: icon::Model) -> Icon {
     Icon {

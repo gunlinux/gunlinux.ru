@@ -1,18 +1,17 @@
-//! Baseline migration: creates the six tables exactly as defined in
-//! `app/infrastructure/database.py`.
+//! Baseline migration: creates the six tables exactly as defined by the
+//! original schema.
 //!
-//! Column types / nullability / uniqueness match the SQLAlchemy definitions:
+//! Column types / nullability / uniqueness match the original definitions:
 //! - `users.id`, `posts.id`, `categories.id`, `tags.id`, `icons.id` — INTEGER PK
 //! - `users.authenticated` — nullable BOOLEAN, no server default (prod schema;
 //!   the repository always writes a value, `NULL` reads as `false`)
 //! - `categories.page` — nullable BOOLEAN, no server default (same reasoning)
-//! - `createdon` / `publishedon` — timezone-aware datetimes, matching
-//!   `DateTime(timezone=True)`: Postgres `TIMESTAMPTZ`; SQLite stores values
-//!   as ISO-8601 text (sea-query declares the column
-//!   `timestamp_with_timezone_text`, which has TEXT affinity — equivalent to
-//!   the Python side storing aware datetime ISO strings).
+//! - `createdon` / `publishedon` — timezone-aware datetimes: Postgres
+//!   `TIMESTAMPTZ`; SQLite stores values as ISO-8601 text (sea-query declares
+//!   the column `timestamp_with_timezone_text`, which has TEXT affinity —
+//!   equivalent to storing aware datetime ISO strings).
 //! - `posts_tags` — pure join table; composite `(post_id, tag_id)` PK.
-//!   FK actions default to NO ACTION like SQLAlchemy's `ForeignKey(...)`.
+//!   FK actions default to NO ACTION.
 
 use sea_orm_migration::prelude::*;
 

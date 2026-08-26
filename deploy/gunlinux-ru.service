@@ -7,7 +7,7 @@
 #
 # --network host: the app binds 127.0.0.1:5000 (BIND_ADDR), exactly where the
 # nginx vhost proxy_passes (no proxy change), and reaches the local Postgres
-# container `db` at 127.0.0.1:5433 — the same topology the legacy Python unit
+# container `db` at 127.0.0.1:5433 — the same topology the previous unit
 # used. The legacy unit file "gunlinux.ru" stays installed for rollback.
 #
 # Env: .env (DATABASE_URL, SECRET_KEY, ...) is fed to the container via

@@ -1,4 +1,4 @@
-//! `PostRepository` — ports `app/repositories/post.py`.
+//! `PostRepository` — SeaORM-backed post storage.
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
@@ -26,9 +26,9 @@ impl PostRepository {
     }
 }
 
-/// Map a post row to the domain `Post`, mirroring the Python `_to_domain`:
-/// strings default to `""` when NULL, and `is_page` is derived from the
-/// loaded category (`bool(category.page)` when `category_id` is set).
+/// Map a post row to the domain `Post`: strings default to `""` when NULL,
+/// and `is_page` is derived from the loaded category (`category.page` when
+/// `category_id` is set).
 pub(crate) fn to_domain(post: post::Model, category: Option<category::Model>) -> Post {
     Post {
         id: Some(post.id),
@@ -72,7 +72,7 @@ impl Repository<Post, i32> for PostRepository {
             content: Set(Some(entity.content.clone())),
             ..Default::default()
         };
-        // Python only sets optional fields when present, so a None value is
+        // Only set optional fields when present, so a None value is
         // left as NULL rather than overwriting existing data.
         if let Some(createdon) = entity.createdon {
             active.createdon = Set(Some(createdon));
@@ -132,9 +132,8 @@ impl Repository<Post, i32> for PostRepository {
         Ok(updated)
     }
 
-    /// The Python `delete` raises `ValueError` when the post is missing, but
-    /// the generic trait contract returns `Result<bool, RepoError>` — follow
-    /// the trait: `Ok(true)` if a row was deleted, `Ok(false)` otherwise.
+    /// The generic trait contract returns `Result<bool, RepoError>`: `Ok(true)`
+    /// if a row was deleted, `Ok(false)` otherwise.
     async fn delete(&self, id: i32) -> Result<bool, RepoError> {
         let result = post::Entity::delete_by_id(id)
             .exec(&self.db)
@@ -158,8 +157,7 @@ impl PostRepoTrait for PostRepository {
 
     /// `publishedon IS NOT NULL AND category_id IS NULL`, ordered by
     /// `publishedon` DESC. All returned posts have `category_id = NULL`, so
-    /// `is_page` is always false — equivalent to the Python query loading the
-    /// (necessarily absent) category.
+    /// `is_page` is always false.
     async fn get_published_posts(&self) -> Result<Vec<Post>, RepoError> {
         let rows = post::Entity::find()
             .filter(post::Column::Publishedon.is_not_null())
@@ -175,7 +173,7 @@ impl PostRepoTrait for PostRepository {
     /// categories), ordered by `publishedon` DESC. The `page IS NOT TRUE`
     /// predicate (null-safe: `NULL IS NOT TRUE` is true, so uncategorised
     /// posts are included) guarantees every returned post has `is_page ==
-    /// false`, matching the Python `_to_domain` with the loaded category.
+    /// false`.
     ///
     /// Rendered as `page = false OR page IS NULL` rather than
     /// `page IS NOT TRUE`: `is_not(true)` binds the bool as a parameter on
@@ -199,8 +197,7 @@ impl PostRepoTrait for PostRepository {
     }
 
     /// Inner-joins categories where `page IS TRUE`. The join guarantees the
-    /// category exists and the filter guarantees `is_page == true`, matching
-    /// the Python `_to_domain` (`bool(category.page)`).
+    /// category exists and the filter guarantees `is_page == true`.
     async fn get_page_posts(&self) -> Result<Vec<Post>, RepoError> {
         let rows = post::Entity::find()
             .join(JoinType::InnerJoin, post::Relation::Category.def())

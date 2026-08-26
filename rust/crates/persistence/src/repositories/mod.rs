@@ -23,9 +23,9 @@ use sea_orm::SqlErr;
 
 /// Translate a SeaORM error into the domain `RepoError`.
 ///
-/// Unique-constraint violations become `RepoError::Conflict`, mirroring the
-/// Python layer where a duplicate alias/title surfaces as an
-/// `IntegrityError`. Everything else becomes `RepoError::Db`.
+/// Unique-constraint violations become `RepoError::Conflict` (duplicate
+/// alias/title surfaces as an integrity error). Everything else becomes
+/// `RepoError::Db`.
 pub(crate) fn translate_err(err: DbErr) -> RepoError {
     if let Some(SqlErr::UniqueConstraintViolation(message)) = err.sql_err() {
         return RepoError::Conflict(message);

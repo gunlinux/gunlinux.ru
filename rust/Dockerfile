@@ -61,7 +61,7 @@ RUN apk add --no-cache ca-certificates
 
 WORKDIR /app
 
-# Non-root user, mirroring the Python Dockerfile (UID 10000). Busybox adduser.
+# Non-root user (UID 10000, matching the previous deployment). Busybox adduser.
 ARG UID=10000
 RUN adduser -D -h "/app" -s "/sbin/nologin" -u "${UID}" appuser
 

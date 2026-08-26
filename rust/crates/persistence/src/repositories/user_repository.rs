@@ -1,4 +1,4 @@
-//! `UserRepository` — ports `app/repositories/user.py`.
+//! `UserRepository` — SeaORM-backed user storage.
 
 use async_trait::async_trait;
 use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
@@ -20,8 +20,8 @@ impl UserRepository {
     }
 }
 
-/// Map a user row to the domain `User`. Python: `name or ""`, `password or
-/// ""`, and `bool(authenticated) if authenticated is not None else False`.
+/// Map a user row to the domain `User`: `name or ""`, `password or ""`,
+/// and `bool(authenticated) if authenticated is not None else False`.
 pub(crate) fn to_domain(u: user::Model) -> User {
     User {
         id: Some(u.id),
@@ -113,8 +113,7 @@ impl UserRepoTrait for UserRepository {
 
     /// Load the user by name and verify the password with
     /// `domain::security::verify_password`. Returns `None` when the name is
-    /// unknown or the hash does not match (mirrors Python
-    /// `check_password` -> `_verify` which swallows all exceptions).
+    /// unknown or the hash does not match (verify swallows all errors).
     async fn authenticate(&self, name: &str, password: &str) -> Result<Option<User>, RepoError> {
         let row = user::Entity::find()
             .filter(user::Column::Name.eq(name))
