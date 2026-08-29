@@ -28,6 +28,18 @@ async fn main() -> anyhow::Result<()> {
 
     let settings = Arc::new(web::settings::get_settings().clone());
 
+    // SECRET_KEY signs the admin JWT, the session-cookie HMAC, and the
+    // analytics IP-hash salt. Refuse to boot with an unset or publicly-known
+    // key: the settings fallback yields the default on any config error, so
+    // this check also covers those cases.
+    if !secret_key_is_safe(&settings.secret_key) {
+        anyhow::bail!(
+            "SECRET_KEY is unset or equals the known default; refusing to start \
+             with a forgeable signing key. Set SECRET_KEY to a strong random value \
+             (e.g. `openssl rand -hex 32`) in the environment or the repo `.env`."
+        );
+    }
+
     // PostgreSQL only (SQLite support was removed). DATABASE_URL is required —
     // the server has no embedded-DB fallback; production and dev both supply
     // it (host `.env` via docker --env-file, or the repo `.env` for local runs).
@@ -73,4 +85,34 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("starting gunlinux.ru (rust) on {addr}");
     web::app::run(state, addr).await.context("serve")?;
     Ok(())
+}
+
+/// Returns true when `secret` is a usable signing key: non-empty and not the
+/// publicly-known default baked into `Settings::default()`. An unset
+/// `SECRET_KEY` surfaces as the default after settings loading, so this check
+/// rejects both directly.
+fn secret_key_is_safe(secret: &str) -> bool {
+    !secret.is_empty() && secret != web::settings::Settings::default().secret_key
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn unset_secret_is_rejected() {
+        assert!(!secret_key_is_safe(""));
+    }
+
+    #[test]
+    fn default_secret_is_rejected() {
+        assert!(!secret_key_is_safe(
+            &web::settings::Settings::default().secret_key
+        ));
+    }
+
+    #[test]
+    fn custom_secret_is_accepted() {
+        assert!(secret_key_is_safe("a-strong-random-value"));
+    }
 }

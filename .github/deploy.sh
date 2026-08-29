@@ -60,6 +60,15 @@ fi
 # (a quoted DATABASE_URL made sqlx fail to parse the connection string).
 sed -i -E 's/^([A-Z_]+)="(.*)"$/\1=\2/' .env || true
 
+# SECRET_KEY is required (hard fail): it signs the admin JWT and session
+# cookies, and the Rust binary refuses to start without a non-default key.
+# Unlike DATABASE_URL above (best-effort copy), an insecure boot is worse
+# than a failed deploy — and failing here leaves the running unit untouched.
+if ! grep -q '^SECRET_KEY=' .env; then
+    echo "ERROR: .env lacks SECRET_KEY — add a strong random value (e.g. \`openssl rand -hex 32\`) before deploying." >&2
+    exit 1
+fi
+
 # --- 3. Materialize the CI-built CSS bundle for nginx -------------------------
 # app/static/dist is gitignored (absent after the git reset above) and the
 # server has no npm, so `make css-build` cannot run here. Extract the bundle

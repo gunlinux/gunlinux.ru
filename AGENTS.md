@@ -145,7 +145,9 @@ layer** (see Deployment) or both gates fail.
 ## Configuration (env / `.env`)
 
 `web/src/settings.rs` (config + dotenvy, cached in a `OnceLock`): `ENV`,
-`SECRET_KEY`, `YANDEX_VERIFICATION`, `REDIS_URL` (cache backend), `JWT_ALGORITHM`,
+`SECRET_KEY` (**required — no default**: the server refuses to start when it
+is unset or equals the code default; generate one, e.g. `openssl rand -hex
+32`), `YANDEX_VERIFICATION`, `REDIS_URL` (cache backend), `JWT_ALGORITHM`,
 `JWT_EXPIRE_MINUTES`. Server: `DATABASE_URL` (required — no default;
 `postgres://` URL), `BIND_ADDR` (default `0.0.0.0:8000`), `STATIC_DIR`
 (default `app/static`), `RUST_LOG` (default `info`). `database_url` in

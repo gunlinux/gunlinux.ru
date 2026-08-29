@@ -57,7 +57,7 @@ only — SQLite support was removed) and is usually supplied by the repo `.env`
 | Variable             | Default                        | Purpose                                              |
 |----------------------|--------------------------------|------------------------------------------------------|
 | `DATABASE_URL`       | *(required — no default)*      | PostgreSQL connection string (`postgres://...`)      |
-| `SECRET_KEY`         | *(dev default in code)*        | Signs JWT tokens / session cookies                   |
+| `SECRET_KEY`         | *(required — no default; server refuses to start without a non-default value)* | Signs JWT tokens / session cookies                   |
 | `STATIC_DIR`         | `app/static` (code); `/app/static` (Docker image) | Directory served at `/static`                        |
 | `YANDEX_VERIFICATION`| *(empty)*                      | Yandex site-verification meta tag content            |
 | `REDIS_URL`          | *(unset)*                     | Response-cache backend: Redis/Valkey URL when set (e.g. `redis://:pass@127.0.0.1:6379`); in-memory cache otherwise |
