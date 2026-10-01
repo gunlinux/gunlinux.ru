@@ -28,6 +28,13 @@ pub const NAMESPACE: &str = "blog";
 /// key, not the TTL; this only bounds how long orphaned versions linger.
 pub const TTL_SECS: u64 = 600;
 
+/// Cap on the initial Redis connect. `ConnectionManager::new` retries an
+/// unreachable server with backoff rather than returning an error, so without
+/// a bound a missing cache would hang startup forever (the process never
+/// reaches `bind`); this keeps the documented "fall back to memory" behavior
+/// real.
+const REDIS_CONNECT_TIMEOUT: Duration = Duration::from_secs(3);
+
 /// A serializable cache entry: everything needed to rebuild the HTTP response.
 #[derive(Debug, Clone)]
 pub struct CachedResponse {
@@ -124,16 +131,23 @@ impl Cache {
                 return Self::memory();
             }
         };
-        match ConnectionManager::new(client).await {
-            Ok(conn) => {
+        match tokio::time::timeout(REDIS_CONNECT_TIMEOUT, ConnectionManager::new(client)).await {
+            Ok(Ok(conn)) => {
                 tracing::info!("response cache backend: redis ({url})");
                 Self {
                     inner: Inner::Redis(conn),
                 }
             }
-            Err(e) => {
+            Ok(Err(e)) => {
                 tracing::warn!(
                     "cannot connect to redis ({url}): {e}; using in-memory response cache"
+                );
+                Self::memory()
+            }
+            Err(_) => {
+                tracing::warn!(
+                    "timed out connecting to redis ({url}) after {REDIS_CONNECT_TIMEOUT:?}; \
+                     using in-memory response cache"
                 );
                 Self::memory()
             }
@@ -318,6 +332,32 @@ mod tests {
         // An unparseable REDIS_URL must not take the site down: the cache
         // degrades to the in-memory backend and keeps serving.
         let cache = Cache::connect(Some("not a valid redis url")).await;
+        let key = format!("{NAMESPACE}:test:{}", Utc::now().timestamp_millis());
+        let entry = CachedResponse {
+            status: StatusCode::OK,
+            body: Bytes::from_static(b"<html>hi</html>"),
+            content_type: "text/html; charset=utf-8".to_string(),
+        };
+        cache.insert(key.clone(), entry.clone()).await;
+        let hit = cache.get(&key).await.expect("memory fallback must serve");
+        assert_eq!(hit.body, entry.body);
+    }
+
+    #[tokio::test]
+    async fn connect_falls_back_to_memory_when_redis_unreachable() {
+        // A refused connection must fall back to the in-memory backend instead
+        // of hanging startup: redis-rs's `ConnectionManager::new` retries an
+        // unreachable server with backoff rather than returning an error.
+        // Bind-then-drop yields a port nothing is listening on. The outer
+        // timeout fails (rather than hangs) if the library bound regresses.
+        let port = {
+            let l = std::net::TcpListener::bind("127.0.0.1:0").expect("bind ephemeral port");
+            l.local_addr().expect("local addr").port()
+        };
+        let url = format!("redis://127.0.0.1:{port}/0");
+        let cache = tokio::time::timeout(Duration::from_secs(10), Cache::connect(Some(&url)))
+            .await
+            .expect("connect must not hang when redis is unreachable");
         let key = format!("{NAMESPACE}:test:{}", Utc::now().timestamp_millis());
         let entry = CachedResponse {
             status: StatusCode::OK,
