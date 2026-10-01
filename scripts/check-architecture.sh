@@ -9,6 +9,10 @@
 #     system is what enforces the seam);
 #   - server is the ONLY crate that joins persistence and web.
 #
+# It also guards the Dockerfile's dependency-cache stub layer, which must
+# list every workspace crate or the image build fails to resolve the
+# workspace (see AGENTS.md → Deployment).
+#
 # Run locally: make check-arch · CI: the `arch` job in
 # .github/workflows/rust-ci.yaml.
 
@@ -46,6 +50,24 @@ for crate in domain application persistence web server; do
     [ "$has_persistence" -eq 0 ] || fail "$crate must not depend on persistence"
     [ "$has_web" -eq 0 ] || fail "$crate must not depend on web"
   fi
+done
+
+# 5. The Dockerfile's dependency-cache stub layer must COPY every workspace
+#    crate's manifest and stub its src/ dir. A missing crate leaves the stub
+#    `cargo build -p server` unable to resolve the workspace (exit 101), which
+#    only surfaces in the image build.
+dockerfile="../Dockerfile"
+[ -f "$dockerfile" ] || fail "Dockerfile not found at rust/$dockerfile"
+
+members=$(sed -n '/^members[[:space:]]*=[[:space:]]*\[/,/\]/p' ../Cargo.toml \
+  | grep -oE '"crates/[A-Za-z0-9_-]+"' | tr -d '"' || true)
+[ -n "$members" ] || fail "could not parse workspace members from rust/Cargo.toml"
+
+for member in $members; do
+  grep -qF "COPY rust/$member/Cargo.toml" "$dockerfile" \
+    || fail "rust/Dockerfile stub layer is missing: COPY rust/$member/Cargo.toml"
+  grep -qF "$member/src" "$dockerfile" \
+    || fail "rust/Dockerfile stub layer does not stub $member/src"
 done
 
 echo "architecture check OK"

@@ -31,15 +31,16 @@ RUN apk add --no-cache gcc musl-dev
 # reused as a Docker layer when only crate sources change.
 COPY rust/Cargo.toml rust/Cargo.lock ./
 COPY rust/crates/domain/Cargo.toml crates/domain/Cargo.toml
+COPY rust/crates/application/Cargo.toml crates/application/Cargo.toml
 COPY rust/crates/persistence/Cargo.toml crates/persistence/Cargo.toml
 COPY rust/crates/web/Cargo.toml crates/web/Cargo.toml
 COPY rust/crates/server/Cargo.toml crates/server/Cargo.toml
 
-RUN mkdir -p crates/domain/src crates/persistence/src crates/web/src crates/server/src \
-    && touch crates/domain/src/lib.rs crates/persistence/src/lib.rs crates/web/src/lib.rs \
+RUN mkdir -p crates/domain/src crates/application/src crates/persistence/src crates/web/src crates/server/src \
+    && touch crates/domain/src/lib.rs crates/application/src/lib.rs crates/persistence/src/lib.rs crates/web/src/lib.rs \
     && printf 'fn main() {}\n' > crates/server/src/main.rs \
     && cargo build --release -p server \
-    && rm -rf crates/domain/src crates/persistence/src crates/web/src crates/server/src
+    && rm -rf crates/domain/src crates/application/src crates/persistence/src crates/web/src crates/server/src
 
 # Real sources — only the workspace crates recompile at this point.
 # `touch` forces newer mtimes than the stub build above: Docker COPY preserves
